@@ -1,0 +1,27 @@
+[package]
+name = "accessible-media-editor"
+version = "0.1.0"
+description = "Screen-reader-first multimedia authoring from Open Door Design."
+authors = ["Open Door Design"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-window-state = "2"
+rfd = "0.15"
+serde = { version = "1", features = ["derive"] }
+
+[[bin]]
+name = "accessible-media-editor"
+path = "src/main.rs"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

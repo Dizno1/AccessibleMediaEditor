@@ -1,0 +1,17 @@
+{
+  "name": "accessible-media-editor",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "A screen-reader-first Windows multimedia authoring application from Open Door Design.",
+  "scripts": {
+    "tauri": "tauri",
+    "prepare:dist": "node scripts/prepare-dist.js",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "test": "node --test tests/"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
