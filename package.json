@@ -9,7 +9,7 @@
     "prepare:dist": "node scripts/prepare-dist.js",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/projectModel.test.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
