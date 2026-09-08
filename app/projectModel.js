@@ -11,5 +11,19 @@ export function moveItem(project, id, direction) {
 }
 export function removeItem(project, id) { const next = structuredClone(project); const before = next.items.length; next.items = next.items.filter(i => i.id !== id); if (next.items.length !== before) next.dirty = true; return next; }
 export function updateItem(project, id, patch) { const next = structuredClone(project); const item = next.items.find(i => i.id === id); if (!item) return project; Object.assign(item, patch); next.dirty = true; return next; }
-export function duration(project) { return project.items.reduce((sum, item) => sum + (Number(item.duration) || 0), 0); }
+export function splitItem(project, id, point, newId) {
+  const next=structuredClone(project); const index=next.items.findIndex(item=>item.id===id); if(index<0)return project;
+  const first=next.items[index]; const start=Number(first.inPoint)||0; const end=first.outPoint==null?Number(first.duration):Number(first.outPoint);
+  if(!["Video","Audio"].includes(first.kind)||point<=start||point>=end)return project;
+  const second={...structuredClone(first),id:newId,inPoint:point,label:`${first.label||first.name} - Part 2`};
+  first.outPoint=point; first.label=`${first.label||first.name} - Part 1`; next.items.splice(index+1,0,second); next.dirty=true; return next;
+}
+export function itemDuration(item) {
+  const sourceDuration = Number(item.duration) || 0;
+  if (!["Video", "Audio"].includes(item.kind)) return sourceDuration;
+  const start = Math.max(0, Number(item.inPoint) || 0);
+  const end = item.outPoint == null ? sourceDuration : Math.min(sourceDuration, Number(item.outPoint));
+  return Math.max(0, end - start);
+}
+export function duration(project) { return project.items.reduce((sum, item) => sum + itemDuration(item), 0); }
 export function serializable(project) { const copy = structuredClone(project); delete copy.path; delete copy.dirty; return copy; }

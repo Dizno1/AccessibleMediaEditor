@@ -2,9 +2,9 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for arranging video, images, narration, audio, text, and transitions into a finished production.
 
-## Build 0.1 purpose
+## Build 0.2 purpose
 
-This build establishes the new Windows interaction model. It intentionally does not copy the former long web interface.
+This build turns the Windows interaction model into a usable precision-trimming workspace. It intentionally does not copy the former long web interface.
 
 - Native Windows application menus.
 - Shared menu and keyboard command handlers.
@@ -12,18 +12,26 @@ This build establishes the new Windows interaction model. It intentionally does 
 - One ordered Project Items list.
 - Add image, audio, video, text, and crossfade items.
 - Move items earlier or later.
-- Edit item labels and durations.
+- Preview selected video and audio items.
+- Set nondestructive In and Out points to 0.001-second precision.
+- Enter exact positions with separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
+- Nudge the playhead by one millisecond with Alt+Left and Alt+Right.
+- Split a video or audio item nondestructively at the exact playhead position with Ctrl+K.
+- Edit item labels and exact durations.
 - Remove, undo, and redo.
-- Save and reopen `.ameproject` project descriptions.
+- Save and reopen `.ameproject` project descriptions in `Documents/Accessible Media Editor/Projects` by default.
+- Open the default Projects folder from the File menu.
+- Import multiple files in one operation, including common iPhone, web-video, audio, and image file extensions.
+- Explain that Ctrl+I imports media when a non-project file is mistakenly selected with Open Project.
 - One authoritative playhead control.
 - One status announcer.
 - Optional sound cues.
 
-Playback and composition export are deliberately deferred until the new workspace has been tested with screen readers.
+Preview uses the Windows media engine in Build 0.2. Some codecs, particularly HEVC, may require an installed Windows decoder. The planned FFmpeg composition engine will provide broader decoding and MP4 export in a later build.
 
 ## Developer commands
 
-After copying Build 0.1 into the existing AccessibleMediaEditor repository, activate `RemoveWebPrototypeFiles.bat` once. It removes only obsolete Python server, web-template, and batch-launcher files. It does not remove Git history, the new Windows application, or the existing `data` folder.
+Copy Build 0.2 into the existing AccessibleMediaEditor repository and replace matching files.
 
 - `npm install`
 - `npm test`
@@ -38,6 +46,10 @@ Windows installers are produced as MSI and NSIS packages.
 2. Import at least two media files with Ctrl+I.
 3. Use the Project Items list without turning the Virtual Cursor on.
 4. Move an item with Ctrl+Up and Ctrl+Down and confirm focus remains in the list.
-5. Open Item Properties with Alt+Enter and change an image duration.
-6. Save, close, and reopen a project.
-7. Confirm announcements are concise and not duplicated.
+5. Preview a selected video or audio item with Ctrl+P.
+6. Set In and Out points with I and O.
+7. Nudge the playhead with Alt+Left and Alt+Right.
+8. Press Ctrl+G and enter a time using the four separately labeled fields.
+9. Open Item Properties with Alt+Enter and type exact In and Out values.
+10. Save, close, and reopen a project.
+11. Confirm announcements are concise and not duplicated.

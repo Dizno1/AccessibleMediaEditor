@@ -1,12 +1,4 @@
 node_modules/
 src-tauri/target/
-dist/
-data/
-ffmpeg/
-logs/
-backups/
-__pycache__/
-*.pyc
 *.log
-*.zip
-powershell.exe
+*.tmp

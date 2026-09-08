@@ -14,6 +14,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-window-state = "2"
 rfd = "0.15"
 serde = { version = "1", features = ["derive"] }
+dirs = "6"
 
 [[bin]]
 name = "accessible-media-editor"

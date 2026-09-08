@@ -3,7 +3,9 @@ const shortcuts = [
   ["newProject", {ctrl:true,key:"n"}], ["openProject", {ctrl:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
   ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["importMedia", {ctrl:true,key:"i"}],
   ["moveEarlier", {ctrl:true,key:"arrowup"}], ["moveLater", {ctrl:true,key:"arrowdown"}],
-  ["properties", {alt:true,key:"enter"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["stop", {key:"escape"}]
+  ["properties", {alt:true,key:"enter"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["stop", {key:"escape"}],
+  ["setIn", {key:"i"}], ["setOut", {key:"o"}], ["nudgeBack", {alt:true,key:"arrowleft"}], ["nudgeForward", {alt:true,key:"arrowright"}],
+  ["goToTime", {ctrl:true,key:"g"}], ["split", {ctrl:true,key:"k"}]
 ];
 export function registerAction(name, handler) { handlers.set(name, handler); }
 export function triggerAction(name) { const handler = handlers.get(name); return handler ? handler() : undefined; }

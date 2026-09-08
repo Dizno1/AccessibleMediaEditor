@@ -8,12 +8,18 @@ use tauri::{Emitter, Manager};
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
 
+fn app_folder(name: &str) -> Option<std::path::PathBuf> {
+    let path = dirs::document_dir()?.join("Accessible Media Editor").join(name);
+    fs::create_dir_all(&path).ok()?;
+    Some(path)
+}
+
 #[tauri::command]
 fn pick_media_files(window: tauri::WebviewWindow) -> Vec<String> {
     rfd::FileDialog::new()
         .set_parent(&window)
         .set_title("Import Media")
-        .add_filter("Supported media", &["mp4","mkv","mov","avi","webm","m4v","mp3","wav","m4a","aac","flac","ogg","opus","png","jpg","jpeg","gif","webp","bmp","tif","tiff"])
+        .add_filter("Supported media", &["mp4","mkv","mov","avi","webm","m4v","3gp","3g2","mts","m2ts","mpeg","mpg","ts","wmv","ogv","hevc","mp3","wav","m4a","aac","flac","ogg","opus","wma","aif","aiff","png","jpg","jpeg","gif","webp","bmp","tif","tiff","heic","heif"])
         .pick_files()
         .unwrap_or_default()
         .into_iter().map(|path| path.to_string_lossy().into_owned()).collect()
@@ -21,14 +27,21 @@ fn pick_media_files(window: tauri::WebviewWindow) -> Vec<String> {
 
 #[tauri::command]
 fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjectResult>, String> {
-    let Some(path) = rfd::FileDialog::new().set_parent(&window).set_title("Open Accessible Media Editor Project").add_filter("Accessible Media Editor project", &["ameproject"]).pick_file() else { return Ok(None); };
-    let content = fs::read_to_string(&path).map_err(|error| error.to_string())?;
+    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Open Project - Select an AMEPROJECT file, not a media file").add_filter("Accessible Media Editor project", &["ameproject"]);
+    if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
+    let Some(path) = dialog.pick_file() else { return Ok(None); };
+    if path.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("ameproject")) != Some(true) {
+        return Err("That is not an Accessible Media Editor project. Use Ctrl+I to import video, audio, or images.".into());
+    }
+    let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Media Editor project. Use Ctrl+I to import media.".to_string())?;
     Ok(Some(OpenProjectResult { path: path.to_string_lossy().into_owned(), content }))
 }
 
 #[tauri::command]
 fn save_project_dialog(window: tauri::WebviewWindow, suggested_name: String, content: String) -> Result<Option<String>, String> {
-    let Some(path) = rfd::FileDialog::new().set_parent(&window).set_title("Save Accessible Media Editor Project").set_file_name(&suggested_name).add_filter("Accessible Media Editor project", &["ameproject"]).save_file() else { return Ok(None); };
+    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Accessible Media Editor Project").set_file_name(&suggested_name).add_filter("Accessible Media Editor project", &["ameproject"]);
+    if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
+    let Some(path) = dialog.save_file() else { return Ok(None); };
     fs::write(&path, content).map_err(|error| error.to_string())?;
     Ok(Some(path.to_string_lossy().into_owned()))
 }
@@ -36,6 +49,13 @@ fn save_project_dialog(window: tauri::WebviewWindow, suggested_name: String, con
 #[tauri::command]
 fn write_project(path: String, content: String) -> Result<String, String> {
     fs::write(&path, content).map_err(|error| error.to_string())?; Ok(path)
+}
+
+#[tauri::command]
+fn open_projects_folder() -> Result<(), String> {
+    let folder = app_folder("Projects").ok_or("The Projects folder could not be created.")?;
+    std::process::Command::new("explorer").arg(folder).spawn().map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::menu::MenuItem<tauri::Wry>> {
@@ -46,15 +66,16 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
         .item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+O","openProject")?)
         .separator().item(&item(app,"Save Ctrl+S","saveProject")?).item(&item(app,"Save As... Ctrl+Shift+S","saveProjectAs")?)
-        .separator().item(&item(app,"Import Media... Ctrl+I","importMedia")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
+        .separator().item(&item(app,"Import Media... Ctrl+I","importMedia")?).item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
-        .separator().item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
+        .separator().item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+I","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).separator()
+        .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set In Point I","setIn")?).item(&item(app,"Set Out Point O","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")
         .item(&item(app,"Preview from Selected Item Ctrl+P","preview")?).item(&item(app,"Stop Escape","stop")?).build()?;
@@ -70,6 +91,8 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
+            let _ = app_folder("Projects");
+            let _ = app_folder("Exports");
             if let Some(window)=app.get_webview_window("main") { window.set_menu(build_menu(app.handle())?)?; }
             app.on_menu_event(|app,event| {
                 let action=event.id.as_ref();
@@ -77,7 +100,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,open_projects_folder])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

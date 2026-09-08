@@ -34,12 +34,17 @@
       </div>
 
       <div class="transport-panel">
+        <video id="media-preview" preload="metadata" aria-label="Selected media preview"></video>
         <label for="playhead">Playhead</label>
-        <input id="playhead" type="range" min="0" max="0" value="0" step="0.1" aria-valuetext="0 seconds">
+        <input id="playhead" type="range" min="0" max="0" value="0" step="0.001" aria-valuetext="0 seconds">
         <p id="playhead-position">Position 0 seconds. Project duration 0 seconds.</p>
         <div class="button-row">
           <button type="button" id="preview-button" disabled>Preview from Selected Item (Ctrl+P)</button>
           <button type="button" id="stop-button" disabled>Stop (Escape)</button>
+          <button type="button" id="set-in-button" disabled>Set In (I)</button>
+          <button type="button" id="set-out-button" disabled>Set Out (O)</button>
+          <button type="button" id="go-to-time-button" disabled>Go to Time (Ctrl+G)</button>
+          <button type="button" id="split-button" disabled>Split at Playhead (Ctrl+K)</button>
         </div>
       </div>
     </div>
@@ -54,11 +59,44 @@
       <label for="item-label">Item label</label>
       <input type="text" id="item-label">
       <label for="item-duration">Duration in seconds</label>
-      <input type="number" id="item-duration" min="0.1" step="0.1">
+      <input type="number" id="item-duration" min="0.001" step="0.001">
+      <div id="trim-fields">
+        <fieldset class="time-fields">
+          <legend>In point</legend>
+          <label for="item-in-hours">Hours</label><input type="number" id="item-in-hours" min="0" step="1">
+          <label for="item-in-minutes">Minutes</label><input type="number" id="item-in-minutes" min="0" max="59" step="1">
+          <label for="item-in-seconds">Seconds</label><input type="number" id="item-in-seconds" min="0" max="59" step="1">
+          <label for="item-in-milliseconds">Milliseconds</label><input type="number" id="item-in-milliseconds" min="0" max="999" step="1">
+        </fieldset>
+        <fieldset class="time-fields">
+          <legend>Out point</legend>
+          <label for="item-out-hours">Hours</label><input type="number" id="item-out-hours" min="0" step="1">
+          <label for="item-out-minutes">Minutes</label><input type="number" id="item-out-minutes" min="0" max="59" step="1">
+          <label for="item-out-seconds">Seconds</label><input type="number" id="item-out-seconds" min="0" max="59" step="1">
+          <label for="item-out-milliseconds">Milliseconds</label><input type="number" id="item-out-milliseconds" min="0" max="999" step="1">
+        </fieldset>
+      </div>
       <p id="duration-help">Duration is required for images, text, and transitions.</p>
       <div class="button-row">
         <button type="button" id="save-properties-button">Save Properties</button>
         <button type="button" id="cancel-properties-button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="go-to-time-dialog" aria-labelledby="go-to-time-heading">
+    <form method="dialog">
+      <h2 id="go-to-time-heading">Go to Exact Time</h2>
+      <fieldset class="time-fields">
+        <legend>Playhead position</legend>
+        <label for="goto-hours">Hours</label><input type="number" id="goto-hours" min="0" step="1">
+        <label for="goto-minutes">Minutes</label><input type="number" id="goto-minutes" min="0" max="59" step="1">
+        <label for="goto-seconds">Seconds</label><input type="number" id="goto-seconds" min="0" max="59" step="1">
+        <label for="goto-milliseconds">Milliseconds</label><input type="number" id="goto-milliseconds" min="0" max="999" step="1">
+      </fieldset>
+      <div class="button-row">
+        <button type="button" id="go-to-time-confirm">Move Playhead</button>
+        <button type="button" id="go-to-time-cancel">Cancel</button>
       </div>
     </form>
   </dialog>
@@ -86,6 +124,10 @@
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
         <li>Ctrl+P: Preview from Selected Item.</li><li>Escape: Stop or close a dialog.</li>
+        <li>I: Set In point at the playhead.</li><li>O: Set Out point at the playhead.</li>
+        <li>Alt+Left or Alt+Right: Nudge the playhead by 0.001 second.</li>
+        <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
+        <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
       </ul>
       <button type="submit">Close</button>
     </form>
