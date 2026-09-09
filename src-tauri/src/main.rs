@@ -5,6 +5,8 @@ use serde::Serialize;
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 
+mod native_media_picker;
+
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
 
@@ -15,14 +17,8 @@ fn app_folder(name: &str) -> Option<std::path::PathBuf> {
 }
 
 #[tauri::command]
-fn pick_media_files(window: tauri::WebviewWindow) -> Vec<String> {
-    rfd::FileDialog::new()
-        .set_parent(&window)
-        .set_title("Import Media")
-        .add_filter("Supported media", &["mp4","mkv","mov","avi","webm","m4v","3gp","3g2","mts","m2ts","mpeg","mpg","ts","wmv","ogv","hevc","mp3","wav","m4a","aac","flac","ogg","opus","wma","aif","aiff","png","jpg","jpeg","gif","webp","bmp","tif","tiff","heic","heif"])
-        .pick_files()
-        .unwrap_or_default()
-        .into_iter().map(|path| path.to_string_lossy().into_owned()).collect()
+fn pick_media_files(app: tauri::AppHandle) -> Result<Vec<String>, String> {
+    native_media_picker::pick_media_files(&app)
 }
 
 #[tauri::command]

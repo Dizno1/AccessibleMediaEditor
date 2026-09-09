@@ -22,6 +22,7 @@ This build turns the Windows interaction model into a usable precision-trimming 
 - Save and reopen `.ameproject` project descriptions in `Documents/Accessible Media Editor/Projects` by default.
 - Open the default Projects folder from the File menu.
 - Import multiple files in one operation, including common iPhone, web-video, audio, and image file extensions.
+- Paste a copied multi-file File Explorer selection into the Import Media dialog, using the proven Windows picker behavior from Accessible Audio Studio Pro.
 - Explain that Ctrl+I imports media when a non-project file is mistakenly selected with Open Project.
 - One authoritative playhead control.
 - One status announcer.
@@ -44,12 +45,13 @@ Windows installers are produced as MSI and NSIS packages.
 
 1. Confirm Alt reaches the native menu bar and all seven menus are announced.
 2. Import at least two media files with Ctrl+I.
-3. Use the Project Items list without turning the Virtual Cursor on.
-4. Move an item with Ctrl+Up and Ctrl+Down and confirm focus remains in the list.
-5. Preview a selected video or audio item with Ctrl+P.
-6. Set In and Out points with I and O.
-7. Nudge the playhead with Alt+Left and Alt+Right.
-8. Press Ctrl+G and enter a time using the four separately labeled fields.
-9. Open Item Properties with Alt+Enter and type exact In and Out values.
-10. Save, close, and reopen a project.
-11. Confirm announcements are concise and not duplicated.
+3. Copy at least three media files in File Explorer, paste them into the Import Media dialog, and confirm that all three become project items.
+4. Use the Project Items list without turning the Virtual Cursor on.
+5. Move an item with Ctrl+Up and Ctrl+Down and confirm focus remains in the list.
+6. Preview a selected video or audio item with Ctrl+P.
+7. Set In and Out points with I and O.
+8. Nudge the playhead with Alt+Left and Alt+Right.
+9. Press Ctrl+G and enter a time using the four separately labeled fields.
+10. Open Item Properties with Alt+Enter and type exact In and Out values.
+11. Save, close, and reopen a project.
+12. Confirm announcements are concise and not duplicated.
