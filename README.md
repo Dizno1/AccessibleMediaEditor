@@ -6,6 +6,8 @@ Accessible Media Editor is a screen-reader-first Windows application for arrangi
 
 This build turns the Windows interaction model into a usable precision-trimming workspace. It intentionally does not copy the former long web interface.
 
+Build 0.2.2 adds an in-app Help menu Testing Guide, a plain-text testing guide, resets the playhead when a different item is selected, and prevents repeated Out-point announcements.
+
 - Native Windows application menus.
 - Shared menu and keyboard command handlers.
 - Native Open, Save, and Import dialogs.

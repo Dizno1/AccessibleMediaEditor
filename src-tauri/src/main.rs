@@ -78,7 +78,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let navigate = SubmenuBuilder::new(app, "Navigate")
         .item(&item(app,"Project Items","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
     let help = SubmenuBuilder::new(app, "Help")
-        .item(&item(app,"Keyboard Shortcuts","showShortcuts")?).item(&item(app,"Toggle Sound Cues","toggleSoundCues")?)
+        .item(&item(app,"Testing Guide","showTestingGuide")?).item(&item(app,"Keyboard Shortcuts","showShortcuts")?).item(&item(app,"Toggle Sound Cues","toggleSoundCues")?)
         .item(&item(app,"About Accessible Media Editor","showAbout")?).build()?;
     MenuBuilder::new(app).items(&[&file,&edit,&insert,&project,&playback,&navigate,&help]).build()
 }

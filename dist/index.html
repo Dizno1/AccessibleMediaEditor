@@ -133,6 +133,21 @@
     </form>
   </dialog>
 
+  <dialog id="testing-guide-dialog" aria-labelledby="testing-guide-heading">
+    <form method="dialog">
+      <h2 id="testing-guide-heading">Testing Guide</h2>
+      <p><strong>Reading the workspace:</strong> Leave the JAWS Virtual Cursor on.</p>
+      <p><strong>Selecting project items:</strong> With the Virtual Cursor on, navigate to Project Items and position JAWS inside the list box. Then press Insert+Z to turn the Virtual Cursor off. Use plain Up Arrow and Down Arrow to select different items.</p>
+      <p><strong>Rearranging project items:</strong> With focus inside Project Items and the Virtual Cursor off, use Ctrl+Up Arrow and Ctrl+Down Arrow. These move the selected item; they do not select another item.</p>
+      <p><strong>Using the playhead:</strong> Position JAWS on the Playhead slider and turn the Virtual Cursor off. Use Arrow keys to move it. Alt+Left Arrow and Alt+Right Arrow move by one millisecond.</p>
+      <p><strong>Setting edit points:</strong> With the Virtual Cursor off, press I for the In point or O for the Out point. Ctrl+G opens human-readable exact-time fields. Ctrl+K splits at the playhead.</p>
+      <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
+      <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>
+      <p>This build previews and trims one selected item at a time. It does not yet play or export the complete project.</p>
+      <button type="submit">Close Testing Guide</button>
+    </form>
+  </dialog>
+
   <script type="module" src="app/app.js"></script>
 </body>
 </html>
