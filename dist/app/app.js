@@ -79,7 +79,7 @@ function editorTitle(item,type){
   return`${mediaRoleLabel(item,type,index)} - ${displayName(item)}`;
 }
 function itemSummary(item,index,source=false){
-  const seconds=itemDuration(item),durationText=seconds>0?` Duration ${readableTime(seconds)}.`:" Duration not yet determined.";
+  const seconds=itemDuration(item),durationText=seconds>0?(source?` Selection duration ${readableTime(seconds)}. Full media duration ${readableTime(item.duration)}.`:` Duration ${readableTime(seconds)}.`):" Duration not yet determined.";
   const trim=["Video","Audio"].includes(item.kind)&&item.duration?` In ${readableTime(Number(item.inPoint)||0)}. Out ${readableTime(item.outPoint==null?Number(item.duration):Number(item.outPoint))}.`:"";
   return`${source?`Source ${index+1}`:item.role==="inserted"?`Inserted segment ${index+1}`:`Primary sequence item ${index+1}`}. ${item.kind}. ${item.label||item.name}.${durationText}${trim}`;
 }
@@ -126,13 +126,19 @@ function updateEditorLabels(state,item,type){
   state.video.setAttribute("aria-label",`${title} preview`);
   state.sliderLabel.textContent=`${title} playhead`;
   state.context.textContent=`${targetText(itemTarget(item))} targeted. In ${readableTime(Number(item.inPoint)||0)}. Out ${readableTime(item.outPoint==null?Number(item.duration):Number(item.outPoint))}.`;
+  state.inButton.textContent=type==="source"?"Set Selection Start (Left Bracket)":"Set Trim Start (Left Bracket)";
+  state.outButton.textContent=type==="source"?"Set Selection End (Right Bracket)":"Set Trim End (Right Bracket)";
   state.video.muted=itemTarget(item)==="video";
+  const source=type==="source",sequence=type==="sequence";
+  state.applyTrim.hidden=!sequence;state.insertSelection.hidden=!source;state.appendSelection.hidden=!source;
+  state.insertSelection.disabled=!source||!item.duration||state.unsupported;state.appendSelection.disabled=!source||!item.duration||state.unsupported;
+  state.play.disabled=state.unsupported;state.audition.disabled=state.unsupported;state.slider.disabled=state.unsupported;
   state.both.disabled=item.kind!=="Video";state.videoOnly.disabled=item.kind!=="Video";state.audioOnly.disabled=!["Video","Audio"].includes(item.kind);
 }
 function createEditor(item,type){
   const section=document.createElement("section");section.className="editor-section media-item-editor";section.tabIndex=-1;section.dataset.mediaId=item.id;
   const heading=document.createElement("h2");section.append(heading);
-  const video=document.createElement("video");video.className="media-preview";video.preload="metadata";video.controls=true;section.append(video);
+  const video=document.createElement("video");video.className="media-preview";video.preload="metadata";video.controls=false;video.tabIndex=-1;video.setAttribute("aria-hidden","true");section.append(video);
   const sliderLabel=document.createElement("label");const slider=document.createElement("input");const sliderId=`media-playhead-${++editorCounter}`;
   sliderLabel.htmlFor=sliderId;slider.id=sliderId;slider.type="range";slider.min="0";slider.max="0";slider.step="0.001";slider.value="0";section.append(sliderLabel,slider);
   const position=document.createElement("p"),context=document.createElement("p");section.append(position,context);
@@ -144,17 +150,22 @@ function createEditor(item,type){
   [inButton,outButton,goto,properties,split].forEach(button=>button.type="button");
   inButton.textContent="Set In Mark (Left Bracket)";outButton.textContent="Set Out Mark (Right Bracket)";goto.textContent="Go to Time (Ctrl+G)";properties.textContent="Properties (Alt+Enter)";split.textContent="Split at Playhead (Ctrl+K)";
   edit.append(inButton,outButton,goto,properties,split);section.append(edit);
+  const workflow=document.createElement("div");workflow.className="button-row";
+  const applyTrim=document.createElement("button"),insertSelection=document.createElement("button"),appendSelection=document.createElement("button");
+  [applyTrim,insertSelection,appendSelection].forEach(button=>button.type="button");
+  applyTrim.textContent="Apply Primary Trim";insertSelection.textContent="Insert Selection at Primary Playhead (Ctrl+Enter)";appendSelection.textContent="Add Selection to End (Ctrl+Shift+Enter)";
+  workflow.append(applyTrim,insertSelection,appendSelection);section.append(workflow);
   const fieldset=document.createElement("fieldset"),legend=document.createElement("legend"),targets=document.createElement("div");legend.textContent="Track target";targets.className="button-row";
   const both=document.createElement("button"),videoOnly=document.createElement("button"),audioOnly=document.createElement("button");
   [both,videoOnly,audioOnly].forEach(button=>button.type="button");both.textContent="Both Audio and Video (B)";videoOnly.textContent="Video Only (V)";audioOnly.textContent="Audio Only (A)";
   targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);section.append(fieldset);
   el["media-editor-sections"].append(section);
-  const state={id:item.id,type,section,heading,video,slider,sliderLabel,position,context,play,audition,inButton,outButton,goto,properties,split,both,videoOnly,audioOnly,cursor:Number(item.inPoint)||0,audition:null};
+  const state={id:item.id,type,section,heading,video,slider,sliderLabel,position,context,play,audition,inButton,outButton,goto,properties,split,applyTrim,insertSelection,appendSelection,both,videoOnly,audioOnly,cursor:Number(item.inPoint)||0,audition:null,unsupported:false};
   editorStates.set(item.id,state);editorNodes.set(item.id,section);
   video.src=convertFileSrc?convertFileSrc(item.source):item.source;
   video.addEventListener("loadedmetadata",()=>handleMetadata(item.id,video.duration));
   video.addEventListener("timeupdate",()=>handleTimeUpdate(item.id));
-  video.addEventListener("error",()=>announce(`${editorTitle(item,type)} could not be decoded by the Windows preview engine.`,true));
+  video.addEventListener("error",()=>handlePreviewError(item.id));
   section.addEventListener("focus",()=>activateMedia(item.id,false));
   slider.addEventListener("focus",()=>activateMedia(item.id,false));
   slider.addEventListener("input",()=>{activateMedia(item.id,false);cancelAudition(state,false);setEditorPosition(state,Number(slider.value),true);});
@@ -165,6 +176,9 @@ function createEditor(item,type){
   goto.addEventListener("click",()=>{activateMedia(item.id,false);showGoToTime();});
   properties.addEventListener("click",()=>{activateMedia(item.id,false);showProperties();});
   split.addEventListener("click",()=>{activateMedia(item.id,false);splitSelected();});
+  applyTrim.addEventListener("click",()=>{activateMedia(item.id,false);applyPrimaryTrim();});
+  insertSelection.addEventListener("click",()=>{activateMedia(item.id,false);insertSelectedSource(false);});
+  appendSelection.addEventListener("click",()=>{activateMedia(item.id,false);insertSelectedSource(true);});
   both.addEventListener("click",()=>{activateMedia(item.id,false);setTrackTarget("both");});
   videoOnly.addEventListener("click",()=>{activateMedia(item.id,false);setTrackTarget("video");});
   audioOnly.addEventListener("click",()=>{activateMedia(item.id,false);setTrackTarget("audio");});
@@ -175,7 +189,15 @@ function handleMetadata(idValue,mediaDuration){
   const location=locateItem(idValue);if(!location||location.item.duration)return;
   project=location.type==="source"?updateSource(project,idValue,{duration:mediaDuration,outPoint:mediaDuration}):updateItem(project,idValue,{duration:mediaDuration,outPoint:mediaDuration});
   const state=editorStates.get(idValue);state.slider.max=String(mediaDuration);setEditorPosition(state,state.cursor,true);render();
-  announce(`${editorTitle(locateItem(idValue).item,location.type)} loaded. Duration ${readableTime(mediaDuration)}.`);
+  const loaded=locateItem(idValue).item,index=location.type==="source"?(project.sources||[]).findIndex(value=>value.id===idValue):project.items.findIndex(value=>value.id===idValue);
+  announce(`${mediaRoleLabel(loaded,location.type,index)} loaded. Duration ${readableTime(mediaDuration)}.`);
+}
+function handlePreviewError(idValue){
+  const state=editorStates.get(idValue),location=locateItem(idValue);if(!state||!location||state.unsupported)return;
+  state.unsupported=true;const extension=(location.item.source.split(".").pop()||"this format").toUpperCase();
+  state.position.textContent=`${extension} preview is not supported by the current Windows media engine. Conversion is required.`;
+  updateEditorLabels(state,location.item,location.type);
+  announce(`${extension} preview is not supported yet. Conversion is required.`,true);
 }
 function handleTimeUpdate(idValue){
   const state=editorStates.get(idValue),location=locateItem(idValue);if(!state||!location)return;
@@ -266,7 +288,7 @@ async function importMedia(){
       if(!next.items.length&&!primaryAdded){media.role="primary";next=addItem(next,media,null);selectedId=media.id;activeMediaId=media.id;primaryAdded=true;}
       else{media.role="source";next=addSource(next,media);selectedSourceId=media.id;sourceCount++;}
     });
-    project=next;undoStack.push(previous);render({focus:true});announce(primaryAdded?`Primary media opened. ${sourceCount} additional source ${sourceCount===1?"item":"items"} added. Primary remains active.`:`${sourceCount} source media ${sourceCount===1?"item":"items"} added. ${editorTitle(activeItem(),activeLocation().type)} remains active.`);cue("add");
+    project=next;undoStack.push(previous);render({focus:true});announce(primaryAdded?`Primary media opened. ${sourceCount} additional source ${sourceCount===1?"item":"items"} added.`:`${sourceCount} source media ${sourceCount===1?"item":"items"} added. Primary remains active.`);cue("add");
   }catch(error){announce(`Media could not be opened. ${error}`,true);}
 }
 function newProject(){if(project.dirty&&!window.confirm("Discard unsaved changes and start a new editing session?"))return;project=createProject();selectedId=selectedSourceId=activeMediaId=null;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render();el["import-media-button"].focus();announce("New editing session. Press Ctrl+O to open primary media.");}
@@ -288,6 +310,12 @@ function insertSelectedSource(atEnd=false){
   else{const targetState=editorStates.get(target.id),point=targetState?.cursor??(Number(target.inPoint)||0);next=insertSourceSelection(project,target.id,point,source,id(),inserted,id());if(next===project)return announce("Selection could not be inserted.",true);}
   selectedId=inserted;activeMediaId=inserted;rememberChange(next,atEnd?"Source selection added to end.":"Source selection inserted at Primary playhead.",true);cue("add");
 }
+function applyPrimaryTrim(){
+  const location=activeLocation();if(!location||location.type!=="sequence")return announce("Activate a Primary editor first.",true);
+  const item=location.item,start=Number(item.inPoint)||0,end=item.outPoint==null?Number(item.duration):Number(item.outPoint);
+  if(!item.duration||end<=start)return announce("Set valid trim marks first.",true);
+  announce(`Trim applied. Start ${readableTime(start)}. End ${readableTime(end)}. Duration ${readableTime(end-start)}.`);
+}
 function showProperties(){const location=activeLocation(),item=location?.item;if(!item)return announce("No media editor active.",true);el["properties-name"].textContent=editorTitle(item,location.type);el["item-label"].value=item.label||item.name;el["item-duration"].value=item.duration??"";const media=["Video","Audio"].includes(item.kind);el["item-duration"].readOnly=media;el["trim-fields"].hidden=!media;writeTime("item-in",Number(item.inPoint)||0);writeTime("item-out",item.outPoint==null?Number(item.duration)||0:Number(item.outPoint));el["properties-dialog"].showModal();el["item-label"].focus();}
 function saveProperties(){const location=activeLocation(),item=location?.item;if(!item)return;const value=Number(el["item-duration"].value),media=["Video","Audio"].includes(item.kind),start=readTime("item-in"),end=readTime("item-out");if(!media&&(!Number.isFinite(value)||value<0.001))return announce("Enter a valid duration.",true);if(media&&(!Number.isFinite(start)||!Number.isFinite(end)||end<=start||end>value))return announce("Enter valid In and Out times.",true);const patch={label:el["item-label"].value.trim()||item.name,duration:value};if(media){patch.inPoint=start;patch.outPoint=end;}el["properties-dialog"].close();rememberChange(updateLocated(item.id,patch),"Media properties saved.");}
 function showTextDialog(){el["text-content"].value="";el["text-duration"].value="5";el["text-dialog"].showModal();el["text-content"].focus();}
@@ -297,21 +325,21 @@ function undo(){if(!undoStack.length)return announce("Nothing to undo.");redoSta
 function redo(){if(!redoStack.length)return announce("Nothing to redo.");undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=project.sources?.[0]?.id||null;activeMediaId=selectedId||selectedSourceId;render({focus:true});announce("Redo completed.");}
 
 async function togglePlayback(){
-  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,true);
-  if(state.video.paused){const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);if(state.cursor>=end)setEditorPosition(state,Number(location.item.inPoint)||0,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
+  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before preview.",true);cancelAudition(state,true);
+  if(state.video.paused){const start=Number(location.item.inPoint)||0,end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);if(state.cursor<start||state.cursor>=end)setEditorPosition(state,start,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
   else{state.video.pause();setEditorPosition(state,state.video.currentTime,true);announce(`Paused at ${readableTime(state.cursor)}.`);}
 }
 async function auditionAround(before=1,after=1,quiet=false){
-  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
+  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return quiet?undefined:announce("This format requires conversion before preview.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
   const point=state.cursor,lower=Number(location.item.inPoint)||0,upper=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint),start=Math.max(lower,point-before),end=Math.min(upper,point+after);
   state.video.currentTime=start;const audition={returnPoint:point,end,timer:null,quiet};
   audition.timer=setTimeout(()=>{if(state.audition===audition){cancelAudition(state,true);if(!quiet)announce(`Returned to ${readableTime(point)}.`);}},Math.max(300,(end-start)*1000+500));state.audition=audition;
   try{await state.video.play();if(!quiet&&state.audition===audition)announce(`Auditioning at ${readableTime(point)}.`);}catch(error){if(state.audition===audition)cancelAudition(state,true);if(error?.name!=="AbortError"&&!quiet)announce(`Audition failed. ${error}`,true);}
 }
-function movePlayhead(amount,label="Playhead"){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);announce(`${label} ${readableTime(state.cursor)}.`);}
+function movePlayhead(amount,label="Playhead"){const state=activeState();if(!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);announce(`${label} ${readableTime(state.cursor)}.`);}
 function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.2,true);}
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);setEditorPosition(state,end?Number(location.item.duration):0,true);announce(`${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
-function setPoint(which){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const item=location.item,point=state.cursor,start=Number(item.inPoint)||0,end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(which==="in"&&point>=end)return announce("In must precede Out.",true);if(which==="out"&&point<=start)return announce("Out must follow In.",true);rememberChange(updateLocated(item.id,which==="in"?{inPoint:point}:{outPoint:point}),`${which==="in"?"In":"Out"} mark set to ${readableTime(point)}.`);}
+function setPoint(which){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);const item=location.item,point=state.cursor,start=Number(item.inPoint)||0,end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(which==="in"&&point>=end)return announce("Start must precede end.",true);if(which==="out"&&point<=start)return announce("End must follow start.",true);const term=location.type==="source"?"Selection":"Trim";rememberChange(updateLocated(item.id,which==="in"?{inPoint:point}:{outPoint:point}),`${term} ${which==="in"?"start":"end"} set to ${readableTime(point)}.`);}
 function setTrackTarget(target){const location=activeLocation();if(!location)return announce("Activate a media editor first.",true);if(location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");rememberChange(updateLocated(location.item.id,{trackTarget:target}),`${targetText(target)} targeted.`);}
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto");if(!state||!location||!Number.isFinite(point)||point>Number(location.item.duration))return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
@@ -324,13 +352,14 @@ const actions={
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,removeItem:removeActive,split:splitSelected,undo,redo,
   preview:togglePlayback,playPause:togglePlayback,audition:()=>auditionAround(),setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
+  insertSource:()=>insertSelectedSource(false),appendSource:()=>insertSelectedSource(true),applyPrimaryTrim,
   scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
   jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.4.4. Quiet transport and a dedicated editor for every media item.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.5.0. Direct Primary trimming and Source insertion controls.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

@@ -32,7 +32,7 @@
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
         <label for="project-items">Primary sequence</label>
-        <select id="project-items" size="12" aria-describedby="selected-item-summary">
+        <select id="project-items" size="12">
           <option disabled>No primary media</option>
         </select>
         <p id="selected-item-summary">No primary media selected.</p>
@@ -45,7 +45,7 @@
           <button type="button" id="remove-item-button" disabled>Remove Item (Delete)</button>
         </div>
         <label for="source-items">Source media</label>
-        <select id="source-items" size="7" aria-describedby="selected-source-summary">
+        <select id="source-items" size="7">
           <option disabled>No source media</option>
         </select>
         <p id="selected-source-summary">No source media selected.</p>
@@ -174,6 +174,8 @@
         <li>Home or End: Move to the beginning or end.</li>
         <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
+        <li>Ctrl+Enter: Insert the active Source selection at the remembered Primary playhead.</li>
+        <li>Ctrl+Shift+Enter: Add the active Source selection to the end.</li>
       </ul>
       <button type="submit">Close</button>
     </form>
@@ -193,6 +195,7 @@
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Ctrl+G opens exact-time fields.</p>
       <p><strong>Building the sequence:</strong> Mark a selection in Source Media, then use Insert Selection at Primary Playhead or Add Selection to End.</p>
+      <p><strong>Primary trim:</strong> Set the trim start and trim end in the Primary editor, then activate Apply Primary Trim for a concise confirmation of the resulting duration.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
       <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>
       <p>This build establishes nondestructive Primary and Source Media architecture. It does not yet render or export the complete sequence.</p>

@@ -1,81 +1,52 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.4.4 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.5.0 TESTING GUIDE
 
-PURPOSE
+PRIMARY TRIM TEST
 
-Build 0.4.4 stops expected AbortError speech during rapid scrubbing and removes filenames from all routine transport feedback. It retains the quiet-interaction corrections and separate editor for every playable Primary and Source item.
+1. Open one video as Primary Media.
+2. Turn the JAWS Virtual Cursor off with Insert+Z.
+3. Enter the Primary editor.
+4. Move to the desired beginning and press left bracket.
+5. Confirm Trim start is announced.
+6. Move to the desired ending and press right bracket.
+7. Confirm Trim end is announced.
+8. Activate Apply Primary Trim.
+9. Confirm the application announces the trim start, trim end, and resulting duration.
+10. Press Home and X. Confirm playback begins at the trim start and stops once at the trim end.
+
+SOURCE SELECTION AND INSERTION TEST
+
+1. Open a second supported video as Source Media.
+2. Enter its Source editor.
+3. Move to the desired selection beginning and press left bracket.
+4. Confirm Selection start is announced.
+5. Move to the desired selection ending and press right bracket.
+6. Confirm Selection end is announced.
+7. Activate Insert Selection at Primary Playhead inside the same Source editor, or press Ctrl+Enter.
+8. Confirm the selection appears in Primary Sequence.
+9. Repeat with Ctrl+Shift+Enter and confirm the selection is added to the end.
+10. Confirm the original Source file remains unchanged.
 
 QUIET INTERACTION TEST
 
 1. Arrow through Primary Sequence and Source Media.
-2. Confirm each option speaks a short role, media type, and filename instead of duration, In, and Out details.
-3. Move through editor sections with Ctrl+Page Up and Ctrl+Page Down.
-4. Confirm JAWS identifies each region only once without a second application announcement.
-5. Press X to play and pause. Confirm the application says only Playing or Paused followed by the time.
-6. Set an Out mark, play toward it, and confirm Out mark reached is announced only once.
-7. Press U or I rapidly and confirm no AbortError is announced and each new command replaces the previous scrub sample cleanly.
-8. Use Space, Home, End, and the movement keys. Confirm their feedback does not repeat the active filename.
+2. Confirm JAWS reads only the short list option and does not append the detailed duration paragraph.
+3. Tab within an editor.
+4. Confirm there is one custom Play or Pause button and one custom playhead slider. The native video buttons and second scrubber should not appear.
+5. Use X, Space, U, I, Home, End, and movement keys.
+6. Confirm filenames are not repeated in routine transport announcements.
+7. Press U or I rapidly and confirm no AbortError is announced.
 
-PRIMARY AND SOURCE TEST
+UNSUPPORTED FORMAT TEST
 
-1. Start Accessible Media Editor.
-2. Turn the JAWS Virtual Cursor off with Insert+Z.
-3. Press Ctrl+O and open one video.
-4. Confirm that it appears in Primary Sequence.
-5. Press Ctrl+O and open a second video.
-6. Confirm that it appears in Source Media and does not increase Primary Sequence duration.
-7. Confirm that importing the Source did not take keyboard control away from Primary Media.
-
-DEDICATED EDITOR TEST
-
-1. From Primary Sequence, arrow to the Primary video.
-2. Press Enter. Confirm focus moves to a section named Primary Video followed by its title.
-3. Tab through its preview player, playhead slider, position, transport, marks, exact-time, properties, split, and track-target controls.
-4. Press Ctrl+Page Down until you reach the Source video editor.
-5. Confirm its heading names the Source video and that it has a different preview player and slider.
-6. Press Ctrl+Page Up and Ctrl+Page Down to cycle among Media Library, every media editor, and Output.
-
-ACTIVE MEDIA AND PLAYBACK TEST
-
-1. In Primary Sequence, arrow to Primary Media and press X. Confirm Primary plays.
-2. Press X again to pause.
-3. In Source Media, arrow to a Source and press X. Confirm that Source, not Primary, plays.
-4. Press Space and confirm a short audition occurs around the active playhead and returns to it.
-5. Confirm that each editor remembers its own playhead when you move between editors.
-
-SCRUB, MARK, AND TARGET TEST
-
-1. Press U and I to scrub backward and forward by one second.
-2. Press Shift+U and Shift+I to scrub by 100 milliseconds.
-3. Press Ctrl+Shift+U and Ctrl+Shift+I to scrub by 10 milliseconds.
-4. Confirm that JAWS does not speak a filename, timestamp, or audition-complete message during any U/I scrub. The short media sample should remain audible.
-5. Press left bracket to set the In mark and right bracket to set the Out mark.
-6. Press B, V, and A in a video editor and confirm Both, Video only, and Audio only announcements.
-7. Press Ctrl+G and enter Hours, Minutes, Seconds, and Milliseconds for an exact playhead position.
-
-INSERT SOURCE SELECTION TEST
-
-1. Activate a Source editor and mark a short selection.
-2. Activate the Primary editor and put its playhead at the desired insertion point.
-3. Return to Source Media without changing the Primary playhead.
-4. Activate Insert Selection at Primary Playhead.
-5. Confirm that the source selection appears in Primary Sequence and the original source file remains unchanged.
-
-WORKSPACE TEST
-
-1. Press Ctrl+Tab to enter AudioStudio Pro.
-2. Confirm that it is an explicit placeholder and was not opened merely because an audio file was loaded.
-3. Press Ctrl+Shift+Tab to return to Media Editor.
-
-JAWS NOTES
-
-- Keep the Virtual Cursor off while operating lists, sliders, and editing shortcuts.
-- Turn it on with Insert+Z when you want to read the page conventionally.
-- Virtual Cursor settings do not apply inside native Windows Open and Save dialogs.
+1. Open a WMV file.
+2. Confirm the application announces that WMV preview is not supported yet and conversion is required.
+3. Enter that Source editor.
+4. Confirm its unusable player, audition, and playhead controls are disabled.
 
 KNOWN LIMITS
+
+Automatic format conversion is not included yet. WMV requires the planned FFmpeg conversion engine.
 
 The application does not yet render or export the complete Primary Sequence.
 
 AudioStudio Pro recording and processing are not implemented in this build.
-
-Video-only targeting currently mutes audio during preview and records the intended edit target. Full track rendering comes with the composition engine.

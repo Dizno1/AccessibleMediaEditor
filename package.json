@@ -1,6 +1,6 @@
 {
   "name": "accessible-media-editor",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "private": true,
   "description": "A screen-reader-first Windows multimedia authoring application from Open Door Design.",

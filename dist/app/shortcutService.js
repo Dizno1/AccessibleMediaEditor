@@ -16,6 +16,7 @@ const shortcuts = [
   ["nudgeBack", {alt:true,key:"arrowleft"}], ["nudgeForward", {alt:true,key:"arrowright"}],
   ["jumpBeginning", {key:"home"}], ["jumpEnd", {key:"end"}],
   ["goToTime", {ctrl:true,key:"g"}], ["split", {ctrl:true,key:"k"}],
+  ["insertSource", {ctrl:true,key:"enter"}], ["appendSource", {ctrl:true,shift:true,key:"enter"}],
   ["previousSection", {ctrl:true,key:"pageup"}], ["nextSection", {ctrl:true,key:"pagedown"}],
   ["previousWorkspace", {ctrl:true,shift:true,key:"tab"}], ["nextWorkspace", {ctrl:true,key:"tab"}]
 ];
