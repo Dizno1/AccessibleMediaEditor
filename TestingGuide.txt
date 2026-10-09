@@ -1,67 +1,64 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.4.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.4.1 TESTING GUIDE
 
 PURPOSE
 
-Build 0.4.0 separates Primary Media from Source Media and introduces the optional AudioStudio Pro workspace.
+Build 0.4.1 gives every playable Primary and Source media item a separate, titled editor with its own preview player, playhead slider, position, marks, and controls.
 
 PRIMARY AND SOURCE TEST
 
 1. Start Accessible Media Editor.
-2. Press Ctrl+O and open one video.
-3. Confirm that it appears in Primary Sequence.
-4. Press Ctrl+O and open a second video.
-5. Confirm that the second video appears in Source Media.
-6. Confirm that the primary sequence duration does not include the second video's complete duration.
+2. Turn the JAWS Virtual Cursor off with Insert+Z.
+3. Press Ctrl+O and open one video.
+4. Confirm that it appears in Primary Sequence.
+5. Press Ctrl+O and open a second video.
+6. Confirm that it appears in Source Media and does not increase Primary Sequence duration.
+7. Confirm that importing the Source did not take keyboard control away from Primary Media.
 
-ACTIVE MEDIA TEST
+DEDICATED EDITOR TEST
 
-1. Select the Primary Sequence item.
-2. Move to Playback with Ctrl+Page Down.
-3. Confirm that the Playback heading includes the primary title.
-4. Return to Media and select the Source Media item.
-5. Confirm that Playback and Edit headings now include the source title.
-6. Confirm that the application announces whether Primary Sequence or Source Media is active.
+1. From Primary Sequence, arrow to the Primary video.
+2. Press Enter. Confirm focus moves to a section named Primary Video followed by its title.
+3. Tab through its preview player, playhead slider, position, transport, marks, exact-time, properties, split, and track-target controls.
+4. Press Ctrl+Page Down until you reach the Source video editor.
+5. Confirm its heading names the Source video and that it has a different preview player and slider.
+6. Press Ctrl+Page Up and Ctrl+Page Down to cycle among Media Library, every media editor, and Output.
 
-TRANSPORT TEST
+ACTIVE MEDIA AND PLAYBACK TEST
 
-1. Press X to start playback from the active playhead.
-2. Press X again to pause and land at the new position.
-3. Press Space.
-4. Confirm that a short section around the playhead is auditioned.
-5. Confirm that the playhead returns to its original position after auditioning.
-6. Press Escape during an audition and confirm that the audition is canceled. Escape should not be the ordinary playback control.
+1. In Primary Sequence, arrow to Primary Media and press X. Confirm Primary plays.
+2. Press X again to pause.
+3. In Source Media, arrow to a Source and press X. Confirm that Source, not Primary, plays.
+4. Press Space and confirm a short audition occurs around the active playhead and returns to it.
+5. Confirm that each editor remembers its own playhead when you move between editors.
 
-SCRUB AND MARK TEST
+SCRUB, MARK, AND TARGET TEST
 
 1. Press U and I to scrub backward and forward by one second.
 2. Press Shift+U and Shift+I to scrub by 100 milliseconds.
 3. Press Ctrl+Shift+U and Ctrl+Shift+I to scrub by 10 milliseconds.
-4. Press left bracket to set the In mark.
-5. Press right bracket to set the Out mark.
-
-TRACK TARGET TEST
-
-1. With video active, press B and confirm Both audio and video targeted.
-2. Press V and confirm Video only targeted.
-3. Press A and confirm Audio only targeted.
-4. Open an audio file and confirm that it begins in Audio only mode.
+4. Press left bracket to set the In mark and right bracket to set the Out mark.
+5. Press B, V, and A in a video editor and confirm Both, Video only, and Audio only announcements.
+6. Press Ctrl+G and enter Hours, Minutes, Seconds, and Milliseconds for an exact playhead position.
 
 INSERT SOURCE SELECTION TEST
 
-1. Activate the Source Media item.
-2. Use the playhead and brackets to mark a short selection.
-3. Return to Primary Sequence and place its playhead at the desired insertion point.
-4. Return to Source Media without changing the Primary playhead.
-5. Activate Insert Selection at Primary Playhead.
-6. Confirm that the source selection appears in Primary Sequence.
-7. Confirm that the original source file remains unchanged.
+1. Activate a Source editor and mark a short selection.
+2. Activate the Primary editor and put its playhead at the desired insertion point.
+3. Return to Source Media without changing the Primary playhead.
+4. Activate Insert Selection at Primary Playhead.
+5. Confirm that the source selection appears in Primary Sequence and the original source file remains unchanged.
 
 WORKSPACE TEST
 
 1. Press Ctrl+Tab to enter AudioStudio Pro.
-2. Confirm that its professional controls are disabled and clearly described as future work.
+2. Confirm that it is an explicit placeholder and was not opened merely because an audio file was loaded.
 3. Press Ctrl+Shift+Tab to return to Media Editor.
-4. Confirm that the active media and playhead position were preserved.
+
+JAWS NOTES
+
+- Keep the Virtual Cursor off while operating lists, sliders, and editing shortcuts.
+- Turn it on with Insert+Z when you want to read the page conventionally.
+- Virtual Cursor settings do not apply inside native Windows Open and Save dialogs.
 
 KNOWN LIMITS
 
@@ -69,4 +66,4 @@ The application does not yet render or export the complete Primary Sequence.
 
 AudioStudio Pro recording and processing are not implemented in this build.
 
-Video-only targeting identifies the intended edit target and mutes audio during preview. Full track rendering comes with the composition engine.
+Video-only targeting currently mutes audio during preview and records the intended edit target. Full track rendering comes with the composition engine.

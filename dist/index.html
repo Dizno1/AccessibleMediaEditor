@@ -23,9 +23,8 @@
 
     <div id="media-editor-workspace" role="tabpanel" aria-labelledby="media-editor-tab">
     <nav class="section-navigation" aria-label="Editor sections">
-      <button type="button" class="section-tab" id="media-section-tab" data-section="media-section" aria-controls="media-section">Media</button>
-      <button type="button" class="section-tab" id="playback-section-tab" data-section="playback-section" aria-controls="playback-section">Playback</button>
-      <button type="button" class="section-tab" id="edit-section-tab" data-section="edit-section" aria-controls="edit-section">Edit</button>
+      <button type="button" class="section-tab" id="media-section-tab" data-section="media-section" aria-controls="media-section">Media Library</button>
+      <span id="media-editor-navigation"></span>
       <button type="button" class="section-tab" id="output-section-tab" data-section="output-section" aria-controls="output-section">Output</button>
     </nav>
 
@@ -39,6 +38,7 @@
         <p id="selected-item-summary">No primary media selected.</p>
         <div class="button-row">
           <button type="button" id="import-media-button">Open Media (Ctrl+O)</button>
+          <button type="button" id="edit-primary-button" disabled>Edit Primary Media</button>
           <button type="button" id="add-text-button">Add Text</button>
           <button type="button" id="move-earlier-button" disabled>Move Earlier (Ctrl+Up)</button>
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
@@ -50,45 +50,14 @@
         </select>
         <p id="selected-source-summary">No source media selected.</p>
         <div class="button-row">
-          <button type="button" id="activate-source-button" disabled>Activate Source Preview</button>
+          <button type="button" id="activate-source-button" disabled>Edit Selected Source Media</button>
           <button type="button" id="insert-source-button" disabled>Insert Selection at Primary Playhead</button>
           <button type="button" id="append-source-button" disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source</button>
         </div>
       </section>
 
-      <section class="editor-section transport-panel" id="playback-section" aria-labelledby="playback-section-heading" tabindex="-1">
-        <h2 id="playback-section-heading">Playback - No media active</h2>
-        <video id="media-preview" preload="metadata" aria-label="Selected media preview"></video>
-        <label for="playhead">Playhead</label>
-        <input id="playhead" type="range" min="0" max="0" value="0" step="0.001" aria-valuetext="0 seconds">
-        <p id="playhead-position">Position 0 seconds. Selected media duration 0 seconds. Total duration 0 seconds.</p>
-        <p id="active-context">No media active.</p>
-        <div class="button-row">
-          <button type="button" id="preview-button" disabled>Play or Pause (X)</button>
-          <button type="button" id="audition-button" disabled>Audition Around Playhead (Space)</button>
-        </div>
-      </section>
-
-      <section class="editor-section edit-panel" id="edit-section" aria-labelledby="edit-section-heading" tabindex="-1">
-        <h2 id="edit-section-heading">Edit - No media active</h2>
-        <p>Scrub with U and I, set marks with left bracket and right bracket, enter an exact time, or split without changing the original file.</p>
-        <div class="button-row">
-          <button type="button" id="set-in-button" disabled>Set In Mark (Left Bracket)</button>
-          <button type="button" id="set-out-button" disabled>Set Out Mark (Right Bracket)</button>
-          <button type="button" id="go-to-time-button" disabled>Go to Time (Ctrl+G)</button>
-          <button type="button" id="properties-button" disabled>Exact Times and Properties (Alt+Enter)</button>
-          <button type="button" id="split-button" disabled>Split at Playhead (Ctrl+K)</button>
-        </div>
-        <fieldset>
-          <legend>Track target</legend>
-          <div class="button-row">
-            <button type="button" id="target-both-button" disabled>Both Audio and Video (B)</button>
-            <button type="button" id="target-video-button" disabled>Video Only (V)</button>
-            <button type="button" id="target-audio-button" disabled>Audio Only (A)</button>
-          </div>
-        </fieldset>
-      </section>
+      <div id="media-editor-sections"></div>
 
       <section class="editor-section output-panel" id="output-section" aria-labelledby="output-section-heading" tabindex="-1">
         <h2 id="output-section-heading">Output</h2>
@@ -214,9 +183,10 @@
     <form method="dialog">
       <h2 id="testing-guide-heading">Testing Guide</h2>
       <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
-      <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media, Playback, Edit, and Output. Tab moves within the active section.</p>
+      <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
       <p><strong>Primary and Source Media:</strong> The first opened file becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted.</p>
-      <p><strong>Activating media:</strong> Select an item in Primary Sequence or Source Media. The Playback and Edit section names change to include the active media title.</p>
+      <p><strong>Dedicated media editors:</strong> Every playable Primary and Source item has its own titled editor section, preview player, playhead slider, position, marks, and controls.</p>
+      <p><strong>Activating media:</strong> Arrow to an item in Primary Sequence or Source Media to activate it, or press Enter to move directly into its editor. Opening another source does not take control away from the Primary editor.</p>
       <p><strong>Playback:</strong> X plays or pauses continuously. Space auditions around the playhead and returns to the original position.</p>
       <p><strong>Scrubbing:</strong> U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.</p>
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>

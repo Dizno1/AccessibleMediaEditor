@@ -25,7 +25,9 @@ select, input, textarea { width: 100%; min-height: 2.75rem; padding: .5rem; colo
 #project-items { min-height: 14rem; }
 #source-items { min-height: 9rem; margin-top: .25rem; }
 input[type="range"] { accent-color: var(--green); }
-#media-preview { display: block; width: 100%; min-height: 11rem; margin-bottom: .75rem; background: #000; }
+.media-preview { display: block; width: 100%; min-height: 11rem; margin-bottom: .75rem; background: #000; }
+#media-editor-sections { display: grid; grid-template-columns: repeat(2, minmax(18rem, 1fr)); gap: 1rem; grid-column: 1 / -1; }
+.media-item-editor[aria-current="true"] { border: 3px solid var(--green); }
 .button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 button { min-height: 2.75rem; padding: .5rem .8rem; color: #fff; background: var(--green); border: 1px solid var(--green-dark); border-radius: .3rem; font: inherit; cursor: pointer; }
 button:disabled { color: #555; background: #e3e3e3; border-color: #888; cursor: default; }
@@ -38,6 +40,6 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .time-fields label { grid-row: 1; }
 .time-fields input { grid-row: 2; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-@media (max-width: 48rem) { .workspace { grid-template-columns: 1fr; } }
+@media (max-width: 48rem) { .workspace, #media-editor-sections { grid-template-columns: 1fr; } }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }
