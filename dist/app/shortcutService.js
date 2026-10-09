@@ -3,7 +3,7 @@ const shortcuts = [
   ["newProject", {ctrl:true,key:"n"}], ["openProject", {ctrl:true,shift:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
   ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["importMedia", {ctrl:true,key:"o"}],
   ["moveEarlier", {ctrl:true,key:"arrowup"}], ["moveLater", {ctrl:true,key:"arrowdown"}],
-  ["properties", {alt:true,key:"enter"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
+  ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],
   ["setIn", {key:"["}], ["setOut", {key:"]"}],

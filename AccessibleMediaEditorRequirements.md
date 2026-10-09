@@ -97,6 +97,18 @@ This is a defining real-user scenario for Accessible Media Editor and should bec
 - Text and title items.
 - Transitions.
 
+## Required media conversion engine
+
+FFmpeg integration is mandatory, not optional. The application must not depend on WebView2 codec support as its complete media-format strategy.
+
+- Unsupported or inconsistently supported input formats must be normalized automatically to an internal editing format.
+- Required coverage includes WMV, MOV and other common iPhone media, MP4 variants, web video, and common audio formats.
+- Conversion must run locally and must never alter the original source file.
+- The application must announce when conversion starts, provide meaningful progress, announce completion or failure concisely, and keep keyboard focus stable.
+- Controls that depend on converted media must remain unavailable until conversion is complete.
+- Converted working files must be tracked separately from original source paths in the project model.
+- FFmpeg must also provide the final composition and export engine.
+
 ## Initial project structure
 
 A project should store references to its source files and a non-destructive description of the composition. Source files must not be altered when an item is trimmed, moved, muted, replaced, or removed from the project.

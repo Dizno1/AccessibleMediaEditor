@@ -1,4 +1,13 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.5.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.5.1 TESTING GUIDE
+
+FIRST IMPORT REGRESSION TEST
+
+1. Start with no media open.
+2. Press Ctrl+O and choose one Primary video.
+3. Confirm Loading selected media. Please wait is announced.
+4. Confirm the Primary video remains Primary and does not become Source media.
+5. Confirm no TypeError is announced.
+6. If an import fails, confirm the entire import is rolled back and the previous editing session remains intact.
 
 PRIMARY TRIM TEST
 
@@ -9,7 +18,7 @@ PRIMARY TRIM TEST
 5. Confirm Trim start is announced.
 6. Move to the desired ending and press right bracket.
 7. Confirm Trim end is announced.
-8. Activate Apply Primary Trim.
+8. Activate Apply Primary Trim or press Ctrl+Delete.
 9. Confirm the application announces the trim start, trim end, and resulting duration.
 10. Press Home and X. Confirm playback begins at the trim start and stops once at the trim end.
 

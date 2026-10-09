@@ -131,8 +131,9 @@ function updateEditorLabels(state,item,type){
   state.video.muted=itemTarget(item)==="video";
   const source=type==="source",sequence=type==="sequence";
   state.applyTrim.hidden=!sequence;state.insertSelection.hidden=!source;state.appendSelection.hidden=!source;
-  state.insertSelection.disabled=!source||!item.duration||state.unsupported;state.appendSelection.disabled=!source||!item.duration||state.unsupported;
-  state.play.disabled=state.unsupported;state.audition.disabled=state.unsupported;state.slider.disabled=state.unsupported;
+  const unavailable=state.loading||state.unsupported;
+  state.insertSelection.disabled=!source||!item.duration||unavailable;state.appendSelection.disabled=!source||!item.duration||unavailable;
+  state.play.disabled=unavailable;state.auditionButton.disabled=unavailable;state.slider.disabled=unavailable;
   state.both.disabled=item.kind!=="Video";state.videoOnly.disabled=item.kind!=="Video";state.audioOnly.disabled=!["Video","Audio"].includes(item.kind);
 }
 function createEditor(item,type){
@@ -153,15 +154,16 @@ function createEditor(item,type){
   const workflow=document.createElement("div");workflow.className="button-row";
   const applyTrim=document.createElement("button"),insertSelection=document.createElement("button"),appendSelection=document.createElement("button");
   [applyTrim,insertSelection,appendSelection].forEach(button=>button.type="button");
-  applyTrim.textContent="Apply Primary Trim";insertSelection.textContent="Insert Selection at Primary Playhead (Ctrl+Enter)";appendSelection.textContent="Add Selection to End (Ctrl+Shift+Enter)";
+  applyTrim.textContent="Apply Primary Trim (Ctrl+Delete)";insertSelection.textContent="Insert Selection at Primary Playhead (Ctrl+Enter)";appendSelection.textContent="Add Selection to End (Ctrl+Shift+Enter)";
   workflow.append(applyTrim,insertSelection,appendSelection);section.append(workflow);
   const fieldset=document.createElement("fieldset"),legend=document.createElement("legend"),targets=document.createElement("div");legend.textContent="Track target";targets.className="button-row";
   const both=document.createElement("button"),videoOnly=document.createElement("button"),audioOnly=document.createElement("button");
   [both,videoOnly,audioOnly].forEach(button=>button.type="button");both.textContent="Both Audio and Video (B)";videoOnly.textContent="Video Only (V)";audioOnly.textContent="Audio Only (A)";
   targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);section.append(fieldset);
   el["media-editor-sections"].append(section);
-  const state={id:item.id,type,section,heading,video,slider,sliderLabel,position,context,play,audition,inButton,outButton,goto,properties,split,applyTrim,insertSelection,appendSelection,both,videoOnly,audioOnly,cursor:Number(item.inPoint)||0,audition:null,unsupported:false};
+  const state={id:item.id,type,section,heading,video,slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,goto,properties,split,applyTrim,insertSelection,appendSelection,both,videoOnly,audioOnly,cursor:Number(item.inPoint)||0,audition:null,unsupported:false,loading:!item.duration};
   editorStates.set(item.id,state);editorNodes.set(item.id,section);
+  if(state.loading)position.textContent="Loading media. Please wait.";
   video.src=convertFileSrc?convertFileSrc(item.source):item.source;
   video.addEventListener("loadedmetadata",()=>handleMetadata(item.id,video.duration));
   video.addEventListener("timeupdate",()=>handleTimeUpdate(item.id));
@@ -188,13 +190,13 @@ function handleMetadata(idValue,mediaDuration){
   if(!Number.isFinite(mediaDuration))return;
   const location=locateItem(idValue);if(!location||location.item.duration)return;
   project=location.type==="source"?updateSource(project,idValue,{duration:mediaDuration,outPoint:mediaDuration}):updateItem(project,idValue,{duration:mediaDuration,outPoint:mediaDuration});
-  const state=editorStates.get(idValue);state.slider.max=String(mediaDuration);setEditorPosition(state,state.cursor,true);render();
+  const state=editorStates.get(idValue);state.loading=false;state.slider.max=String(mediaDuration);setEditorPosition(state,state.cursor,true);render();
   const loaded=locateItem(idValue).item,index=location.type==="source"?(project.sources||[]).findIndex(value=>value.id===idValue):project.items.findIndex(value=>value.id===idValue);
   announce(`${mediaRoleLabel(loaded,location.type,index)} loaded. Duration ${readableTime(mediaDuration)}.`);
 }
 function handlePreviewError(idValue){
   const state=editorStates.get(idValue),location=locateItem(idValue);if(!state||!location||state.unsupported)return;
-  state.unsupported=true;const extension=(location.item.source.split(".").pop()||"this format").toUpperCase();
+  state.loading=false;state.unsupported=true;const extension=(location.item.source.split(".").pop()||"this format").toUpperCase();
   state.position.textContent=`${extension} preview is not supported by the current Windows media engine. Conversion is required.`;
   updateEditorLabels(state,location.item,location.type);
   announce(`${extension} preview is not supported yet. Conversion is required.`,true);
@@ -282,14 +284,15 @@ function switchWorkspace(direction=1,target=null){
 
 async function importMedia(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
+  const previous=project,previousSelectedId=selectedId,previousSourceId=selectedSourceId,previousActiveId=activeMediaId;
   try{
-    const paths=await invoke("pick_media_files");if(!paths.length)return;const previous=project;let next=project,primaryAdded=false,sourceCount=0;
+    const paths=await invoke("pick_media_files");if(!paths.length)return;announce("Loading selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0;
     paths.forEach(path=>{const kind=kindFromPath(path),media={id:id(),source:path,name:baseName(path),label:baseName(path),kind,duration:kind==="Image"?5:null,inPoint:0,outPoint:null,trackTarget:kind==="Audio"?"audio":"both"};
       if(!next.items.length&&!primaryAdded){media.role="primary";next=addItem(next,media,null);selectedId=media.id;activeMediaId=media.id;primaryAdded=true;}
       else{media.role="source";next=addSource(next,media);selectedSourceId=media.id;sourceCount++;}
     });
-    project=next;undoStack.push(previous);render({focus:true});announce(primaryAdded?`Primary media opened. ${sourceCount} additional source ${sourceCount===1?"item":"items"} added.`:`${sourceCount} source media ${sourceCount===1?"item":"items"} added. Primary remains active.`);cue("add");
-  }catch(error){announce(`Media could not be opened. ${error}`,true);}
+    project=next;render({focus:true});undoStack.push(previous);announce(primaryAdded?`Primary media added. Loading preview.`:`${sourceCount} source media ${sourceCount===1?"item":"items"} added. Primary remains active. Loading preview.`);cue("add");
+  }catch(error){project=previous;selectedId=previousSelectedId;selectedSourceId=previousSourceId;activeMediaId=previousActiveId;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();render();announce(`Media import failed and was rolled back. ${error}`,true);}
 }
 function newProject(){if(project.dirty&&!window.confirm("Discard unsaved changes and start a new editing session?"))return;project=createProject();selectedId=selectedSourceId=activeMediaId=null;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render();el["import-media-button"].focus();announce("New editing session. Press Ctrl+O to open primary media.");}
 async function openProject(){
@@ -352,14 +355,14 @@ const actions={
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,removeItem:removeActive,split:splitSelected,undo,redo,
   preview:togglePlayback,playPause:togglePlayback,audition:()=>auditionAround(),setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
-  insertSource:()=>insertSelectedSource(false),appendSource:()=>insertSelectedSource(true),applyPrimaryTrim,
+  insertSource:()=>insertSelectedSource(false),appendSource:()=>insertSelectedSource(true),applyPrimaryTrim,trimPrimary:applyPrimaryTrim,
   scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
   jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.5.0. Direct Primary trimming and Source insertion controls.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.5.1. Reliable loading, direct Primary trimming, and Source insertion controls.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

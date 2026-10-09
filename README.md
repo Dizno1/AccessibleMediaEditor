@@ -2,9 +2,18 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.5.0
+## Build 0.5.1
 
-Build 0.5.0 corrects the Primary trim and Source-selection workflow.
+Build 0.5.1 fixes the Build 0.5.0 first-import regression and makes loading transactional.
+
+- The null-control error during first media import is fixed.
+- A failed import rolls back completely instead of leaving Source media without Primary media.
+- The application announces that selected media is loading.
+- Playback, audition, and playhead controls remain disabled until metadata finishes loading.
+- Ctrl+Delete applies the current Primary trim marks.
+- A failed import cannot silently change the active editor.
+
+Build 0.5.0 corrected the Primary trim and Source-selection workflow.
 
 - Primary brackets are now identified as Trim Start and Trim End.
 - Each Primary editor contains Apply Primary Trim, which confirms the start, end, and resulting duration.
@@ -24,7 +33,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current format limitation
 
-WMV cannot be decoded by the current WebView2 preview engine. Build 0.5.0 identifies this honestly and disables the unusable controls, but automatic conversion is not included yet. An FFmpeg-based conversion and export engine is required to fulfill the broader WMV, iPhone, and web-format promise.
+WMV cannot be decoded by the current WebView2 preview engine. Build 0.5.1 identifies this honestly and disables the unusable controls, but automatic conversion is not included yet. The FFmpeg conversion and export engine is a mandatory application requirement for WMV, iPhone, web-video, and other media formats.
 
 The application does not yet render or export the complete Primary Sequence. AudioStudio Pro recording and processing are not implemented yet.
 
