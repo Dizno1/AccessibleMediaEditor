@@ -1,60 +1,72 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.3.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.4.0 TESTING GUIDE
 
-PURPOSE OF THIS BUILD
+PURPOSE
 
-Build 0.3.1 uses a direct-edit-first workflow, repairs the native window title, reduces playhead announcement noise, and adopts the shared Open Door editing shortcuts. Projects remain optional.
+Build 0.4.0 separates Primary Media from Source Media and introduces the optional AudioStudio Pro workspace.
 
-FIRST TEST
+PRIMARY AND SOURCE TEST
 
-1. Start the application. Focus should be on Open Media.
-2. Press Ctrl+O and open one short video or audio file.
-3. Confirm that the filename becomes both the main heading and the Windows application title.
-4. Press Ctrl+Page Down repeatedly with the JAWS Virtual Cursor off.
-5. Confirm that focus moves through Media, Playback, Edit, and Output, then returns to Media.
-6. Within each section, press Tab to move through its controls.
-7. Confirm that durations are announced as hours, minutes, seconds, and milliseconds rather than decimal seconds.
-8. Start playback while focus remains on the playhead. Confirm that JAWS does not announce every automatic time update.
+1. Start Accessible Media Editor.
+2. Press Ctrl+O and open one video.
+3. Confirm that it appears in Primary Sequence.
+4. Press Ctrl+O and open a second video.
+5. Confirm that the second video appears in Source Media.
+6. Confirm that the primary sequence duration does not include the second video's complete duration.
 
-MULTIPLE MEDIA TEST
+ACTIVE MEDIA TEST
 
-1. Press Ctrl+O.
-2. Select several files in the Windows Open Media dialog, or paste several files copied from File Explorer.
-3. Enter the Open media list and turn the JAWS Virtual Cursor off.
-4. Use plain Up Arrow and Down Arrow to select files.
-5. Use Ctrl+Up Arrow and Ctrl+Down Arrow to rearrange the selected file.
+1. Select the Primary Sequence item.
+2. Move to Playback with Ctrl+Page Down.
+3. Confirm that the Playback heading includes the primary title.
+4. Return to Media and select the Source Media item.
+5. Confirm that Playback and Edit headings now include the source title.
+6. Confirm that the application announces whether Primary Sequence or Source Media is active.
 
-PRECISE EDITING
+TRANSPORT TEST
 
-- Ctrl+P previews the selected video or audio.
-- Escape stops playback or closes an editing dialog.
-- U and I scrub backward and forward by one second.
-- Shift+U and Shift+I scrub by 100 milliseconds.
-- Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.
-- Left bracket sets the In mark.
-- Right bracket sets the Out mark.
-- Left Arrow and Right Arrow move by five seconds.
-- Shift+Left Arrow and Shift+Right Arrow move by 30 seconds.
-- J and L move by five minutes.
-- Alt+Left Arrow and Alt+Right Arrow move by one millisecond.
-- Home and End move to the beginning and end.
-- Ctrl+G opens separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
-- Ctrl+K splits at the playhead.
-- Alt+Enter opens exact times and item properties.
+1. Press X to start playback from the active playhead.
+2. Press X again to pause and land at the new position.
+3. Press Space.
+4. Confirm that a short section around the playhead is auditioned.
+5. Confirm that the playhead returns to its original position after auditioning.
+6. Press Escape during an audition and confirm that the audition is canceled. Escape should not be the ordinary playback control.
 
-PROJECT COMMANDS
+SCRUB AND MARK TEST
 
-- Ctrl+N starts a new optional project.
-- Ctrl+Shift+O opens an AMEPROJECT file.
-- Ctrl+S saves the current project.
-- Ctrl+Shift+S opens Save Project As.
+1. Press U and I to scrub backward and forward by one second.
+2. Press Shift+U and Shift+I to scrub by 100 milliseconds.
+3. Press Ctrl+Shift+U and Ctrl+Shift+I to scrub by 10 milliseconds.
+4. Press left bracket to set the In mark.
+5. Press right bracket to set the Out mark.
 
-NOT IMPLEMENTED YET
+TRACK TARGET TEST
 
-- Saving a trimmed clip as a new media file.
-- Converting to another media format.
-- Playing all project items continuously.
-- Mixing narration, music, and original audio.
-- Rendering transitions.
-- Exporting a complete project as MP4.
+1. With video active, press B and confirm Both audio and video targeted.
+2. Press V and confirm Video only targeted.
+3. Press A and confirm Audio only targeted.
+4. Open an audio file and confirm that it begins in Audio only mode.
 
-The Export Edited Media button is intentionally disabled. It does not claim that rendering is available before the media engine exists.
+INSERT SOURCE SELECTION TEST
+
+1. Activate the Source Media item.
+2. Use the playhead and brackets to mark a short selection.
+3. Return to Primary Sequence and place its playhead at the desired insertion point.
+4. Return to Source Media without changing the Primary playhead.
+5. Activate Insert Selection at Primary Playhead.
+6. Confirm that the source selection appears in Primary Sequence.
+7. Confirm that the original source file remains unchanged.
+
+WORKSPACE TEST
+
+1. Press Ctrl+Tab to enter AudioStudio Pro.
+2. Confirm that its professional controls are disabled and clearly described as future work.
+3. Press Ctrl+Shift+Tab to return to Media Editor.
+4. Confirm that the active media and playhead position were preserved.
+
+KNOWN LIMITS
+
+The application does not yet render or export the complete Primary Sequence.
+
+AudioStudio Pro recording and processing are not implemented in this build.
+
+Video-only targeting identifies the intended edit target and mutes audio during preview. Full track rendering comes with the composition engine.

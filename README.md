@@ -1,29 +1,31 @@
 # Accessible Media Editor
 
-Accessible Media Editor is a screen-reader-first Windows application for precise media editing and optional multimedia authoring.
+Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.3.1
+## Build 0.4.0
 
-This build introduces the direct-edit-first application structure.
+Build 0.4.0 establishes the Primary Media and Source Media architecture.
 
-Build 0.3.1 corrects native window titles, quiets automatic playhead announcements, removes duplicate editing controls, and adopts the shared Open Door editing shortcuts.
+- The first opened file becomes Primary Media.
+- Additional files become Source Media instead of automatically extending the output.
+- Source duration is excluded from the primary sequence until a selection is inserted.
+- Each active media context has its own remembered playhead, In and Out marks, and track target.
+- Playback and Edit section headings include the active media title.
+- X plays or pauses continuously from the current playhead.
+- Space auditions around the playhead and returns to the original position.
+- U and I scrub by 1 second.
+- Shift+U and Shift+I scrub by 100 milliseconds.
+- Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.
+- Left and right brackets set the In and Out marks.
+- B, V, and A target both tracks, video only, or audio only.
+- A marked Source selection can be inserted at the selected Primary Sequence playhead or added to the end.
+- Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor and AudioStudio Pro.
+- AudioStudio Pro is an explicit, optional workspace and is never opened automatically for an audio file.
+- Professional recording and processing controls are present only as disabled future-work indicators.
 
-- Open Media is the starting action. Creating a project is not required.
-- Ctrl+O opens one or several audio, video, or image files.
-- The selected filename becomes the main heading and application title when one file is open.
-- Media, Playback, Edit, and Output are distinct editor sections.
-- Ctrl+Page Up and Ctrl+Page Down move between sections with the JAWS Virtual Cursor off.
-- Tab moves through the controls inside the active section.
-- All displayed and announced durations use human-readable hours, minutes, seconds, and milliseconds.
-- Existing millisecond-precision In, Out, nudge, split, preview, and multi-file features are preserved.
-- U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.
-- Left bracket and right bracket set the In and Out marks.
-- Left and Right Arrow move by 5 seconds. Shift+Left and Shift+Right move by 30 seconds. J and L move by 5 minutes.
-- Alt+Left and Alt+Right retain one-millisecond precision. Home and End jump to the beginning and end.
-- Project commands remain available in the File menu. Ctrl+Shift+O opens a project.
-- Export Edited Media is present but disabled until the rendering engine is implemented.
+All operations are nondestructive. Source files are not modified.
 
-Preview uses the Windows media engine. Some codecs, particularly HEVC, may require an installed Windows decoder. FFmpeg-backed decoding and export remain future work.
+This build does not yet render the complete Primary Sequence or export edited media. The AudioStudio Pro processing engine is also not implemented yet.
 
 ## Developer commands
 
@@ -36,11 +38,13 @@ Windows installers are produced as MSI and NSIS packages by the GitHub Actions w
 
 ## Test priorities
 
-1. Confirm startup focus is Open Media.
-2. Open one media file with Ctrl+O and verify the heading and window title.
-3. Move through all four sections with Ctrl+Page Up and Ctrl+Page Down while the Virtual Cursor is off.
-4. Tab through the controls in each section.
-5. Confirm all time announcements are human-readable.
-6. Open multiple files and verify list selection and rearranging.
-7. Retest preview, In, Out, exact time entry, one-millisecond nudge, and split.
-8. Save and reopen an optional project.
+1. Open one video and confirm it becomes Primary Media.
+2. Open a second video and confirm it becomes Source Media.
+3. Confirm Source Media does not increase Primary Sequence duration before insertion.
+4. Select Primary and Source items and confirm Playback and Edit headings include the active title.
+5. Verify X Play/Pause and Space Audition.
+6. Verify U/I scrubbing and bracket marks.
+7. Verify B, V, and A targeting announcements.
+8. Mark part of Source Media and insert it at the remembered Primary playhead.
+9. Confirm each media item remembers its playhead when switching contexts.
+10. Switch workspaces with Ctrl+Tab and confirm AudioStudio Pro does not open automatically.

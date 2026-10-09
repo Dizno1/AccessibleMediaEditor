@@ -1,6 +1,6 @@
 [package]
 name = "accessible-media-editor"
-version = "0.3.1"
+version = "0.4.0"
 description = "Screen-reader-first multimedia authoring from Open Door Design."
 authors = ["Open Door Design"]
 edition = "2021"

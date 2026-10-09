@@ -80,7 +80,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set In Mark Left Bracket","setIn")?).item(&item(app,"Set Out Mark Right Bracket","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")
-        .item(&item(app,"Preview from Selected Item Ctrl+P","preview")?).item(&item(app,"Stop Escape","stop")?).separator()
+        .item(&item(app,"Play or Pause X","playPause")?).item(&item(app,"Audition Around Playhead Space","audition")?).separator()
         .item(&item(app,"Scrub Back 1 Second U","scrubBack1")?).item(&item(app,"Scrub Forward 1 Second I","scrubForward1")?)
         .item(&item(app,"Scrub Back 100 Milliseconds Shift+U","scrubBack100ms")?).item(&item(app,"Scrub Forward 100 Milliseconds Shift+I","scrubForward100ms")?)
         .item(&item(app,"Scrub Back 10 Milliseconds Ctrl+Shift+U","scrubBack10ms")?).item(&item(app,"Scrub Forward 10 Milliseconds Ctrl+Shift+I","scrubForward10ms")?)
@@ -88,8 +88,11 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Move Back 30 Seconds Shift+Left","moveBack30")?).item(&item(app,"Move Forward 30 Seconds Shift+Right","moveForward30")?)
         .item(&item(app,"Move Back 5 Minutes J","moveBack300")?).item(&item(app,"Move Forward 5 Minutes L","moveForward300")?)
         .item(&item(app,"Move Back 1 Millisecond Alt+Left","nudgeBack")?).item(&item(app,"Move Forward 1 Millisecond Alt+Right","nudgeForward")?)
-        .item(&item(app,"Jump to Beginning Home","jumpBeginning")?).item(&item(app,"Jump to End End","jumpEnd")?).build()?;
+        .item(&item(app,"Jump to Beginning Home","jumpBeginning")?).item(&item(app,"Jump to End End","jumpEnd")?).separator()
+        .item(&item(app,"Target Both Audio and Video B","targetBoth")?).item(&item(app,"Target Video Only V","targetVideo")?).item(&item(app,"Target Audio Only A","targetAudio")?).build()?;
     let navigate = SubmenuBuilder::new(app, "Navigate")
+        .item(&item(app,"Media Editor Workspace","showMediaWorkspace")?).item(&item(app,"AudioStudio Pro Workspace","showAudioWorkspace")?)
+        .item(&item(app,"Next Workspace Ctrl+Tab","nextWorkspace")?).item(&item(app,"Previous Workspace Ctrl+Shift+Tab","previousWorkspace")?).separator()
         .item(&item(app,"Previous Section Ctrl+Page Up","previousSection")?).item(&item(app,"Next Section Ctrl+Page Down","nextSection")?)
         .separator().item(&item(app,"Open Media List","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
     let help = SubmenuBuilder::new(app, "Help")
