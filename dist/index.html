@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Untitled Project - Accessible Media Editor</title>
+  <title>Accessible Media Editor</title>
   <link rel="stylesheet" href="app/styles.css">
 </head>
 <body>
@@ -11,33 +11,42 @@
   <div id="alert-announcer" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
   <header class="app-header">
-    <h1 id="project-heading" tabindex="-1">Untitled Project</h1>
-    <p id="project-summary">No project items. Not saved.</p>
+    <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
+    <p id="project-summary">No media open.</p>
   </header>
 
   <main>
+    <nav class="section-navigation" aria-label="Editor sections">
+      <button type="button" class="section-tab" id="media-section-tab" data-section="media-section" aria-controls="media-section">Media</button>
+      <button type="button" class="section-tab" id="playback-section-tab" data-section="playback-section" aria-controls="playback-section">Playback</button>
+      <button type="button" class="section-tab" id="edit-section-tab" data-section="edit-section" aria-controls="edit-section">Edit</button>
+      <button type="button" class="section-tab" id="output-section-tab" data-section="output-section" aria-controls="output-section">Output</button>
+    </nav>
+
     <div class="workspace">
-      <div class="sequence-panel">
-        <label for="project-items">Project Items</label>
+      <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
+        <h2 id="media-section-heading">Media</h2>
+        <label for="project-items">Open media</label>
         <select id="project-items" size="12" aria-describedby="selected-item-summary">
-          <option disabled>No project items</option>
+          <option disabled>No media open</option>
         </select>
-        <p id="selected-item-summary">No project item selected.</p>
+        <p id="selected-item-summary">No media selected.</p>
         <div class="button-row">
-          <button type="button" id="import-media-button">Import Media (Ctrl+I)</button>
+          <button type="button" id="import-media-button">Open Media (Ctrl+O)</button>
           <button type="button" id="add-text-button">Add Text</button>
           <button type="button" id="move-earlier-button" disabled>Move Earlier (Ctrl+Up)</button>
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
           <button type="button" id="properties-button" disabled>Properties (Alt+Enter)</button>
           <button type="button" id="remove-item-button" disabled>Remove Item (Delete)</button>
         </div>
-      </div>
+      </section>
 
-      <div class="transport-panel">
+      <section class="editor-section transport-panel" id="playback-section" aria-labelledby="playback-section-heading" tabindex="-1">
+        <h2 id="playback-section-heading">Playback</h2>
         <video id="media-preview" preload="metadata" aria-label="Selected media preview"></video>
         <label for="playhead">Playhead</label>
         <input id="playhead" type="range" min="0" max="0" value="0" step="0.001" aria-valuetext="0 seconds">
-        <p id="playhead-position">Position 0 seconds. Project duration 0 seconds.</p>
+        <p id="playhead-position">Position 0 seconds. Selected media duration 0 seconds. Total duration 0 seconds.</p>
         <div class="button-row">
           <button type="button" id="preview-button" disabled>Preview from Selected Item (Ctrl+P)</button>
           <button type="button" id="stop-button" disabled>Stop (Escape)</button>
@@ -46,10 +55,28 @@
           <button type="button" id="go-to-time-button" disabled>Go to Time (Ctrl+G)</button>
           <button type="button" id="split-button" disabled>Split at Playhead (Ctrl+K)</button>
         </div>
-      </div>
+      </section>
+
+      <section class="editor-section edit-panel" id="edit-section" aria-labelledby="edit-section-heading" tabindex="-1">
+        <h2 id="edit-section-heading">Edit</h2>
+        <p>Set exact In and Out points, nudge the playhead by one millisecond, or split the selected media without changing the original file.</p>
+        <div class="button-row">
+          <button type="button" id="edit-properties-button" disabled>Exact Times and Properties (Alt+Enter)</button>
+          <button type="button" id="edit-split-button" disabled>Split at Playhead (Ctrl+K)</button>
+        </div>
+      </section>
+
+      <section class="editor-section output-panel" id="output-section" aria-labelledby="output-section-heading" tabindex="-1">
+        <h2 id="output-section-heading">Output</h2>
+        <p id="output-summary">Open media to begin editing. Project creation is optional from the File menu.</p>
+        <div class="button-row">
+          <button type="button" id="save-project-button">Save Project (Ctrl+Shift+S)</button>
+          <button type="button" id="export-button" disabled>Export Edited Media</button>
+        </div>
+      </section>
     </div>
 
-    <p id="action-status" class="action-status">Ready. Use Ctrl+I to import media or use the Insert menu.</p>
+    <p id="action-status" class="action-status">Ready. Press Ctrl+O to open media. Use Ctrl+Page Up and Ctrl+Page Down to move between editor sections.</p>
   </main>
 
   <dialog id="properties-dialog" aria-labelledby="properties-heading">
@@ -119,8 +146,9 @@
     <form method="dialog">
       <h2 id="shortcuts-heading">Keyboard Shortcuts</h2>
       <ul>
-        <li>Ctrl+N: New Project.</li><li>Ctrl+O: Open Project.</li><li>Ctrl+S: Save.</li>
-        <li>Ctrl+Shift+S: Save As.</li><li>Ctrl+I: Import Media.</li>
+        <li>Ctrl+O: Open one or more media files.</li><li>Ctrl+Shift+O: Open Project.</li>
+        <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
+        <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
         <li>Ctrl+P: Preview from Selected Item.</li><li>Escape: Stop or close a dialog.</li>
@@ -136,9 +164,9 @@
   <dialog id="testing-guide-dialog" aria-labelledby="testing-guide-heading">
     <form method="dialog">
       <h2 id="testing-guide-heading">Testing Guide</h2>
-      <p><strong>Reading the workspace:</strong> Leave the JAWS Virtual Cursor on.</p>
-      <p><strong>Selecting project items:</strong> With the Virtual Cursor on, navigate to Project Items and position JAWS inside the list box. Then press Insert+Z to turn the Virtual Cursor off. Use plain Up Arrow and Down Arrow to select different items.</p>
-      <p><strong>Rearranging project items:</strong> With focus inside Project Items and the Virtual Cursor off, use Ctrl+Up Arrow and Ctrl+Down Arrow. These move the selected item; they do not select another item.</p>
+      <p><strong>Moving through the editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media, Playback, Edit, and Output. Then use Tab within that section.</p>
+      <p><strong>Selecting media:</strong> With the Virtual Cursor on, navigate to Open media and position JAWS inside the list box. Then press Insert+Z to turn the Virtual Cursor off. Use plain Up Arrow and Down Arrow to select different items.</p>
+      <p><strong>Rearranging media:</strong> With focus inside Open media and the Virtual Cursor off, use Ctrl+Up Arrow and Ctrl+Down Arrow. These move the selected item; they do not select another item.</p>
       <p><strong>Using the playhead:</strong> Position JAWS on the Playhead slider and turn the Virtual Cursor off. Use Arrow keys to move it. Alt+Left Arrow and Alt+Right Arrow move by one millisecond.</p>
       <p><strong>Setting edit points:</strong> With the Virtual Cursor off, press I for the In point or O for the Out point. Ctrl+G opens human-readable exact-time fields. Ctrl+K splits at the playhead.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>

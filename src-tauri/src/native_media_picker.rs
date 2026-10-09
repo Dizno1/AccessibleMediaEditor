@@ -743,7 +743,7 @@ fn pick_files_native(app: &tauri::AppHandle) -> Result<(Vec<PathBuf>, PasteDiagn
     PASTE_DIAGNOSTICS.with(|d| *d.borrow_mut() = PasteDiagnostics::default());
 
     let filter = to_wide("Supported media\0*.mp4;*.mkv;*.mov;*.avi;*.webm;*.m4v;*.3gp;*.3g2;*.mts;*.m2ts;*.mpeg;*.mpg;*.ts;*.wmv;*.ogv;*.hevc;*.mp3;*.wav;*.m4a;*.aac;*.flac;*.ogg;*.opus;*.wma;*.aif;*.aiff;*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp;*.tif;*.tiff;*.heic;*.heif\0All Files\0*.*\0\0");
-    let title = to_wide("Import Media");
+    let title = to_wide("Open Media");
     let mut file_buffer: Vec<u16> = vec![0u16; FILE_BUFFER_LEN];
 
     let mut ofn = OPENFILENAMEW::default();

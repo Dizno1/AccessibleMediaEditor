@@ -1,93 +1,52 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.2.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.3.0 TESTING GUIDE
 
-WHAT THIS BUILD CAN DO
+PURPOSE OF THIS BUILD
 
-- Import one or several video, audio, or image files.
-- Paste several copied File Explorer files into the Import Media dialog.
-- Preview one selected video or audio item at a time.
-- Move project items earlier or later.
-- Set nondestructive In and Out points.
-- Enter exact times with Hours, Minutes, Seconds, and Milliseconds fields.
-- Move the playhead by one millisecond.
-- Split a selected video or audio item at the playhead.
-- Save and reopen an Accessible Media Editor project.
-
-WHAT THIS BUILD CANNOT DO YET
-
-- Play all project items continuously.
-- Delete a selected section from within a clip.
-- Mix narration, music, and original audio.
-- Render transitions.
-- Export the completed project as an MP4.
-
-JAWS VIRTUAL CURSOR WORKFLOW
-
-Reading the workspace:
-Leave the Virtual Cursor on.
-
-Selecting a project item:
-1. Leave the Virtual Cursor on while navigating to Project Items.
-2. Position JAWS inside the Project Items list box.
-3. Press Insert+Z to turn the Virtual Cursor off while focus is inside the list box.
-4. Press plain Up Arrow or Down Arrow to select another item.
-5. Do not hold Ctrl when selecting another item.
-
-Moving a project item:
-1. Keep focus inside Project Items with the Virtual Cursor off.
-2. Press Ctrl+Up Arrow to move the selected item earlier.
-3. Press Ctrl+Down Arrow to move the selected item later.
-
-Using the playhead:
-1. Position JAWS on the Playhead slider.
-2. Turn the Virtual Cursor off.
-3. Use Left Arrow or Right Arrow to change its position.
-4. Use Alt+Left Arrow or Alt+Right Arrow to move by one millisecond.
-
-Setting precise edits:
-- I sets the In point at the playhead.
-- O sets the Out point at the playhead.
-- Ctrl+G opens separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
-- Ctrl+K splits the selected item at the playhead.
-- Alt+Enter opens Item Properties.
-
-Returning to normal reading:
-Press Insert+Z to turn the Virtual Cursor on again.
-
-Windows file dialogs:
-The JAWS Virtual Cursor setting does not apply inside native Import, Open, or Save dialogs.
-
-SHORTCUTS BY TASK
-
-Projects and media:
-- Ctrl+N: New project.
-- Ctrl+O: Open a saved AMEPROJECT file.
-- Ctrl+S: Save.
-- Ctrl+Shift+S: Save As.
-- Ctrl+I: Import media.
-
-Selecting and arranging:
-- Plain Up Arrow or Down Arrow: Select another project item when focus is inside the list box.
-- Ctrl+Up Arrow: Move the selected item earlier.
-- Ctrl+Down Arrow: Move the selected item later.
-- Delete: Remove the selected item.
-
-Playback and editing:
-- Ctrl+P: Preview the selected item.
-- Escape: Stop playback or close an editing dialog.
-- I: Set the In point.
-- O: Set the Out point.
-- Alt+Left Arrow or Alt+Right Arrow: Move the playhead by one millisecond.
-- Ctrl+G: Go to an exact human-readable time.
-- Ctrl+K: Split at the playhead.
-- Alt+Enter: Open Item Properties.
+Build 0.3.0 changes the application from project-first to direct-edit-first. A user can open one media file, edit it, and work without first creating a project. Projects remain available when several items need to be arranged and saved together.
 
 FIRST TEST
 
-1. Import two short video clips.
-2. Enter Project Items and turn the Virtual Cursor off there.
-3. Use plain Arrow keys to confirm that the two different filenames are present.
-4. Select the first clip and press Ctrl+P.
-5. Stop with Escape.
-6. Select the second clip and confirm that its playhead begins at its In point.
-7. Preview the second clip.
-8. Confirm that Out point reached is announced only once.
+1. Start the application. Focus should be on Open Media.
+2. Press Ctrl+O and open one short video or audio file.
+3. Confirm that the filename becomes both the main heading and the Windows application title.
+4. Press Ctrl+Page Down repeatedly with the JAWS Virtual Cursor off.
+5. Confirm that focus moves through Media, Playback, Edit, and Output, then returns to Media.
+6. Within each section, press Tab to move through its controls.
+7. Confirm that durations are announced as hours, minutes, seconds, and milliseconds rather than decimal seconds.
+
+MULTIPLE MEDIA TEST
+
+1. Press Ctrl+O.
+2. Select several files in the Windows Open Media dialog, or paste several files copied from File Explorer.
+3. Enter the Open media list and turn the JAWS Virtual Cursor off.
+4. Use plain Up Arrow and Down Arrow to select files.
+5. Use Ctrl+Up Arrow and Ctrl+Down Arrow to rearrange the selected file.
+
+PRECISE EDITING
+
+- Ctrl+P previews the selected video or audio.
+- Escape stops playback or closes an editing dialog.
+- I sets the In point.
+- O sets the Out point.
+- Alt+Left Arrow and Alt+Right Arrow move the playhead by one millisecond.
+- Ctrl+G opens separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
+- Ctrl+K splits at the playhead.
+- Alt+Enter opens exact times and item properties.
+
+PROJECT COMMANDS
+
+- Ctrl+N starts a new optional project.
+- Ctrl+Shift+O opens an AMEPROJECT file.
+- Ctrl+S saves the current project.
+- Ctrl+Shift+S opens Save Project As.
+
+NOT IMPLEMENTED YET
+
+- Saving a trimmed clip as a new media file.
+- Converting to another media format.
+- Playing all project items continuously.
+- Mixing narration, music, and original audio.
+- Rendering transitions.
+- Exporting a complete project as MP4.
+
+The Export Edited Media button is intentionally disabled. It does not claim that rendering is available before the media engine exists.

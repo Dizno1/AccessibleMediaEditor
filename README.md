@@ -1,59 +1,40 @@
 # Accessible Media Editor
 
-Accessible Media Editor is a screen-reader-first Windows application for arranging video, images, narration, audio, text, and transitions into a finished production.
+Accessible Media Editor is a screen-reader-first Windows application for precise media editing and optional multimedia authoring.
 
-## Build 0.2 purpose
+## Build 0.3.0
 
-This build turns the Windows interaction model into a usable precision-trimming workspace. It intentionally does not copy the former long web interface.
+This build introduces the direct-edit-first application structure.
 
-Build 0.2.2 adds an in-app Help menu Testing Guide, a plain-text testing guide, resets the playhead when a different item is selected, and prevents repeated Out-point announcements.
+- Open Media is the starting action. Creating a project is not required.
+- Ctrl+O opens one or several audio, video, or image files.
+- The selected filename becomes the main heading and application title when one file is open.
+- Media, Playback, Edit, and Output are distinct editor sections.
+- Ctrl+Page Up and Ctrl+Page Down move between sections with the JAWS Virtual Cursor off.
+- Tab moves through the controls inside the active section.
+- All displayed and announced durations use human-readable hours, minutes, seconds, and milliseconds.
+- Existing millisecond-precision In, Out, nudge, split, preview, and multi-file features are preserved.
+- Project commands remain available in the File menu. Ctrl+Shift+O opens a project.
+- Export Edited Media is present but disabled until the rendering engine is implemented.
 
-- Native Windows application menus.
-- Shared menu and keyboard command handlers.
-- Native Open, Save, and Import dialogs.
-- One ordered Project Items list.
-- Add image, audio, video, text, and crossfade items.
-- Move items earlier or later.
-- Preview selected video and audio items.
-- Set nondestructive In and Out points to 0.001-second precision.
-- Enter exact positions with separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
-- Nudge the playhead by one millisecond with Alt+Left and Alt+Right.
-- Split a video or audio item nondestructively at the exact playhead position with Ctrl+K.
-- Edit item labels and exact durations.
-- Remove, undo, and redo.
-- Save and reopen `.ameproject` project descriptions in `Documents/Accessible Media Editor/Projects` by default.
-- Open the default Projects folder from the File menu.
-- Import multiple files in one operation, including common iPhone, web-video, audio, and image file extensions.
-- Paste a copied multi-file File Explorer selection into the Import Media dialog, using the proven Windows picker behavior from Accessible Audio Studio Pro.
-- Explain that Ctrl+I imports media when a non-project file is mistakenly selected with Open Project.
-- One authoritative playhead control.
-- One status announcer.
-- Optional sound cues.
-
-Preview uses the Windows media engine in Build 0.2. Some codecs, particularly HEVC, may require an installed Windows decoder. The planned FFmpeg composition engine will provide broader decoding and MP4 export in a later build.
+Preview uses the Windows media engine. Some codecs, particularly HEVC, may require an installed Windows decoder. FFmpeg-backed decoding and export remain future work.
 
 ## Developer commands
-
-Copy Build 0.2 into the existing AccessibleMediaEditor repository and replace matching files.
 
 - `npm install`
 - `npm test`
 - `npm run desktop:dev`
 - `npm run desktop:build`
 
-Windows installers are produced as MSI and NSIS packages.
+Windows installers are produced as MSI and NSIS packages by the GitHub Actions workflow.
 
 ## Test priorities
 
-1. Confirm Alt reaches the native menu bar and all seven menus are announced.
-2. Import at least two media files with Ctrl+I.
-3. Copy at least three media files in File Explorer, paste them into the Import Media dialog, and confirm that all three become project items.
-4. Use the Project Items list without turning the Virtual Cursor on.
-5. Move an item with Ctrl+Up and Ctrl+Down and confirm focus remains in the list.
-6. Preview a selected video or audio item with Ctrl+P.
-7. Set In and Out points with I and O.
-8. Nudge the playhead with Alt+Left and Alt+Right.
-9. Press Ctrl+G and enter a time using the four separately labeled fields.
-10. Open Item Properties with Alt+Enter and type exact In and Out values.
-11. Save, close, and reopen a project.
-12. Confirm announcements are concise and not duplicated.
+1. Confirm startup focus is Open Media.
+2. Open one media file with Ctrl+O and verify the heading and window title.
+3. Move through all four sections with Ctrl+Page Up and Ctrl+Page Down while the Virtual Cursor is off.
+4. Tab through the controls in each section.
+5. Confirm all time announcements are human-readable.
+6. Open multiple files and verify list selection and rearranging.
+7. Retest preview, In, Out, exact time entry, one-millisecond nudge, and split.
+8. Save and reopen an optional project.

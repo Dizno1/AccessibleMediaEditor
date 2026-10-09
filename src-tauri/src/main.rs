@@ -27,9 +27,9 @@ fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjec
     if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.pick_file() else { return Ok(None); };
     if path.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("ameproject")) != Some(true) {
-        return Err("That is not an Accessible Media Editor project. Use Ctrl+I to import video, audio, or images.".into());
+        return Err("That is not an Accessible Media Editor project. Use Ctrl+O to open video, audio, or images.".into());
     }
-    let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Media Editor project. Use Ctrl+I to import media.".to_string())?;
+    let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Media Editor project. Use Ctrl+O to open media.".to_string())?;
     Ok(Some(OpenProjectResult { path: path.to_string_lossy().into_owned(), content }))
 }
 
@@ -60,14 +60,15 @@ fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::m
 
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
-        .item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+O","openProject")?)
-        .separator().item(&item(app,"Save Ctrl+S","saveProject")?).item(&item(app,"Save As... Ctrl+Shift+S","saveProjectAs")?)
-        .separator().item(&item(app,"Import Media... Ctrl+I","importMedia")?).item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
+        .item(&item(app,"Open Media... Ctrl+O","importMedia")?)
+        .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+Shift+O","openProject")?)
+        .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
+        .item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
         .separator().item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
-        .item(&item(app,"Media... Ctrl+I","importMedia")?).item(&item(app,"Text...","addText")?)
+        .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).separator()
@@ -76,7 +77,8 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let playback = SubmenuBuilder::new(app, "Playback")
         .item(&item(app,"Preview from Selected Item Ctrl+P","preview")?).item(&item(app,"Stop Escape","stop")?).build()?;
     let navigate = SubmenuBuilder::new(app, "Navigate")
-        .item(&item(app,"Project Items","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
+        .item(&item(app,"Previous Section Ctrl+Page Up","previousSection")?).item(&item(app,"Next Section Ctrl+Page Down","nextSection")?)
+        .separator().item(&item(app,"Open Media List","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
     let help = SubmenuBuilder::new(app, "Help")
         .item(&item(app,"Testing Guide","showTestingGuide")?).item(&item(app,"Keyboard Shortcuts","showShortcuts")?).item(&item(app,"Toggle Sound Cues","toggleSoundCues")?)
         .item(&item(app,"About Accessible Media Editor","showAbout")?).build()?;
