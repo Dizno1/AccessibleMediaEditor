@@ -1,8 +1,17 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.4.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.4.3 TESTING GUIDE
 
 PURPOSE
 
-Build 0.4.2 prevents JAWS announcements from covering U/I scrub audio. It also gives every playable Primary and Source media item a separate, titled editor with its own preview player, playhead slider, position, marks, and controls.
+Build 0.4.3 stops repeated and unnecessarily long JAWS announcements. It also prevents speech from covering U/I scrub audio and retains a separate editor for every playable Primary and Source item.
+
+QUIET INTERACTION TEST
+
+1. Arrow through Primary Sequence and Source Media.
+2. Confirm each option speaks a short role, media type, and filename instead of duration, In, and Out details.
+3. Move through editor sections with Ctrl+Page Up and Ctrl+Page Down.
+4. Confirm JAWS identifies each region only once without a second application announcement.
+5. Press X to play and pause. Confirm the application says only Playing or Paused followed by the time.
+6. Set an Out mark, play toward it, and confirm Out mark reached is announced only once.
 
 PRIMARY AND SOURCE TEST
 

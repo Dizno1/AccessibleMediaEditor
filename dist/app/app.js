@@ -30,6 +30,7 @@ function announce(message,urgent=false){
   requestAnimationFrame(()=>{region.textContent=message;});
   el["action-status"].textContent=message;
 }
+function updateStatus(message){el["action-status"].textContent=message;}
 
 function cue(kind){
   if(!soundCues)return;
@@ -81,6 +82,10 @@ function itemSummary(item,index,source=false){
   const seconds=itemDuration(item),durationText=seconds>0?` Duration ${readableTime(seconds)}.`:" Duration not yet determined.";
   const trim=["Video","Audio"].includes(item.kind)&&item.duration?` In ${readableTime(Number(item.inPoint)||0)}. Out ${readableTime(item.outPoint==null?Number(item.duration):Number(item.outPoint))}.`:"";
   return`${source?`Source ${index+1}`:item.role==="inserted"?`Inserted segment ${index+1}`:`Primary sequence item ${index+1}`}. ${item.kind}. ${item.label||item.name}.${durationText}${trim}`;
+}
+function itemListLabel(item,index,source=false){
+  const role=source?`Source ${index+1}`:item.role==="inserted"?`Inserted ${index+1}`:`Primary ${index+1}`;
+  return`${role}. ${item.kind}. ${item.label||item.name}`;
 }
 function migrateProject(value){
   const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],version:2};
@@ -180,7 +185,7 @@ function handleTimeUpdate(idValue){
     }
   }else{
     const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);
-    if(state.video.currentTime>=end){state.video.pause();setEditorPosition(state,end,true);announce(`${editorTitle(location.item,location.type)} Out mark reached. Playback paused.`);return;}
+    if(state.video.currentTime>=end&&!state.video.paused){state.video.pause();setEditorPosition(state,end,true);announce("Out mark reached. Paused.");return;}
   }
   state.cursor=state.video.currentTime;state.slider.value=String(state.cursor);state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(itemDuration(location.item))}.`;
 }
@@ -213,16 +218,16 @@ function activateMedia(idValue,focus=true){
   if(activeMediaId&&activeMediaId!==idValue){const old=editorStates.get(activeMediaId);if(old&&!old.video.paused)old.video.pause();}
   activeMediaId=idValue;if(location.type==="source")selectedSourceId=idValue;else selectedId=idValue;updateActiveAppearance();
   if(focus)state.section.focus();
-  announce(`${editorTitle(location.item,location.type)} active. ${targetText(itemTarget(location.item))} targeted. Playhead ${readableTime(state.cursor)}.`);
+  updateStatus(`${editorTitle(location.item,location.type)} active.`);
 }
 
 function render({focus=false}={}){
   el["project-items"].replaceChildren();
   if(!project.items.length){const option=new Option("No primary media","");option.disabled=true;el["project-items"].add(option);selectedId=null;}
-  else{project.items.forEach((item,index)=>el["project-items"].add(new Option(itemSummary(item,index,false),item.id)));if(!sequenceItem())selectedId=project.items[0].id;el["project-items"].value=selectedId;}
+  else{project.items.forEach((item,index)=>el["project-items"].add(new Option(itemListLabel(item,index,false),item.id)));if(!sequenceItem())selectedId=project.items[0].id;el["project-items"].value=selectedId;}
   const sources=project.sources||[];el["source-items"].replaceChildren();
   if(!sources.length){const option=new Option("No source media","");option.disabled=true;el["source-items"].add(option);selectedSourceId=null;}
-  else{sources.forEach((item,index)=>el["source-items"].add(new Option(itemSummary(item,index,true),item.id)));if(!sourceItem())selectedSourceId=sources[0].id;el["source-items"].value=selectedSourceId;}
+  else{sources.forEach((item,index)=>el["source-items"].add(new Option(itemListLabel(item,index,true),item.id)));if(!sourceItem())selectedSourceId=sources[0].id;el["source-items"].value=selectedSourceId;}
   const selected=sequenceItem(),source=sourceItem(),index=project.items.findIndex(item=>item.id===selectedId);
   el["selected-item-summary"].textContent=selected?itemSummary(selected,index,false):"No primary media selected.";
   el["selected-source-summary"].textContent=source?itemSummary(source,sources.findIndex(item=>item.id===selectedSourceId),true):"No source media selected.";
@@ -243,9 +248,9 @@ function focusSection(offset){
   if(activeWorkspace!=="media")return announce("AudioStudio Pro does not have editor sections yet.");
   const sections=sectionElements();activeSectionIndex=(activeSectionIndex+offset+sections.length)%sections.length;const section=sections[activeSectionIndex];
   if(section.dataset.mediaId)activateMedia(section.dataset.mediaId,false);section.focus();
-  announce(`${section.querySelector("h2")?.textContent||"Media Library"} section. Use Tab within this section.`);
+  updateStatus(`${section.querySelector("h2")?.textContent||"Media Library"} section.`);
 }
-function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();announce(`${section.querySelector("h2").textContent} section.`);}
+function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);}
 function switchWorkspace(direction=1,target=null){
   const next=target||(activeWorkspace==="media"?"audio":"media");activeWorkspace=next;const media=next==="media";
   el["media-editor-tab"].setAttribute("aria-selected",String(media));el["audio-studio-tab"].setAttribute("aria-selected",String(!media));el["media-editor-tab"].tabIndex=media?0:-1;el["audio-studio-tab"].tabIndex=media?-1:0;
@@ -293,8 +298,8 @@ function redo(){if(!redoStack.length)return announce("Nothing to redo.");undoSta
 
 async function togglePlayback(){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,true);
-  if(state.video.paused){const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);if(state.cursor>=end)setEditorPosition(state,Number(location.item.inPoint)||0,true);try{await state.video.play();announce(`Playing ${editorTitle(location.item,location.type)} from ${readableTime(state.cursor)}.`);}catch(error){announce(`Playback failed. ${error}`,true);}}
-  else{state.video.pause();setEditorPosition(state,state.video.currentTime,true);announce(`${editorTitle(location.item,location.type)} paused at ${readableTime(state.cursor)}.`);}
+  if(state.video.paused){const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);if(state.cursor>=end)setEditorPosition(state,Number(location.item.inPoint)||0,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
+  else{state.video.pause();setEditorPosition(state,state.video.currentTime,true);announce(`Paused at ${readableTime(state.cursor)}.`);}
 }
 async function auditionAround(before=1,after=1,quiet=false){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
@@ -306,7 +311,7 @@ function movePlayhead(amount,label="Playhead"){const location=activeLocation(),s
 function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.2,true);}
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);setEditorPosition(state,end?Number(location.item.duration):0,true);announce(`${editorTitle(location.item,location.type)}. ${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
 function setPoint(which){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const item=location.item,point=state.cursor,start=Number(item.inPoint)||0,end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(which==="in"&&point>=end)return announce("In must precede Out.",true);if(which==="out"&&point<=start)return announce("Out must follow In.",true);rememberChange(updateLocated(item.id,which==="in"?{inPoint:point}:{outPoint:point}),`${which==="in"?"In":"Out"} mark set to ${readableTime(point)}.`);}
-function setTrackTarget(target){const location=activeLocation();if(!location)return announce("Activate a media editor first.",true);if(location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");rememberChange(updateLocated(location.item.id,{trackTarget:target}),`${editorTitle(location.item,location.type)}. ${targetText(target)} targeted.`);}
+function setTrackTarget(target){const location=activeLocation();if(!location)return announce("Activate a media editor first.",true);if(location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");rememberChange(updateLocated(location.item.id,{trackTarget:target}),`${targetText(target)} targeted.`);}
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto");if(!state||!location||!Number.isFinite(point)||point>Number(location.item.duration))return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move between In and Out before splitting.",true);selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
@@ -322,9 +327,9 @@ const actions={
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
   jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
-  focusPlayhead:()=>{const state=activeState(),location=activeLocation();if(!state||!location)return announce("No media editor active.");state.slider.focus();announce(`${editorTitle(location.item,location.type)} playhead ${readableTime(state.cursor)}.`);},
+  focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.4.2. Silent audio scrubbing and a dedicated editor for every media item.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.4.3. Quiet interaction mode and a dedicated editor for every media item.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

@@ -2,9 +2,16 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.4.2
+## Build 0.4.3
 
-Build 0.4.2 makes U/I scrubbing silent so screen-reader speech does not cover the media sample. It also retains the dedicated editor introduced for every playable Primary and Source item.
+Build 0.4.3 introduces quiet interaction behavior throughout the editor. It also fixes an Out-mark loop that could repeat the same JAWS announcement continuously.
+
+- Reaching the Out mark now pauses and announces once.
+- Primary and Source list options use short role, media type, and filename labels.
+- Moving between editor sections no longer adds a redundant live-region announcement after JAWS identifies the region.
+- Activating a media item no longer repeats its full title, target, and playhead.
+- Play announces only `Playing` and pause announces only the time.
+- Track-target changes announce only the new target.
 
 - The first opened file becomes Primary Media.
 - Additional files become Source Media and are excluded from output until inserted.
