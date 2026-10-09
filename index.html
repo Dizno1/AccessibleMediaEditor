@@ -36,7 +36,6 @@
           <button type="button" id="add-text-button">Add Text</button>
           <button type="button" id="move-earlier-button" disabled>Move Earlier (Ctrl+Up)</button>
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
-          <button type="button" id="properties-button" disabled>Properties (Alt+Enter)</button>
           <button type="button" id="remove-item-button" disabled>Remove Item (Delete)</button>
         </div>
       </section>
@@ -50,19 +49,18 @@
         <div class="button-row">
           <button type="button" id="preview-button" disabled>Preview from Selected Item (Ctrl+P)</button>
           <button type="button" id="stop-button" disabled>Stop (Escape)</button>
-          <button type="button" id="set-in-button" disabled>Set In (I)</button>
-          <button type="button" id="set-out-button" disabled>Set Out (O)</button>
-          <button type="button" id="go-to-time-button" disabled>Go to Time (Ctrl+G)</button>
-          <button type="button" id="split-button" disabled>Split at Playhead (Ctrl+K)</button>
         </div>
       </section>
 
       <section class="editor-section edit-panel" id="edit-section" aria-labelledby="edit-section-heading" tabindex="-1">
         <h2 id="edit-section-heading">Edit</h2>
-        <p>Set exact In and Out points, nudge the playhead by one millisecond, or split the selected media without changing the original file.</p>
+        <p>Scrub with U and I, set marks with left bracket and right bracket, enter an exact time, or split without changing the original file.</p>
         <div class="button-row">
-          <button type="button" id="edit-properties-button" disabled>Exact Times and Properties (Alt+Enter)</button>
-          <button type="button" id="edit-split-button" disabled>Split at Playhead (Ctrl+K)</button>
+          <button type="button" id="set-in-button" disabled>Set In Mark (Left Bracket)</button>
+          <button type="button" id="set-out-button" disabled>Set Out Mark (Right Bracket)</button>
+          <button type="button" id="go-to-time-button" disabled>Go to Time (Ctrl+G)</button>
+          <button type="button" id="properties-button" disabled>Exact Times and Properties (Alt+Enter)</button>
+          <button type="button" id="split-button" disabled>Split at Playhead (Ctrl+K)</button>
         </div>
       </section>
 
@@ -152,8 +150,15 @@
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
         <li>Ctrl+P: Preview from Selected Item.</li><li>Escape: Stop or close a dialog.</li>
-        <li>I: Set In point at the playhead.</li><li>O: Set Out point at the playhead.</li>
-        <li>Alt+Left or Alt+Right: Nudge the playhead by 0.001 second.</li>
+        <li>U or I: Scrub backward or forward 1 second.</li>
+        <li>Shift+U or Shift+I: Scrub backward or forward 100 milliseconds.</li>
+        <li>Ctrl+Shift+U or Ctrl+Shift+I: Scrub backward or forward 10 milliseconds.</li>
+        <li>Left bracket or Right bracket: Set the In or Out mark.</li>
+        <li>Left or Right Arrow: Move backward or forward 5 seconds.</li>
+        <li>Shift+Left or Shift+Right: Move backward or forward 30 seconds.</li>
+        <li>J or L: Move backward or forward 5 minutes.</li>
+        <li>Alt+Left or Alt+Right: Move by 1 millisecond.</li>
+        <li>Home or End: Move to the beginning or end.</li>
         <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
       </ul>
@@ -167,8 +172,8 @@
       <p><strong>Moving through the editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media, Playback, Edit, and Output. Then use Tab within that section.</p>
       <p><strong>Selecting media:</strong> With the Virtual Cursor on, navigate to Open media and position JAWS inside the list box. Then press Insert+Z to turn the Virtual Cursor off. Use plain Up Arrow and Down Arrow to select different items.</p>
       <p><strong>Rearranging media:</strong> With focus inside Open media and the Virtual Cursor off, use Ctrl+Up Arrow and Ctrl+Down Arrow. These move the selected item; they do not select another item.</p>
-      <p><strong>Using the playhead:</strong> Position JAWS on the Playhead slider and turn the Virtual Cursor off. Use Arrow keys to move it. Alt+Left Arrow and Alt+Right Arrow move by one millisecond.</p>
-      <p><strong>Setting edit points:</strong> With the Virtual Cursor off, press I for the In point or O for the Out point. Ctrl+G opens human-readable exact-time fields. Ctrl+K splits at the playhead.</p>
+      <p><strong>Using the playhead:</strong> With the Virtual Cursor off, use U and I to scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds. Left and Right Arrow move by 5 seconds. Shift+Left and Shift+Right move by 30 seconds. Alt+Left and Alt+Right move by one millisecond.</p>
+      <p><strong>Setting edit points:</strong> With the Virtual Cursor off, press left bracket for the In mark or right bracket for the Out mark. Ctrl+G opens human-readable exact-time fields. Ctrl+K splits at the playhead.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
       <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>
       <p>This build previews and trims one selected item at a time. It does not yet play or export the complete project.</p>

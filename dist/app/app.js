@@ -12,6 +12,7 @@ let redoStack = [];
 let soundCues = localStorage.getItem("ame-sound-cues") === "on";
 let loadedPreviewId = null;
 let outPointAnnouncedForId = null;
+let lastNativeTitle = "";
 const sectionIds = ["media-section", "playback-section", "edit-section", "output-section"];
 let activeSectionIndex = 0;
 
@@ -93,14 +94,12 @@ function render({focusList = false} = {}) {
     el["project-items"].value = selectedId;
   }
   const item = selectedItem(); const index = selectedIndex();
-  el["selected-item-summary"].textContent = item ? itemSummary(item, index) : "No project item selected.";
+  el["selected-item-summary"].textContent = item ? itemSummary(item, index) : "No media selected.";
   el["move-earlier-button"].disabled = !item || index === 0;
   el["move-later-button"].disabled = !item || index === project.items.length - 1;
   el["properties-button"].disabled = !item;
-  el["edit-properties-button"].disabled = !item;
   el["remove-item-button"].disabled = !item;
   el["preview-button"].disabled = !item || !["Video","Audio"].includes(item.kind);
-  el["edit-split-button"].disabled = !item || !["Video","Audio"].includes(item.kind);
   syncPreview(item);
   const sourceDuration = Number(item?.duration)||0; const total = duration(project); el.playhead.max = String(Math.max(sourceDuration, 0)); el.playhead.value = String(Math.min(Number(el.playhead.value) || Number(item?.inPoint)||0, sourceDuration));
   el.playhead.setAttribute("aria-valuetext", readableTime(Number(el.playhead.value)));
@@ -109,7 +108,12 @@ function render({focusList = false} = {}) {
   el["project-heading"].textContent = workingName;
   el["project-summary"].textContent = project.items.length ? `${project.items.length} media ${project.items.length === 1 ? "item" : "items"}. ${project.path ? (project.dirty ? "Project has unsaved changes." : "Project saved.") : "No project required."}` : "No media open. Press Ctrl+O to begin.";
   el["output-summary"].textContent = project.items.length ? `Ready to save this session as an optional project. Total duration ${readableTime(total)}.` : "Open media to begin editing. Project creation is optional from the File menu.";
-  document.title = `${project.dirty ? "* " : ""}${workingName}${workingName === "Accessible Media Editor" ? "" : " - Accessible Media Editor"}`;
+  const windowTitle = `${project.dirty ? "* " : ""}${workingName}${workingName === "Accessible Media Editor" ? "" : " - Accessible Media Editor"}`;
+  document.title = windowTitle;
+  if (invoke && windowTitle !== lastNativeTitle) {
+    lastNativeTitle = windowTitle;
+    invoke("set_window_title", {title: windowTitle}).catch(() => {});
+  }
   if (focusList && project.items.length) { el["project-items"].focus(); el["project-items"].value = previous || selectedId; }
 }
 
@@ -156,10 +160,10 @@ async function saveProject(saveAs = false) {
   } catch (error) { announce(`Project could not be saved. ${error}`, true); }
 }
 
-function move(direction) { const item=selectedItem(); if (!item) return announce("No project item selected.",true); const next=moveItem(project,item.id,direction); if (next===project) return announce(direction<0?"The selected item is already first.":"The selected item is already last."); change(next,`${item.label || item.name} moved ${direction<0?"earlier":"later"} to item ${selectedIndex()+1+direction}.`); cue("move"); }
-function removeSelected() { const item=selectedItem(); if (!item) return announce("No project item selected.",true); const index=selectedIndex(); const previous=project; project = removeItem(project,item.id); selectedId=project.items[Math.min(index,project.items.length-1)]?.id || null; undoStack.push(previous); redoStack=[]; render({focusList:true}); announce(`${item.label || item.name} removed. ${project.items.length} project items remain.`); cue("remove"); }
+function move(direction) { const item=selectedItem(); if (!item) return announce("No media selected.",true); const next=moveItem(project,item.id,direction); if (next===project) return announce(direction<0?"The selected item is already first.":"The selected item is already last."); change(next,`${item.label || item.name} moved ${direction<0?"earlier":"later"} to item ${selectedIndex()+1+direction}.`); cue("move"); }
+function removeSelected() { const item=selectedItem(); if (!item) return announce("No media selected.",true); const index=selectedIndex(); const previous=project; project = removeItem(project,item.id); selectedId=project.items[Math.min(index,project.items.length-1)]?.id || null; undoStack.push(previous); redoStack=[]; render({focusList:true}); announce(`${item.label || item.name} removed. ${project.items.length} media items remain.`); cue("remove"); }
 
-function showProperties() { const item=selectedItem(); if (!item) return announce("No project item selected.",true); const media=["Video","Audio"].includes(item.kind); el["properties-name"].textContent=`${item.kind}: ${item.name}`; el["item-label"].value=item.label || item.name; el["item-duration"].value=item.duration ?? ""; el["item-duration"].readOnly=media; el["trim-fields"].hidden=!media; writeTime("item-in",Number(item.inPoint)||0); writeTime("item-out",item.outPoint == null ? Number(item.duration)||0 : Number(item.outPoint)); el["properties-dialog"].showModal(); el["item-label"].focus(); }
+function showProperties() { const item=selectedItem(); if (!item) return announce("No media selected.",true); const media=["Video","Audio"].includes(item.kind); el["properties-name"].textContent=`${item.kind}: ${item.name}`; el["item-label"].value=item.label || item.name; el["item-duration"].value=item.duration ?? ""; el["item-duration"].readOnly=media; el["trim-fields"].hidden=!media; writeTime("item-in",Number(item.inPoint)||0); writeTime("item-out",item.outPoint == null ? Number(item.duration)||0 : Number(item.outPoint)); el["properties-dialog"].showModal(); el["item-label"].focus(); }
 function saveProperties() { const item=selectedItem(); if (!item) return; const value=Number(el["item-duration"].value); const media=["Video","Audio"].includes(item.kind); if (!media && (!Number.isFinite(value)||value<0.001)) return announce("Enter a duration of at least 0.001 second.",true); const start=readTime("item-in"); const end=readTime("item-out"); if(media && (!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>value)) return announce("Enter valid time fields. The Out point must be after the In point and within the source duration.",true); const patch={label:el["item-label"].value.trim()||item.name,duration:Number.isFinite(value)&&value>0?value:null}; if(media){patch.inPoint=start;patch.outPoint=end;} const next=updateItem(project,item.id,patch); el["properties-dialog"].close(); change(next,"Item properties saved."); }
 function showTextDialog() { el["text-content"].value=""; el["text-duration"].value="5"; el["text-dialog"].showModal(); el["text-content"].focus(); }
 function saveText() { const text=el["text-content"].value.trim(); const seconds=Number(el["text-duration"].value); if(!text) return announce("Enter the text to add.",true); if(!Number.isFinite(seconds)||seconds<0.1) return announce("Enter a duration of at least 0.1 seconds.",true); const after=selectedId; const item={id:id(),source:null,name:text.split(/\s+/).slice(0,6).join(" "),label:text.split(/\s+/).slice(0,6).join(" "),kind:"Text",text,duration:seconds}; selectedId=item.id; el["text-dialog"].close(); change(addItem(project,item,after),"Text item added."); cue("add"); }
@@ -168,13 +172,30 @@ function undo() { if(!undoStack.length) return announce("Nothing to undo."); red
 function redo() { if(!redoStack.length) return announce("Nothing to redo."); undoStack.push(project); project=redoStack.pop(); selectedId=project.items[0]?.id||null; render({focusList:true}); announce("Redo completed."); }
 
 function setPoint(which){const item=selectedItem();if(!item||!["Video","Audio"].includes(item.kind)||!item.duration)return announce("Select a loaded video or audio item first.",true);const point=Number(el.playhead.value);const start=Number(item.inPoint)||0;const end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(which==="in"&&point>=end)return announce("The In point must be before the Out point.",true);if(which==="out"&&point<=start)return announce("The Out point must be after the In point.",true);change(updateItem(project,item.id,which==="in"?{inPoint:point}:{outPoint:point}),`${which==="in"?"In":"Out"} point set to ${readableTime(point)}.`,false);}
-function nudge(amount){const item=selectedItem();const max=Number(item?.duration)||0;el.playhead.value=String(Math.max(0,Math.min(max,Number(el.playhead.value)+amount)));el["media-preview"].currentTime=Number(el.playhead.value);updatePlayhead();announce(`Playhead ${readableTime(Number(el.playhead.value))}.`);}
+function movePlayhead(amount, description="Playhead"){
+  const item=selectedItem();
+  if(!item||!["Video","Audio"].includes(item.kind)||!item.duration)return announce("Select a loaded video or audio item first.",true);
+  const max=Number(item.duration)||0;
+  const point=Math.max(0,Math.min(max,Number(el.playhead.value)+amount));
+  el.playhead.value=String(point);
+  el["media-preview"].currentTime=point;
+  outPointAnnouncedForId=null;
+  updatePlayhead(true);
+  announce(`${description} ${readableTime(point)}.`);
+}
+function jumpPlayhead(toEnd=false){
+  const item=selectedItem();
+  if(!item||!["Video","Audio"].includes(item.kind)||!item.duration)return announce("Select a loaded video or audio item first.",true);
+  const point=toEnd?Number(item.duration):0;
+  el.playhead.value=String(point);el["media-preview"].currentTime=point;outPointAnnouncedForId=null;updatePlayhead(true);
+  announce(`${toEnd?"End":"Beginning"}. ${readableTime(point)}.`);
+}
 function showGoToTime(){const item=selectedItem();if(!item||!["Video","Audio"].includes(item.kind)||!item.duration)return announce("Select a loaded video or audio item first.",true);writeTime("goto",Number(el.playhead.value));el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const item=selectedItem();const point=readTime("goto");if(!Number.isFinite(point)||point>Number(item?.duration))return announce("Enter a valid time within the selected media item.",true);el["go-to-time-dialog"].close();el.playhead.value=String(point);el["media-preview"].currentTime=point;updatePlayhead();el.playhead.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const item=selectedItem();if(!item)return announce("No media item selected.",true);const point=Number(el.playhead.value);const next=splitItem(project,item.id,point,id());if(next===project)return announce("Move the playhead between the selected item's In and Out points before splitting.",true);const second=next.items[selectedIndex()+1];selectedId=second.id;change(next,`${item.label||item.name} split at ${readableTime(point)}. Part 2 selected.`);cue("add");}
-function updatePlayhead(){const item=selectedItem();el.playhead.setAttribute("aria-valuetext",readableTime(Number(el.playhead.value)));el["playhead-position"].textContent=`Position ${readableTime(Number(el.playhead.value))}. Selected media duration ${readableTime(item?itemDuration(item):0)}. Total duration ${readableTime(duration(project))}.`;}
+function updatePlayhead(exposeToScreenReader=true){const item=selectedItem();if(exposeToScreenReader)el.playhead.setAttribute("aria-valuetext",readableTime(Number(el.playhead.value)));el["playhead-position"].textContent=`Position ${readableTime(Number(el.playhead.value))}. Selected media duration ${readableTime(item?itemDuration(item):0)}. Total duration ${readableTime(duration(project))}.`;}
 async function preview(){const item=selectedItem();if(!item||!["Video","Audio"].includes(item.kind))return announce("Select a video or audio item to preview.",true);const start=Math.max(Number(item.inPoint)||0,Number(el.playhead.value)||0);const end=item.outPoint==null?Number(item.duration):Number(item.outPoint);el["media-preview"].currentTime=start>=end?Number(item.inPoint)||0:start;try{await el["media-preview"].play();announce(`Previewing ${item.label||item.name} from ${readableTime(el["media-preview"].currentTime)}.`);}catch(error){announce(`This media format could not be previewed by the Windows media engine. ${error}`,true);}}
-const actions={newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(`Projects folder could not be opened. ${error}`,true);}},addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,removeItem:removeSelected,split:splitSelected,undo,redo,preview,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,nudgeBack:()=>nudge(-0.001),nudgeForward:()=>nudge(0.001),stop:()=>{if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else{el["media-preview"].pause();announce("Playback is stopped.");}},focusProjectItems:()=>{el["project-items"].focus();announce("Open media list. With JAWS focus inside this list, turn the Virtual Cursor off. Use plain Arrow keys to select; use Ctrl plus Arrow keys to move an item.");},focusPlayhead:()=>{el.playhead.focus();announce(el["playhead-position"].textContent);},showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);if(soundCues)cue("add");},showAbout:()=>announce("Accessible Media Editor Build 0.3.0. Open Door Design. Direct editing first, with optional projects.")};
+const actions={newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(`Projects folder could not be opened. ${error}`,true);}},addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,removeItem:removeSelected,split:splitSelected,undo,redo,preview,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,scrubBack1:()=>movePlayhead(-1,"Scrubbed to"),scrubForward1:()=>movePlayhead(1,"Scrubbed to"),scrubBack100ms:()=>movePlayhead(-0.1,"Scrubbed to"),scrubForward100ms:()=>movePlayhead(0.1,"Scrubbed to"),scrubBack10ms:()=>movePlayhead(-0.01,"Scrubbed to"),scrubForward10ms:()=>movePlayhead(0.01,"Scrubbed to"),moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),stop:()=>{if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else{el["media-preview"].pause();updatePlayhead(true);announce(`Playback stopped at ${readableTime(Number(el.playhead.value))}.`);}},focusProjectItems:()=>{el["project-items"].focus();announce("Open media list. With JAWS focus inside this list, turn the Virtual Cursor off. Use plain Arrow keys to select; use Ctrl plus Arrow keys to move an item.");},focusPlayhead:()=>{updatePlayhead(true);el.playhead.focus();announce(el["playhead-position"].textContent);},showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);if(soundCues)cue("add");},showAbout:()=>announce("Accessible Media Editor Build 0.3.1. Open Door Design. Direct editing first, with optional projects.")};
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler)); initShortcuts();
 
 el["project-items"].addEventListener("change",()=>{selectedId=el["project-items"].value||null;render();});
@@ -185,14 +206,13 @@ el["preview-button"].addEventListener("click",()=>triggerAction("preview")); el[
 el["set-in-button"].addEventListener("click",()=>triggerAction("setIn")); el["set-out-button"].addEventListener("click",()=>triggerAction("setOut"));
 el["go-to-time-button"].addEventListener("click",()=>triggerAction("goToTime")); el["go-to-time-confirm"].addEventListener("click",confirmGoToTime); el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 el["split-button"].addEventListener("click",()=>triggerAction("split"));
-el["edit-properties-button"].addEventListener("click",()=>triggerAction("properties")); el["edit-split-button"].addEventListener("click",()=>triggerAction("split"));
 el["save-project-button"].addEventListener("click",()=>triggerAction("saveProjectAs"));
 document.querySelectorAll(".section-tab").forEach(button=>button.addEventListener("click",()=>activateSection(button.dataset.section)));
 el["save-properties-button"].addEventListener("click",saveProperties); el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());
 el["save-text-button"].addEventListener("click",saveText); el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el.playhead.addEventListener("input",()=>{outPointAnnouncedForId=null;el["media-preview"].currentTime=Number(el.playhead.value);updatePlayhead();});
 el["media-preview"].addEventListener("loadedmetadata",()=>{const item=selectedItem();if(!item||loadedPreviewId!==item.id||!Number.isFinite(el["media-preview"].duration))return;if(!item.duration){project=updateItem(project,item.id,{duration:el["media-preview"].duration,outPoint:el["media-preview"].duration});render();announce(`${item.name} loaded. Duration ${readableTime(el["media-preview"].duration)}.`);}});
-el["media-preview"].addEventListener("timeupdate",()=>{const item=selectedItem();if(!item)return;const end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(el["media-preview"].currentTime>=end){el["media-preview"].pause();if(Math.abs(el["media-preview"].currentTime-end)>0.0005)el["media-preview"].currentTime=end;if(outPointAnnouncedForId!==item.id){outPointAnnouncedForId=item.id;announce("Out point reached. Playback stopped.");}}else{outPointAnnouncedForId=null;}el.playhead.value=String(el["media-preview"].currentTime);updatePlayhead();});
+el["media-preview"].addEventListener("timeupdate",()=>{const item=selectedItem();if(!item)return;const end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(el["media-preview"].currentTime>=end){el["media-preview"].pause();if(Math.abs(el["media-preview"].currentTime-end)>0.0005)el["media-preview"].currentTime=end;el.playhead.value=String(end);updatePlayhead(true);if(outPointAnnouncedForId!==item.id){outPointAnnouncedForId=item.id;announce("Out mark reached. Playback stopped.");}}else{outPointAnnouncedForId=null;el.playhead.value=String(el["media-preview"].currentTime);updatePlayhead(false);}});
 el["media-preview"].addEventListener("error",()=>announce("This file was imported, but the Windows preview engine could not decode it. FFmpeg compatibility is planned for the export engine.",true));
 
 if(listen) listen("menu-action",event=>triggerAction(event.payload));

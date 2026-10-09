@@ -1,13 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Accessible Media Editor",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "identifier": "org.opendoordesign.accessiblemediaeditor",
   "build": { "frontendDist": "../dist", "devUrl": null, "beforeDevCommand": "node scripts/prepare-dist.js", "beforeBuildCommand": "node scripts/prepare-dist.js" },
   "app": {
     "windows": [{
       "label": "main",
-      "title": "Untitled Project - Accessible Media Editor",
+      "title": "Accessible Media Editor",
       "width": 1100,
       "height": 760,
       "minWidth": 720,

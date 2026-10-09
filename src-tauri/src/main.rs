@@ -54,6 +54,11 @@ fn open_projects_folder() -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), String> {
+    window.set_title(&title).map_err(|error| error.to_string())
+}
+
 fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::menu::MenuItem<tauri::Wry>> {
     MenuItemBuilder::new(label).id(id).build(app)
 }
@@ -72,10 +77,18 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).separator()
-        .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set In Point I","setIn")?).item(&item(app,"Set Out Point O","setOut")?).separator()
+        .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set In Mark Left Bracket","setIn")?).item(&item(app,"Set Out Mark Right Bracket","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")
-        .item(&item(app,"Preview from Selected Item Ctrl+P","preview")?).item(&item(app,"Stop Escape","stop")?).build()?;
+        .item(&item(app,"Preview from Selected Item Ctrl+P","preview")?).item(&item(app,"Stop Escape","stop")?).separator()
+        .item(&item(app,"Scrub Back 1 Second U","scrubBack1")?).item(&item(app,"Scrub Forward 1 Second I","scrubForward1")?)
+        .item(&item(app,"Scrub Back 100 Milliseconds Shift+U","scrubBack100ms")?).item(&item(app,"Scrub Forward 100 Milliseconds Shift+I","scrubForward100ms")?)
+        .item(&item(app,"Scrub Back 10 Milliseconds Ctrl+Shift+U","scrubBack10ms")?).item(&item(app,"Scrub Forward 10 Milliseconds Ctrl+Shift+I","scrubForward10ms")?)
+        .separator().item(&item(app,"Move Back 5 Seconds Left Arrow","moveBack5")?).item(&item(app,"Move Forward 5 Seconds Right Arrow","moveForward5")?)
+        .item(&item(app,"Move Back 30 Seconds Shift+Left","moveBack30")?).item(&item(app,"Move Forward 30 Seconds Shift+Right","moveForward30")?)
+        .item(&item(app,"Move Back 5 Minutes J","moveBack300")?).item(&item(app,"Move Forward 5 Minutes L","moveForward300")?)
+        .item(&item(app,"Move Back 1 Millisecond Alt+Left","nudgeBack")?).item(&item(app,"Move Forward 1 Millisecond Alt+Right","nudgeForward")?)
+        .item(&item(app,"Jump to Beginning Home","jumpBeginning")?).item(&item(app,"Jump to End End","jumpEnd")?).build()?;
     let navigate = SubmenuBuilder::new(app, "Navigate")
         .item(&item(app,"Previous Section Ctrl+Page Up","previousSection")?).item(&item(app,"Next Section Ctrl+Page Down","nextSection")?)
         .separator().item(&item(app,"Open Media List","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
@@ -98,7 +111,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,open_projects_folder])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,open_projects_folder,set_window_title])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

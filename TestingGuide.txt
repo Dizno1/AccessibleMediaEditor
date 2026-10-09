@@ -1,8 +1,8 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.3.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.3.1 TESTING GUIDE
 
 PURPOSE OF THIS BUILD
 
-Build 0.3.0 changes the application from project-first to direct-edit-first. A user can open one media file, edit it, and work without first creating a project. Projects remain available when several items need to be arranged and saved together.
+Build 0.3.1 uses a direct-edit-first workflow, repairs the native window title, reduces playhead announcement noise, and adopts the shared Open Door editing shortcuts. Projects remain optional.
 
 FIRST TEST
 
@@ -13,6 +13,7 @@ FIRST TEST
 5. Confirm that focus moves through Media, Playback, Edit, and Output, then returns to Media.
 6. Within each section, press Tab to move through its controls.
 7. Confirm that durations are announced as hours, minutes, seconds, and milliseconds rather than decimal seconds.
+8. Start playback while focus remains on the playhead. Confirm that JAWS does not announce every automatic time update.
 
 MULTIPLE MEDIA TEST
 
@@ -26,9 +27,16 @@ PRECISE EDITING
 
 - Ctrl+P previews the selected video or audio.
 - Escape stops playback or closes an editing dialog.
-- I sets the In point.
-- O sets the Out point.
-- Alt+Left Arrow and Alt+Right Arrow move the playhead by one millisecond.
+- U and I scrub backward and forward by one second.
+- Shift+U and Shift+I scrub by 100 milliseconds.
+- Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.
+- Left bracket sets the In mark.
+- Right bracket sets the Out mark.
+- Left Arrow and Right Arrow move by five seconds.
+- Shift+Left Arrow and Shift+Right Arrow move by 30 seconds.
+- J and L move by five minutes.
+- Alt+Left Arrow and Alt+Right Arrow move by one millisecond.
+- Home and End move to the beginning and end.
 - Ctrl+G opens separately labeled Hours, Minutes, Seconds, and Milliseconds fields.
 - Ctrl+K splits at the playhead.
 - Alt+Enter opens exact times and item properties.

@@ -2,9 +2,11 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for precise media editing and optional multimedia authoring.
 
-## Build 0.3.0
+## Build 0.3.1
 
 This build introduces the direct-edit-first application structure.
+
+Build 0.3.1 corrects native window titles, quiets automatic playhead announcements, removes duplicate editing controls, and adopts the shared Open Door editing shortcuts.
 
 - Open Media is the starting action. Creating a project is not required.
 - Ctrl+O opens one or several audio, video, or image files.
@@ -14,6 +16,10 @@ This build introduces the direct-edit-first application structure.
 - Tab moves through the controls inside the active section.
 - All displayed and announced durations use human-readable hours, minutes, seconds, and milliseconds.
 - Existing millisecond-precision In, Out, nudge, split, preview, and multi-file features are preserved.
+- U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds.
+- Left bracket and right bracket set the In and Out marks.
+- Left and Right Arrow move by 5 seconds. Shift+Left and Shift+Right move by 30 seconds. J and L move by 5 minutes.
+- Alt+Left and Alt+Right retain one-millisecond precision. Home and End jump to the beginning and end.
 - Project commands remain available in the File menu. Ctrl+Shift+O opens a project.
 - Export Edited Media is present but disabled until the rendering engine is implemented.
 
