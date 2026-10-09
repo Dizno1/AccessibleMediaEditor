@@ -27,6 +27,7 @@ export function initShortcuts() {
   window.addEventListener("keydown", event => {
     if (editable(event.target) && event.key !== "Escape") return;
     const key = event.key.toLowerCase();
+    if (event.repeat && ["x"," ","[","]"].includes(key)) return;
     if (key === " " && spaceActivatesControl(event.target)) return;
     if (event.target?.getAttribute?.("role") === "tab" && ["arrowleft","arrowright","home","end"].includes(key)) return;
     const match = shortcuts.find(([, c]) => key === c.key && !!event.ctrlKey === !!c.ctrl && !!event.altKey === !!c.alt && !!event.shiftKey === !!c.shift);

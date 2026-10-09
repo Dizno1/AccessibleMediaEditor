@@ -1,8 +1,8 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.4.3 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.4.4 TESTING GUIDE
 
 PURPOSE
 
-Build 0.4.3 stops repeated and unnecessarily long JAWS announcements. It also prevents speech from covering U/I scrub audio and retains a separate editor for every playable Primary and Source item.
+Build 0.4.4 stops expected AbortError speech during rapid scrubbing and removes filenames from all routine transport feedback. It retains the quiet-interaction corrections and separate editor for every playable Primary and Source item.
 
 QUIET INTERACTION TEST
 
@@ -12,6 +12,8 @@ QUIET INTERACTION TEST
 4. Confirm JAWS identifies each region only once without a second application announcement.
 5. Press X to play and pause. Confirm the application says only Playing or Paused followed by the time.
 6. Set an Out mark, play toward it, and confirm Out mark reached is announced only once.
+7. Press U or I rapidly and confirm no AbortError is announced and each new command replaces the previous scrub sample cleanly.
+8. Use Space, Home, End, and the movement keys. Confirm their feedback does not repeat the active filename.
 
 PRIMARY AND SOURCE TEST
 

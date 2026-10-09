@@ -2,9 +2,16 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.4.3
+## Build 0.4.4
 
-Build 0.4.3 introduces quiet interaction behavior throughout the editor. It also fixes an Out-mark loop that could repeat the same JAWS announcement continuously.
+Build 0.4.4 completes the quiet transport correction and makes rapid scrubbing reliable.
+
+- Expected AbortError messages from rapidly interrupted scrub samples are suppressed.
+- A superseded scrub operation can no longer cancel the newer scrub sample.
+- Space audition, Home, End, and playhead movement no longer repeat the active filename.
+- Held X, Space, or bracket keys do not fire repeatedly.
+
+Build 0.4.3 introduced quiet interaction behavior throughout the editor and fixed an Out-mark loop that could repeat the same JAWS announcement continuously.
 
 - Reaching the Out mark now pauses and announces once.
 - Primary and Source list options use short role, media type, and filename labels.
