@@ -1,8 +1,8 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.4.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.4.2 TESTING GUIDE
 
 PURPOSE
 
-Build 0.4.1 gives every playable Primary and Source media item a separate, titled editor with its own preview player, playhead slider, position, marks, and controls.
+Build 0.4.2 prevents JAWS announcements from covering U/I scrub audio. It also gives every playable Primary and Source media item a separate, titled editor with its own preview player, playhead slider, position, marks, and controls.
 
 PRIMARY AND SOURCE TEST
 
@@ -36,9 +36,10 @@ SCRUB, MARK, AND TARGET TEST
 1. Press U and I to scrub backward and forward by one second.
 2. Press Shift+U and Shift+I to scrub by 100 milliseconds.
 3. Press Ctrl+Shift+U and Ctrl+Shift+I to scrub by 10 milliseconds.
-4. Press left bracket to set the In mark and right bracket to set the Out mark.
-5. Press B, V, and A in a video editor and confirm Both, Video only, and Audio only announcements.
-6. Press Ctrl+G and enter Hours, Minutes, Seconds, and Milliseconds for an exact playhead position.
+4. Confirm that JAWS does not speak a filename, timestamp, or audition-complete message during any U/I scrub. The short media sample should remain audible.
+5. Press left bracket to set the In mark and right bracket to set the Out mark.
+6. Press B, V, and A in a video editor and confirm Both, Video only, and Audio only announcements.
+7. Press Ctrl+G and enter Hours, Minutes, Seconds, and Milliseconds for an exact playhead position.
 
 INSERT SOURCE SELECTION TEST
 

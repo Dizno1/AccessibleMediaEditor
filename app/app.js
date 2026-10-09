@@ -176,7 +176,7 @@ function handleTimeUpdate(idValue){
   const state=editorStates.get(idValue),location=locateItem(idValue);if(!state||!location)return;
   if(state.audition){
     if(state.video.currentTime>=state.audition.end){
-      const point=state.audition.returnPoint;cancelAudition(state,false);setEditorPosition(state,point,true);announce(`Audition complete. ${editorTitle(location.item,location.type)} playhead returned to ${readableTime(point)}.`);return;
+      const point=state.audition.returnPoint,quiet=state.audition.quiet;cancelAudition(state,false);setEditorPosition(state,point,true);if(!quiet)announce(`Audition complete. ${editorTitle(location.item,location.type)} playhead returned to ${readableTime(point)}.`);return;
     }
   }else{
     const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);
@@ -299,11 +299,11 @@ async function togglePlayback(){
 async function auditionAround(before=1,after=1,quiet=false){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
   const point=state.cursor,lower=Number(location.item.inPoint)||0,upper=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint),start=Math.max(lower,point-before),end=Math.min(upper,point+after);
-  state.video.currentTime=start;const timer=setTimeout(()=>{if(state.audition){cancelAudition(state,true);announce(`Audition complete. ${editorTitle(location.item,location.type)} returned to ${readableTime(point)}.`);}},Math.max(300,(end-start)*1000+500));state.audition={returnPoint:point,end,timer};
+  state.video.currentTime=start;const timer=setTimeout(()=>{if(state.audition){cancelAudition(state,true);if(!quiet)announce(`Audition complete. ${editorTitle(location.item,location.type)} returned to ${readableTime(point)}.`);}},Math.max(300,(end-start)*1000+500));state.audition={returnPoint:point,end,timer,quiet};
   try{await state.video.play();if(!quiet)announce(`Auditioning ${editorTitle(location.item,location.type)} around ${readableTime(point)}.`);}catch(error){cancelAudition(state,true);announce(`Audition failed. ${error}`,true);}
 }
 function movePlayhead(amount,label="Playhead"){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);announce(`${editorTitle(location.item,location.type)}. ${label} ${readableTime(state.cursor)}.`);}
-function scrub(amount){movePlayhead(amount,"Scrubbed to");auditionAround(0,0.2,true);}
+function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.2,true);}
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);setEditorPosition(state,end?Number(location.item.duration):0,true);announce(`${editorTitle(location.item,location.type)}. ${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
 function setPoint(which){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const item=location.item,point=state.cursor,start=Number(item.inPoint)||0,end=item.outPoint==null?Number(item.duration):Number(item.outPoint);if(which==="in"&&point>=end)return announce("In must precede Out.",true);if(which==="out"&&point<=start)return announce("Out must follow In.",true);rememberChange(updateLocated(item.id,which==="in"?{inPoint:point}:{outPoint:point}),`${which==="in"?"In":"Out"} mark set to ${readableTime(point)}.`);}
 function setTrackTarget(target){const location=activeLocation();if(!location)return announce("Activate a media editor first.",true);if(location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");rememberChange(updateLocated(location.item.id,{trackTarget:target}),`${editorTitle(location.item,location.type)}. ${targetText(target)} targeted.`);}
@@ -324,7 +324,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState(),location=activeLocation();if(!state||!location)return announce("No media editor active.");state.slider.focus();announce(`${editorTitle(location.item,location.type)} playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.4.1. Dedicated editor and playhead for every media item.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.4.2. Silent audio scrubbing and a dedicated editor for every media item.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

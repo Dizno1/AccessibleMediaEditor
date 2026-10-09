@@ -2,9 +2,9 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.4.1
+## Build 0.4.2
 
-Build 0.4.1 gives every playable Primary and Source item its own editor.
+Build 0.4.2 makes U/I scrubbing silent so screen-reader speech does not cover the media sample. It also retains the dedicated editor introduced for every playable Primary and Source item.
 
 - The first opened file becomes Primary Media.
 - Additional files become Source Media and are excluded from output until inserted.
@@ -15,7 +15,7 @@ Build 0.4.1 gives every playable Primary and Source item its own editor.
 - Ctrl+Page Up and Ctrl+Page Down cycle through Media Library, every named media editor, and Output.
 - X plays or pauses the active editor from its current playhead.
 - Space auditions around that playhead and returns to the original position.
-- U and I scrub by 1 second; Shift+U/I by 100 milliseconds; Ctrl+Shift+U/I by 10 milliseconds.
+- U and I scrub by 1 second; Shift+U/I by 100 milliseconds; Ctrl+Shift+U/I by 10 milliseconds. These commands do not announce the filename, timestamp, or audition completion, allowing the media sample to be heard.
 - Left and right brackets set In and Out marks.
 - B, V, and A target both tracks, video only, or audio only.
 - A marked Source selection can be inserted at the Primary playhead or appended.
