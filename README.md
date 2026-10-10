@@ -2,6 +2,20 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.6.1
+
+Build 0.6.1 corrects the first 0.6.0 field-test findings and adds the conversion and output boundaries required for future composition.
+
+- Every imported video and audio file is normalized to an app-owned MP4 or M4A working copy before editing.
+- The original uploaded file and its name remain preserved in the project model.
+- WMV, MOV, WebM, iPhone media, and other FFmpeg-readable formats no longer depend on WebView2 preview support.
+- Source In and Out marks no longer restrict playback or navigation.
+- Home and End always move to the beginning and end of the complete Source file.
+- Ctrl+Z removes the most recently set uncommitted mark before undoing committed project changes.
+- Escape cancels all uncommitted marks in the active editor.
+- Ctrl+E opens a Save as type choice for MP4, MOV, WebM, M4A, MP3, or WAV.
+- Screen-reader visual positioning, layout description, and conflict detection requirements are now recorded in the roadmap for later composition builds.
+
 ## Build 0.6.0
 
 Build 0.6.0 replaces playback-boundary pretending with the first real editing engine.
@@ -45,7 +59,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.6.0 proves real editing and saving for one WebView2-playable Primary video or audio file. Automatic import normalization for WMV and other formats is next. Multi-item composition export and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.6.1 proves normalization, real editing, immediate review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

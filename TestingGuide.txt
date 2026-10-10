@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.6.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.6.1 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -57,17 +57,27 @@ QUIET INTERACTION TEST
 6. Confirm filenames are not repeated in routine transport announcements.
 7. Press U or I rapidly and confirm no AbortError is announced.
 
-UNSUPPORTED FORMAT TEST
+FORMAT CONVERSION TEST
 
 1. Open a WMV file.
-2. Confirm the application announces that WMV preview is not supported yet and conversion is required.
-3. Enter that Source editor.
-4. Confirm its unusable player, audition, and playhead controls are disabled.
+2. Confirm the application announces that it is converting the media and asks you to wait.
+3. Confirm Media ready or the normal loaded-duration message is announced after conversion.
+4. Enter the editor and confirm the WMV content now plays from its normalized working copy.
+5. Confirm the original WMV file remains unchanged.
+
+SOURCE MARK AND NAVIGATION TEST
+
+1. Open a second file as Source Media and enter its editor.
+2. Move several seconds forward and press Left Bracket.
+3. Press Home and confirm the playhead returns to 0 rather than the Selection Start.
+4. Press End and confirm the playhead moves to the full Source duration.
+5. Set another mark and press Ctrl+Z. Confirm the most recent uncommitted mark is removed.
+6. Set one or two marks and press Escape. Confirm all uncommitted marks are canceled.
 
 KNOWN LIMITS
 
-Automatic import conversion is not included yet. WMV still requires the next format-normalization stage.
+Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.6.0 creates and saves an edited working file for one Primary video or audio file. It does not yet render the complete multi-item Primary Sequence.
+Build 0.6.1 creates and saves an edited working file for one Primary video or audio file. It does not yet render the complete multi-item Primary Sequence.
 
 AudioStudio Pro recording and processing are not implemented in this build.

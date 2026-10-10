@@ -52,12 +52,24 @@ fn write_project(path: String, content: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn export_edited_media(window: tauri::WebviewWindow, source: String, suggested_name: String) -> Result<Option<String>, String> {
-    let extension = std::path::Path::new(&source).extension().and_then(|value| value.to_str()).unwrap_or("mp4");
+async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow, source: String, suggested_name: String, format: String) -> Result<Option<String>, String> {
+    let extension = match format.to_ascii_lowercase().as_str() { "mov" => "mov", "webm" => "webm", "mp3" => "mp3", "wav" => "wav", "m4a" => "m4a", _ => "mp4" };
     let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Edited Media").set_file_name(&suggested_name).add_filter("Edited media", &[extension]);
     if let Some(folder) = app_folder("Exports") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.save_file() else { return Ok(None); };
-    fs::copy(&source, &path).map_err(|error| error.to_string())?;
+    if extension == "mp4" { fs::copy(&source, &path).map_err(|error| error.to_string())?; }
+    else {
+        let output = path.to_string_lossy().into_owned();
+        let args: Vec<String> = match extension {
+            "mov" => vec!["-y".into(), "-i".into(), source, "-c".into(), "copy".into(), output],
+            "webm" => vec!["-y".into(), "-i".into(), source, "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
+            "mp3" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "libmp3lame".into(), "-q:a".into(), "2".into(), output],
+            "wav" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "pcm_s16le".into(), output],
+            "m4a" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output],
+            _ => unreachable!(),
+        };
+        run_ffmpeg(&app, args).await?;
+    }
     Ok(Some(path.to_string_lossy().into_owned()))
 }
 
@@ -94,25 +106,43 @@ async fn run_ffmpeg(app: &tauri::AppHandle, args: Vec<String>) -> Result<(), Str
     }
 }
 
-#[tauri::command]
-async fn render_working_edit(app: tauri::AppHandle, source: String, segments: Vec<EditSegment>, media_kind: String, item_id: String) -> Result<String, String> {
-    if segments.is_empty() { return Err("The edit contains no retained media.".into()); }
+fn safe_working_path(item_id: &str, extension: &str, purpose: &str) -> Result<std::path::PathBuf, String> {
     let folder = dirs::data_local_dir().ok_or("The local application data folder is unavailable.")?.join("Accessible Media Editor").join("Working");
     fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
     let safe_id: String = item_id.chars().filter(|character| character.is_ascii_alphanumeric() || *character == '-').collect();
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|error| error.to_string())?.as_millis();
+    Ok(folder.join(format!("{}-{}-{}.{}", if safe_id.is_empty() { "media" } else { &safe_id }, purpose, stamp, extension)))
+}
+
+#[tauri::command]
+async fn normalize_media(app: tauri::AppHandle, source: String, media_kind: String, item_id: String) -> Result<String, String> {
     let audio_only = media_kind.eq_ignore_ascii_case("audio");
-    let output_path = folder.join(format!("{}-{}.{}", if safe_id.is_empty() { "edit" } else { &safe_id }, stamp, if audio_only { "m4a" } else { "mp4" }));
+    let output_path = safe_working_path(&item_id, if audio_only { "m4a" } else { "mp4" }, "normalized")?;
+    let output_text = output_path.to_string_lossy().into_owned();
+    let args = if audio_only {
+        vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output_text.clone()]
+    } else {
+        vec!["-y".into(), "-i".into(), source, "-map".into(), "0:v:0".into(), "-map".into(), "0:a:0?".into(), "-vf".into(), "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=nv12".into(), "-c:v".into(), "h264_mf".into(), "-rate_control".into(), "quality".into(), "-quality".into(), "80".into(), "-hw_encoding".into(), "0".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-movflags".into(), "+faststart".into(), output_text.clone()]
+    };
+    run_ffmpeg(&app, args).await?;
+    Ok(output_text)
+}
+
+#[tauri::command]
+async fn render_working_edit(app: tauri::AppHandle, source: String, segments: Vec<EditSegment>, media_kind: String, item_id: String) -> Result<String, String> {
+    if segments.is_empty() { return Err("The edit contains no retained media.".into()); }
+    let audio_only = media_kind.eq_ignore_ascii_case("audio");
+    let output_path = safe_working_path(&item_id, if audio_only { "m4a" } else { "mp4" }, "edited")?;
     let output_text = output_path.to_string_lossy().into_owned();
     if audio_only {
         let filter = segment_filter(&segments, false, true);
         run_ffmpeg(&app, vec!["-y".into(), "-i".into(), source, "-filter_complex".into(), filter, "-map".into(), "[a]".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output_text.clone()]).await?;
     } else {
         let filter = segment_filter(&segments, true, true);
-        let args = vec!["-y".into(), "-i".into(), source.clone(), "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-map".into(), "[a]".into(), "-c:v".into(), "mpeg4".into(), "-q:v".into(), "2".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-movflags".into(), "+faststart".into(), output_text.clone()];
+        let args = vec!["-y".into(), "-i".into(), source.clone(), "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-map".into(), "[a]".into(), "-c:v".into(), "h264_mf".into(), "-pix_fmt".into(), "nv12".into(), "-rate_control".into(), "quality".into(), "-quality".into(), "80".into(), "-hw_encoding".into(), "0".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-movflags".into(), "+faststart".into(), output_text.clone()];
         if run_ffmpeg(&app, args).await.is_err() {
             let filter = segment_filter(&segments, true, false);
-            run_ffmpeg(&app, vec!["-y".into(), "-i".into(), source, "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-c:v".into(), "mpeg4".into(), "-q:v".into(), "2".into(), "-movflags".into(), "+faststart".into(), output_text.clone()]).await?;
+            run_ffmpeg(&app, vec!["-y".into(), "-i".into(), source, "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-c:v".into(), "h264_mf".into(), "-pix_fmt".into(), "nv12".into(), "-rate_control".into(), "quality".into(), "-quality".into(), "80".into(), "-hw_encoding".into(), "0".into(), "-movflags".into(), "+faststart".into(), output_text.clone()]).await?;
         }
     }
     Ok(output_text)
@@ -177,7 +207,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,render_working_edit])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,normalize_media,render_working_edit])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

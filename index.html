@@ -135,6 +135,26 @@
     </form>
   </dialog>
 
+  <dialog id="export-dialog" aria-labelledby="export-heading">
+    <form method="dialog">
+      <h2 id="export-heading">Save Edited Media</h2>
+      <p>The editor has already created and previewed the edited working media. Choose the format for the saved copy.</p>
+      <label for="export-format">Save as type</label>
+      <select id="export-format">
+        <option value="mp4">MP4 video</option>
+        <option value="mov">MOV video</option>
+        <option value="webm">WebM video</option>
+        <option value="m4a">M4A audio</option>
+        <option value="mp3">MP3 audio</option>
+        <option value="wav">WAV audio</option>
+      </select>
+      <div class="button-row">
+        <button type="button" id="export-confirm">Continue to Save</button>
+        <button type="button" id="export-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="text-dialog" aria-labelledby="text-heading">
     <form method="dialog">
       <h2 id="text-heading">Add Text Item</h2>
@@ -189,6 +209,7 @@
       <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
       <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
       <p><strong>Primary and Source Media:</strong> The first opened file becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted.</p>
+      <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>
       <p><strong>Dedicated media editors:</strong> Every playable Primary and Source item has its own titled editor section, preview player, playhead slider, position, marks, and controls.</p>
       <p><strong>Activating media:</strong> Arrow to an item in Primary Sequence or Source Media to activate it, or press Enter to move directly into its editor. Opening another source does not take control away from the Primary editor.</p>
       <p><strong>Playback:</strong> X plays or pauses continuously. Space auditions around the playhead and returns to the original position.</p>
@@ -196,6 +217,7 @@
       <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the Out mark announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Ctrl+G opens exact-time fields.</p>
+      <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
       <p><strong>Building the sequence:</strong> Mark a selection in Source Media, then use Insert Selection at Primary Playhead or Add Selection to End.</p>
       <p><strong>Committing an edit:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Press Ctrl+Delete to remove the marked selection. With only an Out mark, Ctrl+Delete removes everything after that mark. With only an In mark, it removes everything before that mark.</p>
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>

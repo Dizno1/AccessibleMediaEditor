@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.4 establishes the first ordered Project Items foundation. Users can add image, audio, and video assets from the media library, assign an image duration, move items earlier or later, remove items, save a project description, and reopen it. Multi-item preview and composition export remain the next development stage. The proven single-file editing and export workflow remains available during this transition.
+Accessible Media Editor build 0.6.1 establishes automatic working-media normalization, immediate nondestructive single-media editing, logical edited playback, Undo, and format-selectable saving. Users can also add image, audio, and video assets, maintain Primary and Source media, assign an image duration, move items, remove items, save a project description, and reopen it. Multi-item composition preview and export remain the next development stage after this media foundation is verified.
 
 ## Product purpose
 
@@ -138,6 +138,32 @@ The project model should include:
 - The interface must use native semantics and meaningful names, roles, states, headings, and status messages.
 - Instructions intended for the public should refer to screen readers rather than one specific product.
 - The editor should support focused keyboard operation without making the screen reader's browse mode the only way to reach important controls.
+
+## Screen-reader visual authoring
+
+Blind authors must be able to understand and control the visual canvas without treating the visual preview as the interface. This requirement applies to text overlays, separate title cards, still images with exact durations, transitions, captions, and future layered visual elements.
+
+Every visual element must expose:
+
+- Element type, text, or filename.
+- Start time, end time, and duration.
+- Horizontal position as a named preset and exact percentage.
+- Vertical position as a named preset and exact percentage.
+- Width, height, scale, and cropping.
+- Layer order and relationships to other elements.
+- Entrance and exit transitions.
+- Detected overlap with other inserted elements or underlying video content.
+- Whether any part extends beyond the visible frame.
+
+Required position presets include Top Left, Top Center, Top Right, Center, Bottom Left, Bottom Center, and Bottom Right. Exact positioning must also be available. Keyboard commands must support moving an element left, right, up, and down; changing its size; and moving it forward or backward in the layer order.
+
+The application must provide a Describe Current Frame action and a Check for Visual Conflicts action. Conflict checking should inspect the frames covered by the element and warn about likely overlap with faces, captions, existing text, dialog boxes, controls, cursor activity, other inserted elements, and high-detail or rapidly changing regions. The application may recommend a safer position, but it must not move the element without the user's permission.
+
+Example announcement:
+
+"Text overlay. Accessibility defect demonstrated. Begins at 00:00:12.000. Duration 8 seconds. Bottom center. Width 60 percent. In front of video. Possible overlap with existing captions."
+
+Title cards and still images must expose their complete layout, including background, text alignment, image scaling, cropping, and unused space. These capabilities belong on the composition roadmap after dependable media normalization, single-media editing, immediate edited review, Undo, and export-format selection are working.
 
 ## Useful work already present in the supplied prototype
 
