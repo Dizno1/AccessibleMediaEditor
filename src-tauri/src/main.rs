@@ -1,14 +1,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
+use tauri_plugin_shell::ShellExt;
 
 mod native_media_picker;
 
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
+
+#[derive(Deserialize)]
+struct EditSegment { start: f64, end: f64 }
 
 fn app_folder(name: &str) -> Option<std::path::PathBuf> {
     let path = dirs::document_dir()?.join("Accessible Media Editor").join(name);
@@ -48,6 +52,16 @@ fn write_project(path: String, content: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn export_edited_media(window: tauri::WebviewWindow, source: String, suggested_name: String) -> Result<Option<String>, String> {
+    let extension = std::path::Path::new(&source).extension().and_then(|value| value.to_str()).unwrap_or("mp4");
+    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Edited Media").set_file_name(&suggested_name).add_filter("Edited media", &[extension]);
+    if let Some(folder) = app_folder("Exports") { dialog = dialog.set_directory(folder); }
+    let Some(path) = dialog.save_file() else { return Ok(None); };
+    fs::copy(&source, &path).map_err(|error| error.to_string())?;
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
+#[tauri::command]
 fn open_projects_folder() -> Result<(), String> {
     let folder = app_folder("Projects").ok_or("The Projects folder could not be created.")?;
     std::process::Command::new("explorer").arg(folder).spawn().map_err(|error| error.to_string())?;
@@ -59,6 +73,51 @@ fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), S
     window.set_title(&title).map_err(|error| error.to_string())
 }
 
+fn segment_filter(segments: &[EditSegment], with_video: bool, with_audio: bool) -> String {
+    let mut parts = Vec::new();
+    for (index, segment) in segments.iter().enumerate() {
+        if with_video { parts.push(format!("[0:v:0]trim=start={:.6}:end={:.6},setpts=PTS-STARTPTS[v{}]", segment.start, segment.end, index)); }
+        if with_audio { parts.push(format!("[0:a:0]atrim=start={:.6}:end={:.6},asetpts=PTS-STARTPTS[a{}]", segment.start, segment.end, index)); }
+    }
+    let inputs = (0..segments.len()).map(|index| {
+        format!("{}{}", if with_video { format!("[v{}]", index) } else { String::new() }, if with_audio { format!("[a{}]", index) } else { String::new() })
+    }).collect::<String>();
+    parts.push(format!("{}concat=n={}:v={}:a={}{}", inputs, segments.len(), if with_video { 1 } else { 0 }, if with_audio { 1 } else { 0 }, if with_video && with_audio { "[v][a]" } else if with_video { "[v]" } else { "[a]" }));
+    parts.join(";")
+}
+
+async fn run_ffmpeg(app: &tauri::AppHandle, args: Vec<String>) -> Result<(), String> {
+    let output = app.shell().sidecar("ffmpeg").map_err(|error| error.to_string())?.args(args).output().await.map_err(|error| error.to_string())?;
+    if output.status.success() { Ok(()) } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(stderr.lines().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" "))
+    }
+}
+
+#[tauri::command]
+async fn render_working_edit(app: tauri::AppHandle, source: String, segments: Vec<EditSegment>, media_kind: String, item_id: String) -> Result<String, String> {
+    if segments.is_empty() { return Err("The edit contains no retained media.".into()); }
+    let folder = dirs::data_local_dir().ok_or("The local application data folder is unavailable.")?.join("Accessible Media Editor").join("Working");
+    fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
+    let safe_id: String = item_id.chars().filter(|character| character.is_ascii_alphanumeric() || *character == '-').collect();
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|error| error.to_string())?.as_millis();
+    let audio_only = media_kind.eq_ignore_ascii_case("audio");
+    let output_path = folder.join(format!("{}-{}.{}", if safe_id.is_empty() { "edit" } else { &safe_id }, stamp, if audio_only { "m4a" } else { "mp4" }));
+    let output_text = output_path.to_string_lossy().into_owned();
+    if audio_only {
+        let filter = segment_filter(&segments, false, true);
+        run_ffmpeg(&app, vec!["-y".into(), "-i".into(), source, "-filter_complex".into(), filter, "-map".into(), "[a]".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output_text.clone()]).await?;
+    } else {
+        let filter = segment_filter(&segments, true, true);
+        let args = vec!["-y".into(), "-i".into(), source.clone(), "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-map".into(), "[a]".into(), "-c:v".into(), "mpeg4".into(), "-q:v".into(), "2".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-movflags".into(), "+faststart".into(), output_text.clone()];
+        if run_ffmpeg(&app, args).await.is_err() {
+            let filter = segment_filter(&segments, true, false);
+            run_ffmpeg(&app, vec!["-y".into(), "-i".into(), source, "-filter_complex".into(), filter, "-map".into(), "[v]".into(), "-c:v".into(), "mpeg4".into(), "-q:v".into(), "2".into(), "-movflags".into(), "+faststart".into(), output_text.clone()]).await?;
+        }
+    }
+    Ok(output_text)
+}
+
 fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::menu::MenuItem<tauri::Wry>> {
     MenuItemBuilder::new(label).id(id).build(app)
 }
@@ -66,12 +125,13 @@ fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::m
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
         .item(&item(app,"Open Media... Ctrl+O","importMedia")?)
+        .item(&item(app,"Export Edited Media... Ctrl+E","exportMedia")?)
         .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+Shift+O","openProject")?)
         .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
-        .separator().item(&item(app,"Apply Primary Trim Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
+        .separator().item(&item(app,"Apply Marked Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).separator()
@@ -106,6 +166,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let _ = app_folder("Projects");
             let _ = app_folder("Exports");
@@ -116,7 +177,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,open_projects_folder,set_window_title])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,render_working_edit])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

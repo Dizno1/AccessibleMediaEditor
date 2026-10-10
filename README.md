@@ -2,21 +2,33 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
-## Build 0.5.1
+## Build 0.6.0
 
-Build 0.5.1 fixes the Build 0.5.0 first-import regression and makes loading transactional.
+Build 0.6.0 replaces playback-boundary pretending with the first real editing engine.
+
+- Left bracket and Right bracket set edit marks without changing the media.
+- Ctrl+Delete commits the marked removal to a nondestructive retained-segment plan.
+- With only an Out mark, Ctrl+Delete trims the tail. With only an In mark, it trims the beginning.
+- Playback, the playhead, Home and End, and U and I scrubbing immediately use logical edited time.
+- Playback skips removed media without requiring export first.
+- Undo restores the prior edit plan.
+- A verified FFmpeg sidecar creates a separate edited working file. The original is never changed.
+- Ctrl+E saves the edited working file to a user-selected location after rendering completes.
+- The GitHub workflow downloads the LGPL static FFmpeg build and verifies its SHA256 checksum before packaging it.
+
+Build 0.5.1 fixed the first-import regression and made loading transactional.
 
 - The null-control error during first media import is fixed.
 - A failed import rolls back completely instead of leaving Source media without Primary media.
 - The application announces that selected media is loading.
 - Playback, audition, and playhead controls remain disabled until metadata finishes loading.
-- Ctrl+Delete applies the current Primary trim marks.
+- Ctrl+Delete is reserved for setting the Primary working trim end.
 - A failed import cannot silently change the active editor.
 
 Build 0.5.0 corrected the Primary trim and Source-selection workflow.
 
 - Primary brackets are now identified as Trim Start and Trim End.
-- Each Primary editor contains Apply Primary Trim, which confirms the start, end, and resulting duration.
+- Primary editor trim controls distinguish working trim boundaries from final file export.
 - Source brackets are now identified as Selection Start and Selection End.
 - Every Source editor contains Insert Selection at Primary Playhead and Add Selection to End.
 - Ctrl+Enter inserts the active Source selection at the remembered Primary playhead.
@@ -31,11 +43,9 @@ The first opened file becomes Primary Media. Additional files become Source Medi
 
 All operations are nondestructive. Source files are not modified.
 
-## Current format limitation
+## Current limits
 
-WMV cannot be decoded by the current WebView2 preview engine. Build 0.5.1 identifies this honestly and disables the unusable controls, but automatic conversion is not included yet. The FFmpeg conversion and export engine is a mandatory application requirement for WMV, iPhone, web-video, and other media formats.
-
-The application does not yet render or export the complete Primary Sequence. AudioStudio Pro recording and processing are not implemented yet.
+Build 0.6.0 proves real editing and saving for one WebView2-playable Primary video or audio file. Automatic import normalization for WMV and other formats is next. Multi-item composition export and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

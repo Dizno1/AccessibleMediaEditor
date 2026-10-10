@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.5.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.6.0 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -9,18 +9,30 @@ FIRST IMPORT REGRESSION TEST
 5. Confirm no TypeError is announced.
 6. If an import fails, confirm the entire import is rolled back and the previous editing session remains intact.
 
-PRIMARY TRIM TEST
+PRIMARY REAL EDIT TEST
 
 1. Open one video as Primary Media.
 2. Turn the JAWS Virtual Cursor off with Insert+Z.
 3. Enter the Primary editor.
-4. Move to the desired beginning and press left bracket.
-5. Confirm Trim start is announced.
-6. Move to the desired ending and press right bracket.
-7. Confirm Trim end is announced.
-8. Activate Apply Primary Trim or press Ctrl+Delete.
-9. Confirm the application announces the trim start, trim end, and resulting duration.
-10. Press Home and X. Confirm playback begins at the trim start and stops once at the trim end.
+4. Move to the beginning of a short unwanted section and press left bracket.
+5. Move to the end of the unwanted section and press right bracket.
+6. Press Ctrl+Delete.
+7. Confirm Edit applied and the shorter duration are announced.
+8. Press Home and then X. Confirm playback skips the removed section immediately without export.
+9. Use U, I, Left Arrow, Right Arrow, Home, End, and the playhead. Confirm all use the shorter edited timeline.
+10. Press Ctrl+Z. Confirm the removed media is restored.
+11. Repeat the edit and wait for Edited working file ready.
+12. Press Ctrl+E and save the edited file.
+13. Open the saved file outside the editor and confirm the section is physically absent.
+14. Confirm the original file is unchanged.
+
+TAIL TRIM TEST
+
+1. Open one video as Primary Media.
+2. Move to the desired new ending and press right bracket only.
+3. Press Ctrl+Delete.
+4. Confirm everything after the mark is removed from immediate playback.
+5. Wait for the working file and save it with Ctrl+E.
 
 SOURCE SELECTION AND INSERTION TEST
 
@@ -54,8 +66,8 @@ UNSUPPORTED FORMAT TEST
 
 KNOWN LIMITS
 
-Automatic format conversion is not included yet. WMV requires the planned FFmpeg conversion engine.
+Automatic import conversion is not included yet. WMV still requires the next format-normalization stage.
 
-The application does not yet render or export the complete Primary Sequence.
+Build 0.6.0 creates and saves an edited working file for one Primary video or audio file. It does not yet render the complete multi-item Primary Sequence.
 
 AudioStudio Pro recording and processing are not implemented in this build.

@@ -40,9 +40,71 @@ export function splitItem(project, id, point, newId) {
   const second={...structuredClone(first),id:newId,inPoint:point,label:`${first.label||first.name} - Part 2`};
   first.outPoint=point; first.label=`${first.label||first.name} - Part 1`; next.items.splice(index+1,0,second); next.dirty=true; return next;
 }
+export function normalizedSegments(item) {
+  const sourceDuration = Math.max(0, Number(item?.duration) || 0);
+  if (!sourceDuration) return [];
+  if (Array.isArray(item.editSegments) && item.editSegments.length) {
+    return item.editSegments
+      .map(segment => ({ start: Math.max(0, Number(segment.start) || 0), end: Math.min(sourceDuration, Number(segment.end) || 0) }))
+      .filter(segment => segment.end > segment.start);
+  }
+  const start = Math.max(0, Number(item.inPoint) || 0);
+  const end = item.outPoint == null ? sourceDuration : Math.min(sourceDuration, Number(item.outPoint));
+  return end > start ? [{ start, end }] : [];
+}
+export function logicalDuration(item) {
+  return normalizedSegments(item).reduce((sum, segment) => sum + segment.end - segment.start, 0);
+}
+export function logicalToSourceTime(item, logicalTime) {
+  const segments = normalizedSegments(item);
+  let remaining = Math.max(0, Math.min(logicalDuration(item), Number(logicalTime) || 0));
+  for (const segment of segments) {
+    const length = segment.end - segment.start;
+    if (remaining <= length) return Math.min(segment.end, segment.start + remaining);
+    remaining -= length;
+  }
+  return segments.at(-1)?.end || 0;
+}
+export function sourceToLogicalTime(item, sourceTime) {
+  const segments = normalizedSegments(item);
+  const source = Math.max(0, Number(sourceTime) || 0);
+  let logical = 0;
+  for (const segment of segments) {
+    if (source < segment.start) return logical;
+    if (source <= segment.end) return logical + source - segment.start;
+    logical += segment.end - segment.start;
+  }
+  return logical;
+}
+export function removeLogicalRange(project, id, start, end, sourceCollection = false) {
+  const next = structuredClone(project);
+  const collection = sourceCollection ? (next.sources || []) : next.items;
+  const item = collection.find(value => value.id === id);
+  if (!item) return project;
+  const total = logicalDuration(item);
+  const from = Math.max(0, Math.min(total, Number(start) || 0));
+  const to = Math.max(from, Math.min(total, Number(end) || 0));
+  if (to <= from || (from === 0 && to === total)) return project;
+  const retained = [];
+  let logicalStart = 0;
+  for (const segment of normalizedSegments(item)) {
+    const length = segment.end - segment.start;
+    const logicalEnd = logicalStart + length;
+    if (from > logicalStart) retained.push({ start: segment.start, end: segment.start + Math.min(length, from - logicalStart) });
+    if (to < logicalEnd) retained.push({ start: segment.start + Math.max(0, to - logicalStart), end: segment.end });
+    logicalStart = logicalEnd;
+  }
+  item.editSegments = retained.filter(segment => segment.end > segment.start);
+  item.inPoint = 0;
+  item.outPoint = logicalDuration(item);
+  item.workingSource = null;
+  next.dirty = true;
+  return next;
+}
 export function itemDuration(item) {
   const sourceDuration = Number(item.duration) || 0;
   if (!["Video", "Audio"].includes(item.kind)) return sourceDuration;
+  if (Array.isArray(item.editSegments) && item.editSegments.length) return logicalDuration(item);
   const start = Math.max(0, Number(item.inPoint) || 0);
   const end = item.outPoint == null ? sourceDuration : Math.min(sourceDuration, Number(item.outPoint));
   return Math.max(0, end - start);

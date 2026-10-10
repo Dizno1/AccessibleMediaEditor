@@ -1,6 +1,6 @@
 [package]
 name = "accessible-media-editor"
-version = "0.5.1"
+version = "0.6.0"
 description = "Screen-reader-first multimedia authoring from Open Door Design."
 authors = ["Open Door Design"]
 edition = "2021"
@@ -12,6 +12,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-window-state = "2"
+tauri-plugin-shell = "2"
 rfd = "0.15"
 serde = { version = "1", features = ["derive"] }
 dirs = "6"

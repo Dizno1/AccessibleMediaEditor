@@ -3,5 +3,14 @@
   "identifier": "default",
   "description": "Accessible Media Editor main window permissions.",
   "windows": ["main"],
-  "permissions": ["core:default", "window-state:default", "core:window:default", "core:window:allow-set-title"]
+  "permissions": [
+    "core:default",
+    "window-state:default",
+    "core:window:default",
+    "core:window:allow-set-title",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [{ "name": "ffmpeg", "cmd": "ffmpeg", "sidecar": true, "args": true }]
+    }
+  ]
 }

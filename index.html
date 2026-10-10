@@ -64,7 +64,7 @@
         <p id="output-summary">Open media to begin editing. Project creation is optional from the File menu.</p>
         <div class="button-row">
           <button type="button" id="save-project-button">Save Project (Ctrl+Shift+S)</button>
-          <button type="button" id="export-button" disabled>Export Edited Media</button>
+          <button type="button" id="export-button" disabled>Save Edited Media (Ctrl+E)</button>
         </div>
       </section>
     </div>
@@ -155,6 +155,7 @@
       <ul>
         <li>Ctrl+O: Open one or more media files.</li><li>Ctrl+Shift+O: Open Project.</li>
         <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
+        <li>Ctrl+E: Save the edited working media as a new file.</li>
         <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
@@ -174,7 +175,7 @@
         <li>Home or End: Move to the beginning or end.</li>
         <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
-        <li>Ctrl+Delete: Apply the current Primary trim marks.</li>
+        <li>Ctrl+Delete: Commit the marked Primary edit.</li>
         <li>Ctrl+Enter: Insert the active Source selection at the remembered Primary playhead.</li>
         <li>Ctrl+Shift+Enter: Add the active Source selection to the end.</li>
       </ul>
@@ -196,10 +197,11 @@
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Ctrl+G opens exact-time fields.</p>
       <p><strong>Building the sequence:</strong> Mark a selection in Source Media, then use Insert Selection at Primary Playhead or Add Selection to End.</p>
-      <p><strong>Primary trim:</strong> Set the trim start and trim end in the Primary editor, then activate Apply Primary Trim or press Ctrl+Delete for a concise confirmation of the resulting duration.</p>
+      <p><strong>Committing an edit:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Press Ctrl+Delete to remove the marked selection. With only an Out mark, Ctrl+Delete removes everything after that mark. With only an In mark, it removes everything before that mark.</p>
+      <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
       <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>
-      <p>This build establishes nondestructive Primary and Source Media architecture. It does not yet render or export the complete sequence.</p>
+      <p><strong>Saving edited media:</strong> FFmpeg creates a separate working file without changing the original. After it is ready, press Ctrl+E to save the edited media where you choose.</p>
       <button type="submit">Close Testing Guide</button>
     </form>
   </dialog>

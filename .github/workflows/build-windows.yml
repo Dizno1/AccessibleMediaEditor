@@ -23,6 +23,26 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: npm install
+      - name: Download and verify FFmpeg sidecar
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -eq "ffmpeg-master-latest-win64-lgpl.zip" } | Select-Object -First 1
+          $checksums = $release.assets | Where-Object { $_.name -eq "checksums.sha256" } | Select-Object -First 1
+          if (-not $asset -or -not $checksums) { throw "The verified FFmpeg release assets were not found." }
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile ffmpeg.zip
+          Invoke-WebRequest -Uri $checksums.browser_download_url -OutFile checksums.sha256
+          $expectedLine = Get-Content checksums.sha256 | Where-Object { $_ -match "\sffmpeg-master-latest-win64-lgpl\.zip$" } | Select-Object -First 1
+          if (-not $expectedLine) { throw "The FFmpeg checksum was not found." }
+          $expected = ($expectedLine -split "\s+")[0].ToLowerInvariant()
+          $actual = (Get-FileHash ffmpeg.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "FFmpeg checksum verification failed." }
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-package
+          $ffmpeg = Get-ChildItem ffmpeg-package -Filter ffmpeg.exe -Recurse | Select-Object -First 1
+          if (-not $ffmpeg) { throw "ffmpeg.exe was not found in the verified archive." }
+          New-Item -ItemType Directory -Force -Path src-tauri/binaries | Out-Null
+          Copy-Item $ffmpeg.FullName src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe
+          & src-tauri/binaries/ffmpeg-x86_64-pc-windows-msvc.exe -version
       - name: Run tests
         run: npm test
       - name: Build installers for manual testing
