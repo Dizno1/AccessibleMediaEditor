@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.7.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.7.1 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -26,30 +26,38 @@ PRIMARY REAL EDIT TEST
 13. Open the saved file outside the editor and confirm the section is physically absent.
 14. Confirm the original file is unchanged.
 
-TAIL TRIM TEST
+SINGLE BRACKET LOGIC TEST
 
 1. Open one video as Primary Media.
-2. Move to the desired new ending and press right bracket only.
+2. Move to the desired new ending and press left bracket only.
 3. Press Ctrl+Delete.
-4. Confirm everything after the mark is removed from immediate playback.
-5. Wait for the working file and save it with Ctrl+E.
+4. Confirm everything to the right of the Left Bracket is deleted and the content to its left remains.
+5. Press Ctrl+Z and confirm the ending returns.
+6. Move to the desired new beginning and press right bracket only.
+7. Press Ctrl+Delete.
+8. Confirm everything to the left of the Right Bracket is deleted and the content to its right remains.
+9. Press Ctrl+Z and confirm the beginning returns.
+10. Set both brackets and press Ctrl+Delete.
+11. Confirm only the content enclosed between the brackets is deleted.
 
 SOURCE COPY AND PRIMARY PASTE TEST
 
 1. Open a second supported video as Source Media.
 2. Enter its Source editor.
 3. Move to the desired selection beginning and press left bracket.
-4. Confirm Selection start is announced.
+4. Confirm Left Bracket and the selected area are announced.
 5. Move to the desired selection ending and press right bracket.
-6. Confirm Selection end is announced.
-7. Press Ctrl+C and confirm the filename and copied duration are announced.
-8. Press Ctrl+Page Up until Primary Production is focused.
-9. Move its playhead to the desired insertion point and press Ctrl+V.
-10. Confirm the pasted duration and insertion time are announced.
-11. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
-12. Confirm no separate Inserted Video editor region was created.
-13. Press Ctrl+Z and confirm the pasted material is removed from Primary Production.
-14. Confirm the complete original Source file remains available and unchanged.
+6. Confirm Right Bracket and the enclosed selection are announced.
+7. Press Ctrl+C and confirm the filename, copied duration, and cleared brackets are announced.
+8. Set the Source brackets again, use Edit, Copy Source Selection, and confirm it performs the same command.
+9. Press Ctrl+Page Up until Primary Production is focused.
+10. Move its playhead to the desired insertion point and press Ctrl+V.
+11. Confirm the pasted duration and insertion time are announced.
+12. Move to another Primary position, use Edit, Paste into Primary Production, and confirm it performs the same command.
+13. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
+14. Confirm no separate Inserted Video editor region was created.
+15. Press Ctrl+Z and confirm the pasted material is removed from Primary Production.
+16. Confirm the complete original Source file remains available and unchanged.
 
 SOURCE REMOVAL TEST
 
@@ -89,6 +97,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.7.0 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.7.1 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

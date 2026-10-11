@@ -168,7 +168,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).separator()
-        .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set In Mark Left Bracket","setIn")?).item(&item(app,"Set Out Mark Right Bracket","setOut")?).separator()
+        .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set Left Bracket [","setIn")?).item(&item(app,"Set Right Bracket ]","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")
         .item(&item(app,"Play or Pause X","playPause")?).item(&item(app,"Audition Around Playhead Space","audition")?).separator()

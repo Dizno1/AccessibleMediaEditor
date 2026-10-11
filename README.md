@@ -2,6 +2,19 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.7.1
+
+Build 0.7.1 corrects and tests the bracket-selection model.
+
+- A lone Left Bracket selects everything to its right.
+- A lone Right Bracket selects everything to its left.
+- Paired brackets select only the content enclosed between them.
+- Ctrl+Delete deletes the selected content and preserves everything outside the bracketed area.
+- Spoken confirmations identify whether the beginning, ending, or enclosed selection will be deleted.
+- Ctrl+C clears Source brackets after copying while preserving the internal media clipboard.
+- The Edit menu provides Copy Source Selection Ctrl+C and Paste into Primary Production Ctrl+V.
+- End reached is announced only once.
+
 ## Build 0.7.0
 
 Build 0.7.0 replaces the disconnected inserted-item editors with a ScreenCapture-style Primary Production experience.
@@ -40,7 +53,7 @@ Build 0.6.0 replaces playback-boundary pretending with the first real editing en
 
 - Left bracket and Right bracket set edit marks without changing the media.
 - Ctrl+Delete commits the marked removal to a nondestructive retained-segment plan.
-- With only an Out mark, Ctrl+Delete trims the tail. With only an In mark, it trims the beginning.
+- This build introduced single-mark deletion, but its single-bracket direction was incorrect and was corrected in Build 0.7.1.
 - Playback, the playhead, Home and End, and U and I scrubbing immediately use logical edited time.
 - Playback skips removed media without requiring export first.
 - Undo restores the prior edit plan.
@@ -77,7 +90,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.7.0 proves normalization, dedicated Source editors, logical copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.7.1 proves normalization, dedicated Source editors, logical bracket selection, copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

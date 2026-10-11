@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.7.0 establishes a unified Primary Production player, dedicated filename-titled Source Video and Source Audio editors, logical Ctrl+C and Ctrl+V media editing, automatic working-media normalization, immediate nondestructive playback, Undo, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
+Accessible Media Editor build 0.7.1 establishes a unified Primary Production player, dedicated filename-titled Source Video and Source Audio editors, logical bracket selection, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, Undo, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
 
 ## Product purpose
 
@@ -172,7 +172,7 @@ The supplied Accessible Video Suite prototype contains implementation that may b
 - FastAPI application structure.
 - Media upload and format normalization.
 - Keyboard-controlled playback.
-- Precise time navigation and In and Out marks.
+- Precise time navigation and logical Left and Right Brackets. A lone Left Bracket selects everything to its right, a lone Right Bracket selects everything to its left, and paired brackets select only the enclosed content.
 - Non-destructive removal segments.
 - Mute-range export.
 - Media-library upload and listing.

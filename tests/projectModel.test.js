@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, bracketSelectionRange } from "../app/projectModel.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
   const empty=createProject(); const a=addItem(empty,item("a",2)); const b=addItem(a,item("b",3)); const moved=moveItem(b,"b",-1);
@@ -43,9 +43,22 @@ test("committed edits remove a logical range while preserving the original sourc
   assert.equal(logicalToSourceTime(edited.items[0],4),7);
   assert.equal(sourceToLogicalTime(edited.items[0],7),4);
 });
-test("a single Out mark can trim the tail through the same edit model",()=>{
+test("a lone Left Bracket selects everything to its right",()=>{
   const primary=addItem(createProject(),{...item("primary",10),editSegments:[{start:0,end:10}]});
-  const edited=removeLogicalRange(primary,"primary",4.25,10);
+  const range=bracketSelectionRange(10,4.25,null);
+  assert.deepEqual(range,{from:4.25,to:10,kind:"ending"});
+  const edited=removeLogicalRange(primary,"primary",range.from,range.to);
   assert.deepEqual(edited.items[0].editSegments,[{start:0,end:4.25}]);
   assert.equal(itemDuration(edited.items[0]),4.25);
+});
+test("a lone Right Bracket selects everything to its left",()=>{
+  const primary=addItem(createProject(),{...item("primary",10),editSegments:[{start:0,end:10}]});
+  const range=bracketSelectionRange(10,null,4.25);
+  assert.deepEqual(range,{from:0,to:4.25,kind:"beginning"});
+  const edited=removeLogicalRange(primary,"primary",range.from,range.to);
+  assert.deepEqual(edited.items[0].editSegments,[{start:4.25,end:10}]);
+  assert.equal(itemDuration(edited.items[0]),5.75);
+});
+test("paired brackets select only the content between them",()=>{
+  assert.deepEqual(bracketSelectionRange(10,2.125,7.875),{from:2.125,to:7.875,kind:"between"});
 });

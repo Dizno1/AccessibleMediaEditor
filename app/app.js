@@ -2,7 +2,8 @@ import {
   createProject, addItem, moveItem, removeItem, updateItem, splitItem,
   addSource, removeSource, updateSource, appendSourceSelection,
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
-  logicalDuration, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange
+  logicalDuration, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange,
+  bracketSelectionRange
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 
@@ -143,6 +144,7 @@ function setEditorPosition(state,point,expose=true){
   const location=locateItem(state.id);if(!location||!location.item.duration)return false;
   const bounds=editorBounds(location.item,location.type),next=Math.max(bounds.start,Math.min(bounds.end,Number(point)||0));
   state.cursor=next;state.slider.value=String(next);
+  if(next<bounds.end-0.0005)state.endReached=false;
   if(location.type==="program")setProgramMedia(state,next,false);else state.video.currentTime=location.type==="sequence"?logicalToSourceTime(location.item,next):next;
   if(expose)state.slider.setAttribute("aria-valuetext",readableTime(next));
   state.position.textContent=`Position ${readableTime(next)}. Media duration ${readableTime(itemDuration(location.item))}.`;
@@ -154,10 +156,10 @@ function updateEditorLabels(state,item,type){
   state.heading.textContent=title;
   state.video.setAttribute("aria-label",`${title} preview`);
   state.sliderLabel.textContent=`${title} playhead`;
-  const edited=type==="sequence"&&Array.isArray(item.editSegments)&&item.editSegments.length,markText=`In ${state.markIn==null?"not set":readableTime(state.markIn)}. Out ${state.markOut==null?"not set":readableTime(state.markOut)}.`;
+  const edited=type==="sequence"&&Array.isArray(item.editSegments)&&item.editSegments.length,markText=`Left bracket ${state.markIn==null?"not set":readableTime(state.markIn)}. Right bracket ${state.markOut==null?"not set":readableTime(state.markOut)}.`;
   state.context.textContent=type==="program"?`${project.items.length} production ${project.items.length===1?"item":"items"}. Total duration ${readableTime(duration(project))}. ${markText}`:edited?`${targetText(itemTarget(item))} targeted. Edited duration ${readableTime(itemDuration(item))}. ${item.editSegments.length} retained ${item.editSegments.length===1?"segment":"segments"}. ${markText}`:`${targetText(itemTarget(item))} targeted. ${markText}`;
-  state.inButton.textContent=type==="source"?"Set Selection Start (Left Bracket)":"Set Edit Start (Left Bracket)";
-  state.outButton.textContent=type==="source"?"Set Selection End (Right Bracket)":"Set Edit End (Right Bracket)";
+  state.inButton.textContent="Set Left Bracket";
+  state.outButton.textContent="Set Right Bracket";
   state.video.muted=itemTarget(item)==="video";
   const source=type==="source",program=type==="program";
   state.insertSelection.hidden=!source&&!program;state.appendSelection.hidden=!source;state.commitButton.hidden=!program;
@@ -196,7 +198,7 @@ function createEditor(item,type){
   [both,videoOnly,audioOnly].forEach(button=>button.type="button");both.textContent="Both Audio and Video (B)";videoOnly.textContent="Video Only (V)";audioOnly.textContent="Audio Only (A)";
   targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);section.append(fieldset);
   el["media-editor-sections"].append(section);
-  const state={id:stateId,type,section,heading,video,slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,commitButton,goto,properties,split,insertSelection,appendSelection,both,videoOnly,audioOnly,cursor:0,markIn:null,markOut:null,markHistory:[],audition:null,unsupported:false,loading:!item.duration,rendering:false,monitoring:false,currentItemId:type==="program"?item.id:null,currentItemOffset:0,pendingSourceTime:0,pendingAutoplay:false};
+  const state={id:stateId,type,section,heading,video,slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,commitButton,goto,properties,split,insertSelection,appendSelection,both,videoOnly,audioOnly,cursor:0,markIn:null,markOut:null,markHistory:[],audition:null,unsupported:false,loading:!item.duration,rendering:false,monitoring:false,endReached:false,currentItemId:type==="program"?item.id:null,currentItemOffset:0,pendingSourceTime:0,pendingAutoplay:false};
   editorStates.set(stateId,state);editorNodes.set(stateId,section);
   if(state.loading)position.textContent="Loading media. Please wait.";
   video.dataset.sourcePath=item.source;video.src=sourceForItem(item);
@@ -205,8 +207,8 @@ function createEditor(item,type){
     video.currentTime=state.pendingSourceTime||0;if(state.pendingAutoplay){state.pendingAutoplay=false;video.play().catch(()=>{});}
   }else handleMetadata(stateId,video.duration);});
   video.addEventListener("timeupdate",()=>handleTimeUpdate(stateId));
-  video.addEventListener("ended",()=>{if(type!=="program")return;const current=project.items.find(value=>value.id===state.currentItemId),index=project.items.findIndex(value=>value.id===state.currentItemId);if(current&&index<project.items.length-1){const nextPoint=(state.currentItemOffset||0)+itemDuration(current);state.cursor=nextPoint;setProgramMedia(state,nextPoint,true);}else{setEditorPosition(state,duration(project),true);announce("End reached.");}});
-  video.addEventListener("play",()=>monitorPlayback(stateId));
+  video.addEventListener("ended",()=>{if(type!=="program")return;const current=project.items.find(value=>value.id===state.currentItemId),index=project.items.findIndex(value=>value.id===state.currentItemId);if(current&&index<project.items.length-1){const nextPoint=(state.currentItemOffset||0)+itemDuration(current);state.cursor=nextPoint;state.endReached=false;setProgramMedia(state,nextPoint,true);}else finishAtEnd(state,duration(project));});
+  video.addEventListener("play",()=>{state.endReached=false;monitorPlayback(stateId);});
   video.addEventListener("error",()=>handlePreviewError(stateId));
   section.addEventListener("focus",()=>{activateMedia(stateId,false);activeSectionIndex=sectionElements().indexOf(section);});
   slider.addEventListener("focus",()=>activateMedia(stateId,false));
@@ -230,6 +232,11 @@ function monitorPlayback(idValue){
   const state=editorStates.get(idValue);if(!state||state.monitoring)return;state.monitoring=true;
   const tick=()=>{const current=editorStates.get(idValue);if(!current||current.video.paused){if(current)current.monitoring=false;return;}handleTimeUpdate(idValue);requestAnimationFrame(tick);};
   requestAnimationFrame(tick);
+}
+function finishAtEnd(state,total){
+  state.video.pause();state.cursor=total;state.slider.value=String(total);state.slider.setAttribute("aria-valuetext",readableTime(total));
+  state.position.textContent=`Position ${readableTime(total)}. Media duration ${readableTime(total)}.`;
+  if(!state.endReached){state.endReached=true;announce("End reached.");}
 }
 function handleMetadata(idValue,mediaDuration){
   if(!Number.isFinite(mediaDuration))return;
@@ -261,7 +268,7 @@ function handleTimeUpdate(idValue){
       if(nextSegment){state.video.currentTime=nextSegment.start;return;}
       const currentIndex=project.items.findIndex(item=>item.id===currentProgramItem.id);
       if(currentIndex<project.items.length-1){const nextPoint=(state.currentItemOffset||0)+itemDuration(currentProgramItem);state.cursor=nextPoint;setProgramMedia(state,nextPoint,true);return;}
-      state.video.pause();setEditorPosition(state,duration(project),true);announce("End reached.");return;
+      finishAtEnd(state,duration(project));return;
     }
   }else if(location.type==="sequence"&&Array.isArray(location.item.editSegments)&&location.item.editSegments.length){
     const segments=normalizedSegments(location.item),sourceTime=state.video.currentTime;
@@ -269,11 +276,11 @@ function handleTimeUpdate(idValue){
     if(currentIndex<0&&!state.video.paused){
       const nextIndex=segments.findIndex(segment=>sourceTime<segment.start);
       if(nextIndex>=0){state.video.currentTime=segments[nextIndex].start;state.cursor=sourceToLogicalTime(location.item,segments[nextIndex].start);return;}
-      state.video.pause();setEditorPosition(state,logicalDuration(location.item),true);announce("End reached.");return;
+      finishAtEnd(state,logicalDuration(location.item));return;
     }
   }else{
     const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);
-    if(state.video.currentTime>=end&&!state.video.paused){state.video.pause();setEditorPosition(state,end,true);announce("End reached.");return;}
+    if(state.video.currentTime>=end&&!state.video.paused){finishAtEnd(state,end);return;}
   }
   state.cursor=logicalNow;state.slider.value=String(state.cursor);state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
 }
@@ -403,9 +410,10 @@ function sliceEditSegments(item,from,to){
 }
 function copySourceSelection(){
   const location=activeLocation(),state=activeState();if(!location||location.type!=="source"||!state)return announce("Activate a Source editor first.",true);
-  const total=Number(location.item.duration)||0,from=state.markIn??0,to=state.markOut??total;if(to<=from)return announce("Selection end must follow selection start.",true);
+  const total=Number(location.item.duration)||0,range=bracketSelectionRange(total,state.markIn,state.markOut);if(!range)return announce("Set a Left or Right Bracket before copying.",true);const {from,to}=range;if(to<=from)return announce("The bracketed selection has no duration.",true);
   mediaClipboard={...structuredClone(location.item),id:null,role:"inserted",inPoint:0,outPoint:to-from,editSegments:[{start:from,end:to}],workingSource:location.item.workingSource||location.item.source};
-  const programState=editorStates.get(PROGRAM_ID);if(programState&&project.items[0])updateEditorLabels(programState,project.items[0],"program");announce(`Copied ${readableTime(to-from)} from ${displayName(location.item)}.`);cue("add");
+  state.markIn=state.markOut=null;state.markHistory=[];updateEditorLabels(state,location.item,location.type);
+  const programState=editorStates.get(PROGRAM_ID);if(programState&&project.items[0])updateEditorLabels(programState,project.items[0],"program");announce(`Copied ${readableTime(to-from)} from ${displayName(location.item)}. Brackets cleared.`);cue("add");
 }
 function pasteMediaClipboard(){
   const state=activeState(),location=activeLocation();if(!mediaClipboard)return announce("Copy a Source selection first.",true);if(!state||location?.type!=="program")return announce("Move to Primary Production before pasting.",true);
@@ -426,7 +434,7 @@ function saveText(){const text=el["text-content"].value.trim(),seconds=Number(el
 function addTransition(){const after=selectedId,item={id:id(),source:null,name:"Crossfade",label:"Crossfade",kind:"Transition",duration:1,role:"sequence"};selectedId=item.id;rememberChange(addItem(project,item,after),"Crossfade added.",true);}
 function undo(){
   const state=activeState();
-  if(state?.markHistory?.length){const change=state.markHistory.pop();if(change.which==="in")state.markIn=change.previous;else state.markOut=change.previous;const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);return announce(`${change.which==="in"?"In":"Out"} mark removed.`);}
+  if(state?.markHistory?.length){const change=state.markHistory.pop();if(change.which==="in")state.markIn=change.previous;else state.markOut=change.previous;const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);return announce(`${change.which==="in"?"Left":"Right"} bracket removed.`);}
   if(!undoStack.length)return announce("Nothing to undo.");redoStack.push(project);project=undoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=project.sources?.[0]?.id||null;activeMediaId=project.items.length?PROGRAM_ID:selectedSourceId;render();editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");
 }
 function redo(){if(!redoStack.length)return announce("Nothing to redo.");undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=project.sources?.[0]?.id||null;activeMediaId=project.items.length?PROGRAM_ID:selectedSourceId;render();editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}
@@ -449,20 +457,20 @@ function jumpPlayhead(end=false){const location=activeLocation(),state=activeSta
 function setPoint(which){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);
   const point=state.cursor,other=which==="in"?state.markOut:state.markIn;
-  if(which==="in"&&other!=null&&point>=other)return announce("In mark must precede Out mark.",true);
-  if(which==="out"&&other!=null&&point<=other)return announce("Out mark must follow In mark.",true);
-  const previous=which==="in"?state.markIn:state.markOut;if(previous===point)return announce(`${which==="in"?"In":"Out"} mark is already set there.`);
+  if(which==="in"&&other!=null&&point>=other)return announce("Left Bracket must precede Right Bracket.",true);
+  if(which==="out"&&other!=null&&point<=other)return announce("Right Bracket must follow Left Bracket.",true);
+  const previous=which==="in"?state.markIn:state.markOut;if(previous===point)return announce(`${which==="in"?"Left":"Right"} Bracket is already set there.`);
   state.markHistory.push({which,previous});if(which==="in")state.markIn=point;else state.markOut=point;updateEditorLabels(state,location.item,location.type);
-  announce(`${location.type==="source"?"Selection ":""}${which==="in"?"In":"Out"} mark set to ${readableTime(point)}.${location.type==="source"?"":" Press Ctrl+Delete to apply the edit."}`);
+  const range=bracketSelectionRange(location.type==="program"?duration(project):itemDuration(location.item),state.markIn,state.markOut);
+  const effect=range.kind==="ending"?`End selected from ${readableTime(range.from)}.`:range.kind==="beginning"?`Beginning selected through ${readableTime(range.to)}.`:`Content selected from ${readableTime(range.from)} through ${readableTime(range.to)}.`;
+  announce(`${which==="in"?"Left":"Right"} Bracket set. ${effect}${location.type==="source"?"":" Press Ctrl+Delete to delete it."}`);
 }
 async function commitPrimaryEdit(){
   const location=activeLocation(),state=activeState();
   if(!location||!['sequence','program'].includes(location.type)||!state)return announce("Activate Primary Production first.",true);
-  const total=location.type==="program"?duration(project):itemDuration(location.item);let from,to;
-  if(state.markIn!=null&&state.markOut!=null){from=Math.min(state.markIn,state.markOut);to=Math.max(state.markIn,state.markOut);}
-  else if(state.markOut!=null){from=state.markOut;to=total;}
-  else if(state.markIn!=null){from=0;to=state.markIn;}
-  else return announce("Set an In or Out mark before applying an edit.",true);
+  const total=location.type==="program"?duration(project):itemDuration(location.item),range=bracketSelectionRange(total,state.markIn,state.markOut);
+  if(!range)return announce("Set a Left or Right Bracket before applying an edit.",true);
+  const {from,to}=range;
   let next;
   if(location.type==="program"){
     next=structuredClone(project);const kept=[];let offset=0;
@@ -477,8 +485,8 @@ async function commitPrimaryEdit(){
     if(!kept.length)next=project;else{next.items=kept;next.items[0].workingSource=null;next.dirty=true;}
   }else next=removeLogicalRange(project,location.item.id,from,to,false);
   if(next===project)return announce("That edit would remove the entire file or no media. Nothing changed.",true);
-  const itemId=location.item.id;state.markIn=state.markOut=null;state.markHistory=[];rememberChange(next,`Edit applied. Duration ${readableTime(location.type==="program"?duration(next):itemDuration(next.items.find(item=>item.id===itemId)))}.`);
-  const edited=sequenceItem(itemId),currentState=editorStates.get(location.type==="program"?PROGRAM_ID:itemId);if(currentState)setEditorPosition(currentState,Math.min(from,location.type==="program"?duration(next):itemDuration(edited)),true);
+  const itemId=location.item.id,deleted=range.kind==="ending"?"End deleted.":range.kind==="beginning"?"Beginning deleted.":"Bracketed selection deleted.";state.markIn=state.markOut=null;state.markHistory=[];rememberChange(next,`${deleted} Duration ${readableTime(location.type==="program"?duration(next):itemDuration(next.items.find(item=>item.id===itemId)))}.`);
+  const edited=sequenceItem(itemId)||next.items[0],currentState=editorStates.get(location.type==="program"?PROGRAM_ID:itemId);if(currentState)setEditorPosition(currentState,Math.min(from,location.type==="program"?duration(next):itemDuration(edited)),true);
   if(location.type==="program"&&next.items.length>1){updateStatus("Production edit is ready for immediate playback. Multi-item export rendering is not included in this build.");return;}
   if(!invoke)return;
   if(currentState)currentState.rendering=true;updateStatus("Creating the edited working file. Playback already uses the edited timeline.");
@@ -506,7 +514,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.7.0. Unified Primary Production with dedicated Source editors and logical copy and paste.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.7.1. Logical bracket deletion, automatic Source bracket clearing, and concise end announcements.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

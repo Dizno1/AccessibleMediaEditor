@@ -187,7 +187,7 @@
         <li>U or I: Silently move backward or forward 1 second and play a short media sample. JAWS does not announce each scrub.</li>
         <li>Shift+U or Shift+I: Scrub backward or forward 100 milliseconds.</li>
         <li>Ctrl+Shift+U or Ctrl+Shift+I: Scrub backward or forward 10 milliseconds.</li>
-        <li>Left bracket or Right bracket: Set the In or Out mark.</li>
+        <li>Left bracket or Right bracket: Set the matching selection boundary.</li>
         <li>Left or Right Arrow: Move backward or forward 5 seconds.</li>
         <li>Shift+Left or Shift+Right: Move backward or forward 30 seconds.</li>
         <li>J or L: Move backward or forward 5 minutes.</li>
@@ -214,12 +214,12 @@
       <p><strong>Activating media:</strong> Arrow to an item in Primary Sequence or Source Media to activate it, or press Enter to move directly into its editor. Opening another source does not take control away from the Primary editor.</p>
       <p><strong>Playback:</strong> X plays or pauses continuously. Space auditions around the playhead and returns to the original position.</p>
       <p><strong>Scrubbing:</strong> U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Shift+U and Ctrl+Shift+I scrub by 10 milliseconds. Scrubbing intentionally produces no JAWS status announcement so you can hear the media sample.</p>
-      <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the Out mark announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
+      <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the end announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
-      <p><strong>Setting edit points:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Ctrl+G opens exact-time fields.</p>
+      <p><strong>Setting edit points:</strong> Left bracket sets the left boundary. Right bracket sets the right boundary. Ctrl+G opens exact-time fields.</p>
       <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
-      <p><strong>Building the production:</strong> Mark a selection in a Source editor, press Ctrl+C, move to Primary Production, position its playhead, and press Ctrl+V. To paste at the end, press End before Ctrl+V.</p>
-      <p><strong>Committing an edit:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Press Ctrl+Delete to remove the marked selection. With only an Out mark, Ctrl+Delete removes everything after that mark. With only an In mark, it removes everything before that mark.</p>
+      <p><strong>Building the production:</strong> Mark a selection in a Source editor, press Ctrl+C or choose Copy Source Selection from the Edit menu, move to Primary Production, position its playhead, and press Ctrl+V or choose Paste into Primary Production from the Edit menu. Copying clears the Source brackets. To paste at the end, press End before pasting.</p>
+      <p><strong>Committing an edit:</strong> Press Ctrl+Delete to remove the bracketed content. A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Paired brackets select only the content between them. Content outside the bracketed area remains unchanged.</p>
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
       <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>

@@ -110,4 +110,13 @@ export function itemDuration(item) {
   return Math.max(0, end - start);
 }
 export function duration(project) { return project.items.reduce((sum, item) => sum + itemDuration(item), 0); }
+export function bracketSelectionRange(totalDuration, leftBracket = null, rightBracket = null) {
+  const total = Math.max(0, Number(totalDuration) || 0);
+  const left = leftBracket == null ? null : Math.max(0, Math.min(total, Number(leftBracket) || 0));
+  const right = rightBracket == null ? null : Math.max(0, Math.min(total, Number(rightBracket) || 0));
+  if (left != null && right != null) return { from: Math.min(left, right), to: Math.max(left, right), kind: "between" };
+  if (left != null) return { from: left, to: total, kind: "ending" };
+  if (right != null) return { from: 0, to: right, kind: "beginning" };
+  return null;
+}
 export function serializable(project) { const copy = structuredClone(project); delete copy.path; delete copy.dirty; return copy; }
