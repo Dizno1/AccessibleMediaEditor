@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.7.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.7.2 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -75,6 +75,7 @@ QUIET INTERACTION TEST
 5. Use X, Space, U, I, Home, End, and movement keys.
 6. Confirm filenames are not repeated in routine transport announcements.
 7. Press U or I rapidly and confirm no AbortError is announced.
+8. Press Space, U, and I and confirm JAWS does not say Auditioning or Returned over the media sample.
 
 FORMAT CONVERSION TEST
 
@@ -97,6 +98,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.7.1 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.7.2 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.
