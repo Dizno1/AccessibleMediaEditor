@@ -2,6 +2,10 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.7.3
+
+Build 0.7.3 extends logical bracket editing to every Source Video and Source Audio editor. Ctrl+Delete edits the active Source working timeline nondestructively, playback and copying use that edited timeline, and the original Source file remains unchanged. Removing a Source clears stale bracket history so the first Ctrl+Z restores the removed Source and returns focus to its editor.
+
 ## Build 0.7.2
 
 Build 0.7.2 makes media auditioning genuinely quiet. Space, U, I, and their precision variants play the media sample without live "Auditioning" or "Returned" announcements talking over it.
@@ -94,7 +98,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.7.2 proves normalization, dedicated Source editors, quiet media auditioning, logical bracket selection, copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.7.3 proves normalization, dedicated and nondestructively editable Source editors, quiet media auditioning, logical bracket selection, copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

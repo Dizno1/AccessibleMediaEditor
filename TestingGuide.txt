@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.7.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.7.3 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -62,9 +62,20 @@ SOURCE COPY AND PRIMARY PASTE TEST
 SOURCE REMOVAL TEST
 
 1. Enter a Source editor and activate Remove Source from Project.
-2. Confirm Source removed. Original file unchanged is announced.
+2. Confirm Source removed. Press Ctrl+Z to restore it. Original file unchanged is announced.
 3. Confirm focus moves to the next Source editor, or to Primary Production if no Source remains.
-4. Press Ctrl+Z and confirm the Source editor returns.
+4. Press Ctrl+Z once and confirm Source restored is announced, the Source editor returns, and focus returns to it.
+
+SOURCE NONDESTRUCTIVE EDIT TEST
+
+1. Enter a Source Video or Source Audio editor.
+2. Set a lone Right Bracket and press Ctrl+Delete.
+3. Confirm the beginning is deleted from immediate Source playback.
+4. Confirm Activate Primary Production first is not announced.
+5. Press Home and X and confirm playback begins at the edited Source beginning.
+6. Set brackets around material in the edited Source and press Ctrl+C.
+7. Paste into Primary Production and confirm the copied material comes from the edited Source timeline.
+8. Confirm the original Source file remains unchanged.
 
 QUIET INTERACTION TEST
 
@@ -98,6 +109,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.7.2 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.7.3 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

@@ -62,3 +62,12 @@ test("a lone Right Bracket selects everything to its left",()=>{
 test("paired brackets select only the content between them",()=>{
   assert.deepEqual(bracketSelectionRange(10,2.125,7.875),{from:2.125,to:7.875,kind:"between"});
 });
+test("a Source edit changes only its nondestructive working timeline",()=>{
+  const original={...item("source",10),originalSource:"C:/original-source.mp4",editSegments:[{start:0,end:10}]};
+  const project=addSource(createProject(),original);
+  const range=bracketSelectionRange(10,null,3.25);
+  const edited=removeLogicalRange(project,"source",range.from,range.to,true);
+  assert.deepEqual(edited.sources[0].editSegments,[{start:3.25,end:10}]);
+  assert.equal(itemDuration(edited.sources[0]),6.75);
+  assert.equal(edited.sources[0].originalSource,"C:/original-source.mp4");
+});
