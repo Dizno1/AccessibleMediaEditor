@@ -6,6 +6,7 @@ const shortcuts = [
   ["moveEarlier", {ctrl:true,key:"arrowup"}], ["moveLater", {ctrl:true,key:"arrowdown"}],
   ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
+  ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],
   ["setIn", {key:"["}], ["setOut", {key:"]"}],
   ["scrubBack1", {key:"u"}], ["scrubForward1", {key:"i"}],
@@ -17,7 +18,6 @@ const shortcuts = [
   ["nudgeBack", {alt:true,key:"arrowleft"}], ["nudgeForward", {alt:true,key:"arrowright"}],
   ["jumpBeginning", {key:"home"}], ["jumpEnd", {key:"end"}],
   ["goToTime", {ctrl:true,key:"g"}], ["split", {ctrl:true,key:"k"}],
-  ["insertSource", {ctrl:true,key:"enter"}], ["appendSource", {ctrl:true,shift:true,key:"enter"}],
   ["previousSection", {ctrl:true,key:"pageup"}], ["nextSection", {ctrl:true,key:"pagedown"}],
   ["previousWorkspace", {ctrl:true,shift:true,key:"tab"}], ["nextWorkspace", {ctrl:true,key:"tab"}]
 ];

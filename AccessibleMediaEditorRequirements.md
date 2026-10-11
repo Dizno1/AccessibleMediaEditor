@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.6.1 establishes automatic working-media normalization, immediate nondestructive single-media editing, logical edited playback, Undo, and format-selectable saving. Users can also add image, audio, and video assets, maintain Primary and Source media, assign an image duration, move items, remove items, save a project description, and reopen it. Multi-item composition preview and export remain the next development stage after this media foundation is verified.
+Accessible Media Editor build 0.7.0 establishes a unified Primary Production player, dedicated filename-titled Source Video and Source Audio editors, logical Ctrl+C and Ctrl+V media editing, automatic working-media normalization, immediate nondestructive playback, Undo, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
 
 ## Product purpose
 

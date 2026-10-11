@@ -31,14 +31,14 @@
     <div class="workspace">
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
-        <label for="project-items">Primary sequence</label>
+        <label for="project-items">Primary Production contents</label>
         <select id="project-items" size="12">
           <option disabled>No primary media</option>
         </select>
         <p id="selected-item-summary">No primary media selected.</p>
         <div class="button-row">
           <button type="button" id="import-media-button">Open Media (Ctrl+O)</button>
-          <button type="button" id="edit-primary-button" disabled>Edit Primary Media</button>
+          <button type="button" id="edit-primary-button" disabled>Go to Primary Production</button>
           <button type="button" id="add-text-button">Add Text</button>
           <button type="button" id="move-earlier-button" disabled>Move Earlier (Ctrl+Up)</button>
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
@@ -51,8 +51,8 @@
         <p id="selected-source-summary">No source media selected.</p>
         <div class="button-row">
           <button type="button" id="activate-source-button" disabled>Edit Selected Source Media</button>
-          <button type="button" id="insert-source-button" disabled>Insert Selection at Primary Playhead</button>
-          <button type="button" id="append-source-button" disabled>Add Selection to End</button>
+          <button type="button" id="insert-source-button" hidden disabled>Insert Selection at Primary Playhead</button>
+          <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source</button>
         </div>
       </section>
@@ -194,10 +194,10 @@
         <li>Alt+Left or Alt+Right: Move by 1 millisecond.</li>
         <li>Home or End: Move to the beginning or end.</li>
         <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
+        <li>Ctrl+C: Copy the marked selection from the active Source editor.</li>
+        <li>Ctrl+V: Paste copied media into Primary Production at its playhead.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
         <li>Ctrl+Delete: Commit the marked Primary edit.</li>
-        <li>Ctrl+Enter: Insert the active Source selection at the remembered Primary playhead.</li>
-        <li>Ctrl+Shift+Enter: Add the active Source selection to the end.</li>
       </ul>
       <button type="submit">Close</button>
     </form>
@@ -218,7 +218,7 @@
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Ctrl+G opens exact-time fields.</p>
       <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
-      <p><strong>Building the sequence:</strong> Mark a selection in Source Media, then use Insert Selection at Primary Playhead or Add Selection to End.</p>
+      <p><strong>Building the production:</strong> Mark a selection in a Source editor, press Ctrl+C, move to Primary Production, position its playhead, and press Ctrl+V. To paste at the end, press End before Ctrl+V.</p>
       <p><strong>Committing an edit:</strong> Left bracket sets the In mark. Right bracket sets the Out mark. Press Ctrl+Delete to remove the marked selection. With only an Out mark, Ctrl+Delete removes everything after that mark. With only an In mark, it removes everything before that mark.</p>
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>

@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.6.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.7.0 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -34,7 +34,7 @@ TAIL TRIM TEST
 4. Confirm everything after the mark is removed from immediate playback.
 5. Wait for the working file and save it with Ctrl+E.
 
-SOURCE SELECTION AND INSERTION TEST
+SOURCE COPY AND PRIMARY PASTE TEST
 
 1. Open a second supported video as Source Media.
 2. Enter its Source editor.
@@ -42,10 +42,21 @@ SOURCE SELECTION AND INSERTION TEST
 4. Confirm Selection start is announced.
 5. Move to the desired selection ending and press right bracket.
 6. Confirm Selection end is announced.
-7. Activate Insert Selection at Primary Playhead inside the same Source editor, or press Ctrl+Enter.
-8. Confirm the selection appears in Primary Sequence.
-9. Repeat with Ctrl+Shift+Enter and confirm the selection is added to the end.
-10. Confirm the original Source file remains unchanged.
+7. Press Ctrl+C and confirm the filename and copied duration are announced.
+8. Press Ctrl+Page Up until Primary Production is focused.
+9. Move its playhead to the desired insertion point and press Ctrl+V.
+10. Confirm the pasted duration and insertion time are announced.
+11. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
+12. Confirm no separate Inserted Video editor region was created.
+13. Press Ctrl+Z and confirm the pasted material is removed from Primary Production.
+14. Confirm the complete original Source file remains available and unchanged.
+
+SOURCE REMOVAL TEST
+
+1. Enter a Source editor and activate Remove Source from Project.
+2. Confirm Source removed. Original file unchanged is announced.
+3. Confirm focus moves to the next Source editor, or to Primary Production if no Source remains.
+4. Press Ctrl+Z and confirm the Source editor returns.
 
 QUIET INTERACTION TEST
 
@@ -78,6 +89,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.6.1 creates and saves an edited working file for one Primary video or audio file. It does not yet render the complete multi-item Primary Sequence.
+Build 0.7.0 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

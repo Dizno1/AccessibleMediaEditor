@@ -2,6 +2,24 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.7.0
+
+Build 0.7.0 replaces the disconnected inserted-item editors with a ScreenCapture-style Primary Production experience.
+
+- One Primary Production player and playhead cover the complete sequence.
+- Pasted video or audio becomes part of that continuous production instead of opening another editor region.
+- Each imported Source Video and Source Audio keeps its own filename-titled editor section.
+- Ctrl+Page Up and Ctrl+Page Down move directly among Primary Production, every Source editor, Media Management, and Output.
+- Left and Right Bracket mark a Source selection.
+- Ctrl+C copies the marked Source selection into the application's internal media clipboard.
+- Ctrl+V pastes it at the Primary Production playhead.
+- End followed by Ctrl+V appends the selection without a separate Append command.
+- Every Source editor includes Remove Source from Project. The original file and already pasted production material remain unchanged.
+- Inserted items no longer create focus jumps into additional editing regions.
+- Source audio uses the same ordinary Media Editor workflow and does not require AudioStudio Pro.
+
+Build 0.7.0 provides immediate continuous playback of a multi-item production. FFmpeg rendering of that multi-item production is intentionally not presented as complete yet; format-selectable export remains available for a normalized or edited single-media production.
+
 ## Build 0.6.1
 
 Build 0.6.1 corrects the first 0.6.0 field-test findings and adds the conversion and output boundaries required for future composition.
@@ -59,7 +77,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.6.1 proves normalization, real editing, immediate review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.7.0 proves normalization, dedicated Source editors, logical copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 
