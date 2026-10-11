@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, bracketSelectionRange } from "../app/projectModel.js";
+import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
   const empty=createProject(); const a=addItem(empty,item("a",2)); const b=addItem(a,item("b",3)); const moved=moveItem(b,"b",-1);
@@ -70,4 +71,14 @@ test("a Source edit changes only its nondestructive working timeline",()=>{
   assert.deepEqual(edited.sources[0].editSegments,[{start:3.25,end:10}]);
   assert.equal(itemDuration(edited.sources[0]),6.75);
   assert.equal(edited.sources[0].originalSource,"C:/original-source.mp4");
+});
+test("an edited Source pause converts original media time back to edited timeline time",()=>{
+  const source={...item("source",240.767),editSegments:[{start:10.417,end:240.767}]};
+  const logical=sourceToLogicalTime(source,23.464);
+  assert.ok(Math.abs(logical-13.047)<0.000001);
+  assert.ok(Math.abs(logicalToSourceTime(source,logical)-23.464)<0.000001);
+});
+test("Undo and Redo are registered keyboard shortcuts rather than menu labels only",()=>{
+  assert.ok(shortcuts.some(([name,key])=>name==="undo"&&key.ctrl&&key.key==="z"));
+  assert.ok(shortcuts.some(([name,key])=>name==="redo"&&key.ctrl&&key.key==="y"));
 });

@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.7.3 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.7.5 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -77,6 +77,17 @@ SOURCE NONDESTRUCTIVE EDIT TEST
 7. Paste into Primary Production and confirm the copied material comes from the edited Source timeline.
 8. Confirm the original Source file remains unchanged.
 
+EDITED SOURCE PLAYHEAD ACCURACY TEST
+
+1. Delete several seconds from the beginning of a Source.
+2. Press Home and X to begin playback of the edited Source.
+3. When you hear a recognizable word, press X to pause.
+4. Press Space and confirm the audition contains that same word or the immediately surrounding audio.
+5. Press X twice several times and confirm each pause remains at the point actually heard rather than jumping forward.
+6. Press Space and immediately press a bracket before the sample finishes. Confirm the bracket uses the original audition point rather than a later moving playback position.
+7. Apply an edit with Ctrl+Delete, press Ctrl+Z once, and confirm the deleted material returns.
+8. Press Ctrl+Y once and confirm the edit is reapplied.
+
 QUIET INTERACTION TEST
 
 1. Arrow through Primary Sequence and Source Media.
@@ -109,6 +120,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.7.3 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.7.5 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

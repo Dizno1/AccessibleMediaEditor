@@ -1,10 +1,11 @@
 const handlers = new Map();
-const shortcuts = [
+export const shortcuts = [
   ["newProject", {ctrl:true,key:"n"}], ["openProject", {ctrl:true,shift:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
   ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["importMedia", {ctrl:true,key:"o"}],
   ["exportMedia", {ctrl:true,key:"e"}],
   ["moveEarlier", {ctrl:true,key:"arrowup"}], ["moveLater", {ctrl:true,key:"arrowdown"}],
   ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
+  ["undo", {ctrl:true,key:"z"}], ["redo", {ctrl:true,key:"y"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
   ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],

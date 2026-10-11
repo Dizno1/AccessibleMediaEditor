@@ -2,6 +2,14 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.7.5
+
+Build 0.7.5 registers Ctrl+Z and Ctrl+Y as real application shortcuts instead of menu text only. It also keeps the logical playhead anchored throughout a quiet Space audition. Pressing a bracket during an audition first returns to the anchor, preventing a moving audition position from becoming an unintended deletion boundary.
+
+## Build 0.7.4
+
+Build 0.7.4 corrects the time conversion used when X pauses edited media. The player now converts original-file time back into edited-timeline time before saving the playhead, so repeated play and pause no longer moves the playhead and Space auditions the location where playback was actually paused.
+
 ## Build 0.7.3
 
 Build 0.7.3 extends logical bracket editing to every Source Video and Source Audio editor. Ctrl+Delete edits the active Source working timeline nondestructively, playback and copying use that edited timeline, and the original Source file remains unchanged. Removing a Source clears stale bracket history so the first Ctrl+Z restores the removed Source and returns focus to its editor.
@@ -98,7 +106,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.7.3 proves normalization, dedicated and nondestructively editable Source editors, quiet media auditioning, logical bracket selection, copy and paste, continuous Primary Production review, Undo, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.7.5 proves normalization, dedicated and nondestructively editable Source editors, accurate edited-timeline playback positions, anchored quiet auditioning, logical bracket selection, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 
@@ -108,5 +116,3 @@ Build 0.7.3 proves normalization, dedicated and nondestructively editable Source
 - `npm run desktop:build`
 
 Windows installers are produced as MSI and NSIS packages by the GitHub Actions workflow.
-
-10/11/2026: Changing a file so the app will push.

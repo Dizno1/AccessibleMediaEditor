@@ -262,6 +262,7 @@ function handleTimeUpdate(idValue){
     if(logicalNow>=state.audition.end){
       const point=state.audition.returnPoint;cancelAudition(state,false);setEditorPosition(state,point,true);updateStatus(`Playhead ${readableTime(point)}.`);return;
     }
+    return;
   }else if(location.type==="program"&&currentProgramItem){
     const segments=normalizedSegments(currentProgramItem),sourceTime=state.video.currentTime,currentSegment=segments.findIndex(segment=>sourceTime>=segment.start-0.02&&sourceTime<segment.end-0.01);
     if(currentSegment<0&&!state.video.paused){
@@ -440,10 +441,18 @@ function undo(){
 }
 function redo(){if(!redoStack.length)return announce("Nothing to redo.");undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=project.sources?.[0]?.id||null;activeMediaId=project.items.length?PROGRAM_ID:selectedSourceId;render();editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}
 
+function currentLogicalPosition(location,state){
+  if(location.type==="program"){
+    const current=project.items.find(item=>item.id===state.currentItemId);
+    return(state.currentItemOffset||0)+(current?sourceToLogicalTime(current,state.video.currentTime):0);
+  }
+  if(["sequence","source"].includes(location.type))return sourceToLogicalTime(location.item,state.video.currentTime);
+  return state.video.currentTime;
+}
 async function togglePlayback(){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before preview.",true);cancelAudition(state,true);
   if(state.video.paused){const bounds=editorBounds(location.item,location.type);if(state.cursor<bounds.start||state.cursor>=bounds.end)setEditorPosition(state,bounds.start,true);else setEditorPosition(state,state.cursor,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
-  else{state.video.pause();setEditorPosition(state,state.video.currentTime,true);announce(`Paused at ${readableTime(state.cursor)}.`);}
+  else{state.video.pause();setEditorPosition(state,currentLogicalPosition(location,state),true);announce(`Paused at ${readableTime(state.cursor)}.`);}
 }
 async function auditionAround(before=1,after=1,quiet=false){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return quiet?undefined:announce("This format requires conversion before preview.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
@@ -457,6 +466,7 @@ function scrub(amount){const state=activeState();if(!state)return announce("Acti
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const bounds=editorBounds(location.item,location.type);setEditorPosition(state,end?bounds.end:bounds.start,true);announce(`${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
 function setPoint(which){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);
+  cancelAudition(state,true);
   const point=state.cursor,other=which==="in"?state.markOut:state.markIn;
   if(which==="in"&&other!=null&&point>=other)return announce("Left Bracket must precede Right Bracket.",true);
   if(which==="out"&&other!=null&&point<=other)return announce("Right Bracket must follow Left Bracket.",true);
@@ -517,7 +527,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.7.3. Nondestructive Source editing and one-step Source restoration.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.7.5. Fixed Ctrl+Z restoration and fixed audition-anchored brackets.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

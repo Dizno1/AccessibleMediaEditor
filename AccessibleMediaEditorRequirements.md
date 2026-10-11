@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.7.3 establishes a unified Primary Production player, quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, logical bracket selection, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, Undo, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
+Accessible Media Editor build 0.7.5 establishes a unified Primary Production player, accurate edited-timeline playhead positions, anchored quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, logical bracket selection, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
 
 ## Product purpose
 
