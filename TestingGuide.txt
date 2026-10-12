@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.8.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.8.3 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -110,6 +110,26 @@ EDITED SOURCE PLAYHEAD ACCURACY TEST
 7. Apply an edit with Ctrl+Delete, press Ctrl+Z once, and confirm the deleted material returns.
 8. Press Ctrl+Y once and confirm the edit is reapplied.
 
+PAUSE AND BRACKET SYNCHRONIZATION TEST
+
+1. Enter Primary Production and press X to play.
+2. Press X to pause and listen to the announced time.
+3. Immediately press Left Bracket or Right Bracket.
+4. Confirm the bracket time exactly matches the paused time.
+5. Repeat in at least two Source editors.
+6. Repeat after deleting part of Primary Production and after deleting part of a Source.
+7. Confirm no delayed media event moves the paused playhead after X announces its position.
+
+PRECISION SCRUBBING TEST
+
+1. With the Virtual Cursor off, enter Primary Production or a Source editor.
+2. Press U and I and confirm movement by 1 second with a short quiet media sample.
+3. Press Shift+U and Shift+I and confirm movement by 100 milliseconds.
+4. Press Ctrl+Alt+U and Ctrl+Alt+I and confirm movement by 10 milliseconds.
+5. Press Alt+Left Arrow and Alt+Right Arrow and confirm movement by 1 millisecond.
+6. Confirm Ctrl+Alt+I does not open Chromium Developer Tools.
+7. Confirm scrubbing does not speak a status message over the media sample.
+
 QUIET INTERACTION TEST
 
 1. Arrow through Primary Sequence and Source Media.
@@ -142,6 +162,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.8.2 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.8.3 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

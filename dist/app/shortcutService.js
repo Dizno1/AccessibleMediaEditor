@@ -12,7 +12,7 @@ export const shortcuts = [
   ["setIn", {key:"["}], ["setOut", {key:"]"}],
   ["scrubBack1", {key:"u"}], ["scrubForward1", {key:"i"}],
   ["scrubBack100ms", {shift:true,key:"u"}], ["scrubForward100ms", {shift:true,key:"i"}],
-  ["scrubBack10ms", {ctrl:true,shift:true,key:"u"}], ["scrubForward10ms", {ctrl:true,shift:true,key:"i"}],
+  ["scrubBack10ms", {ctrl:true,alt:true,key:"u"}], ["scrubForward10ms", {ctrl:true,alt:true,key:"i"}],
   ["moveBack5", {key:"arrowleft"}], ["moveForward5", {key:"arrowright"}],
   ["moveBack30", {shift:true,key:"arrowleft"}], ["moveForward30", {shift:true,key:"arrowright"}],
   ["moveBack300", {key:"j"}], ["moveForward300", {key:"l"}],

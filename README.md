@@ -2,6 +2,19 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
+
+## Build 0.8.3
+
+Build 0.8.3 stabilizes the editing foundation before multi-item rendering.
+
+- X freezes the exact logical playhead position before announcing Pause.
+- Delayed media time-update events cannot move a paused playhead.
+- A bracket placed during playback captures the current logical media position.
+- Ctrl+Alt+U and Ctrl+Alt+I scrub by 10 milliseconds without colliding with Chromium View Source or Developer Tools commands.
+- Active-editor styling no longer uses aria-current, removing repeated Current announcements from JAWS.
+- The comprehensive development roadmap is stored in AccessibleMediaEditorDevelopmentRoadmap.md.
+
 ## Build 0.8.2
 
 Build 0.8.2 makes bracket geometry a shared selection model and uses the user's logical orientation terminology.
@@ -125,7 +138,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.8.2 proves normalization, dedicated and nondestructively editable Source editors, accurate edited-timeline playback positions, anchored quiet auditioning, shared orientation-based bracket selection for Copy and Delete, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.8.3 proves normalization, dedicated and nondestructively editable Source editors, stabilized edited-timeline playback positions, anchored quiet auditioning, shared orientation-based bracket selection for Copy and Delete, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

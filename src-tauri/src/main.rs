@@ -174,7 +174,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Play or Pause X","playPause")?).item(&item(app,"Audition Around Playhead Space","audition")?).separator()
         .item(&item(app,"Scrub Back 1 Second U","scrubBack1")?).item(&item(app,"Scrub Forward 1 Second I","scrubForward1")?)
         .item(&item(app,"Scrub Back 100 Milliseconds Shift+U","scrubBack100ms")?).item(&item(app,"Scrub Forward 100 Milliseconds Shift+I","scrubForward100ms")?)
-        .item(&item(app,"Scrub Back 10 Milliseconds Ctrl+Shift+U","scrubBack10ms")?).item(&item(app,"Scrub Forward 10 Milliseconds Ctrl+Shift+I","scrubForward10ms")?)
+        .item(&item(app,"Scrub Back 10 Milliseconds Ctrl+Alt+U","scrubBack10ms")?).item(&item(app,"Scrub Forward 10 Milliseconds Ctrl+Alt+I","scrubForward10ms")?)
         .separator().item(&item(app,"Move Back 5 Seconds Left Arrow","moveBack5")?).item(&item(app,"Move Forward 5 Seconds Right Arrow","moveForward5")?)
         .item(&item(app,"Move Back 30 Seconds Shift+Left","moveBack30")?).item(&item(app,"Move Forward 30 Seconds Shift+Right","moveForward30")?)
         .item(&item(app,"Move Back 5 Minutes J","moveBack300")?).item(&item(app,"Move Forward 5 Minutes L","moveForward300")?)

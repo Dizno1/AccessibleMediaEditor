@@ -82,6 +82,11 @@ test("Undo and Redo are registered keyboard shortcuts rather than menu labels on
   assert.ok(shortcuts.some(([name,key])=>name==="undo"&&key.ctrl&&key.key==="z"));
   assert.ok(shortcuts.some(([name,key])=>name==="redo"&&key.ctrl&&key.key==="y"));
 });
+test("precision scrubbing avoids Chromium View Source and Developer Tools shortcuts",()=>{
+  assert.ok(shortcuts.some(([name,key])=>name==="scrubBack10ms"&&key.ctrl&&key.alt&&key.key==="u"));
+  assert.ok(shortcuts.some(([name,key])=>name==="scrubForward10ms"&&key.ctrl&&key.alt&&key.key==="i"));
+  assert.ok(!shortcuts.some(([name,key])=>["scrubBack10ms","scrubForward10ms"].includes(name)&&key.ctrl&&key.shift));
+});
 test("all four logical bracket arrangements produce the intended selection plan",()=>{
   assert.deepEqual(bracketSelectionPlan(10,4,null),{kind:"ending",selectedRanges:[{from:4,to:10}]});
   assert.deepEqual(bracketSelectionPlan(10,null,4),{kind:"beginning",selectedRanges:[{from:0,to:4}]});

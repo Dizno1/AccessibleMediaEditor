@@ -141,14 +141,18 @@ function setProgramMedia(state,point,autoplay=false){
   else{state.video.currentTime=sourceTime;if(autoplay)state.video.play().catch(()=>{});}
   return true;
 }
-function setEditorPosition(state,point,expose=true){
-  const location=locateItem(state.id);if(!location||!location.item.duration)return false;
+function storeCursor(state,location,point,expose=true){
   const bounds=editorBounds(location.item,location.type),next=Math.max(bounds.start,Math.min(bounds.end,Number(point)||0));
   state.cursor=next;state.slider.value=String(next);
   if(next<bounds.end-0.0005)state.endReached=false;
-  if(location.type==="program")setProgramMedia(state,next,false);else state.video.currentTime=["sequence","source"].includes(location.type)?logicalToSourceTime(location.item,next):next;
   if(expose)state.slider.setAttribute("aria-valuetext",readableTime(next));
-  state.position.textContent=`Position ${readableTime(next)}. Media duration ${readableTime(itemDuration(location.item))}.`;
+  state.position.textContent=`Position ${readableTime(next)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
+  return next;
+}
+function setEditorPosition(state,point,expose=true){
+  const location=locateItem(state.id);if(!location||!location.item.duration)return false;
+  const next=storeCursor(state,location,point,expose);
+  if(location.type==="program")setProgramMedia(state,next,false);else state.video.currentTime=["sequence","source"].includes(location.type)?logicalToSourceTime(location.item,next):next;
   return true;
 }
 function updateEditorLabels(state,item,type){
@@ -263,7 +267,9 @@ function handleTimeUpdate(idValue){
       const point=state.audition.returnPoint;cancelAudition(state,false);setEditorPosition(state,point,true);updateStatus(`Playhead ${readableTime(point)}.`);return;
     }
     return;
-  }else if(location.type==="program"&&currentProgramItem){
+  }
+  if(state.video.paused)return;
+  if(location.type==="program"&&currentProgramItem){
     const segments=normalizedSegments(currentProgramItem),sourceTime=state.video.currentTime,currentSegment=segments.findIndex(segment=>sourceTime>=segment.start-0.02&&sourceTime<segment.end-0.01);
     if(currentSegment<0&&!state.video.paused){
       const nextSegment=segments.find(segment=>sourceTime<segment.start);
@@ -308,7 +314,7 @@ function renderEditorNavigation(playable){
   });
 }
 function updateActiveAppearance(){
-  for(const [idValue,state]of editorStates)state.section.setAttribute("aria-current",String(idValue===activeMediaId));
+  for(const [idValue,state]of editorStates)state.section.classList.toggle("active-editor",idValue===activeMediaId);
 }
 function activateMedia(idValue,focus=true){
   const location=locateItem(idValue),state=editorStates.get(idValue);if(!location||!state)return;
@@ -463,7 +469,7 @@ function currentLogicalPosition(location,state){
 async function togglePlayback(){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before preview.",true);cancelAudition(state,true);
   if(state.video.paused){const bounds=editorBounds(location.item,location.type);if(state.cursor<bounds.start||state.cursor>=bounds.end)setEditorPosition(state,bounds.start,true);else setEditorPosition(state,state.cursor,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
-  else{state.video.pause();setEditorPosition(state,currentLogicalPosition(location,state),true);announce(`Paused at ${readableTime(state.cursor)}.`);}
+  else{const point=currentLogicalPosition(location,state);state.video.pause();storeCursor(state,location,point,true);announce(`Paused at ${readableTime(state.cursor)}.`);}
 }
 async function auditionAround(before=1,after=1,quiet=false){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return quiet?undefined:announce("This format requires conversion before preview.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
@@ -478,7 +484,7 @@ function jumpPlayhead(end=false){const location=activeLocation(),state=activeSta
 function setPoint(which){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);
   cancelAudition(state,true);
-  const point=state.cursor;
+  const point=state.video.paused?state.cursor:currentLogicalPosition(location,state);storeCursor(state,location,point,true);
   const previous=which==="in"?state.markIn:state.markOut;if(previous===point)return announce(`${which==="in"?"Left":"Right"} Bracket is already set there.`);
   state.markHistory.push({which,previous});if(which==="in")state.markIn=point;else state.markOut=point;updateEditorLabels(state,location.item,location.type);
   const total=location.type==="program"?duration(project):itemDuration(location.item),plan=bracketSelectionPlan(total,state.markIn,state.markOut);
@@ -539,7 +545,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.2. Correct bracket orientation language and concise editing announcements.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.3. Stabilized pause positions, reliable precision scrubbing, and quieter editor navigation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
