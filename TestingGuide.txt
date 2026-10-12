@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.8.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.8.2 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -38,12 +38,12 @@ SINGLE BRACKET LOGIC TEST
 8. Confirm everything to the left of the Right Bracket is deleted and the content to its right remains.
 9. Press Ctrl+Z and confirm the beginning returns.
 10. Set the Left Bracket at an earlier time and the Right Bracket at a later time.
-11. Confirm Inward brackets and the selected content are announced without calling it deletable data.
-12. Press Ctrl+Delete and confirm only the content between the inward-facing brackets is deleted.
+11. Confirm Outward brackets and the selected content are announced without calling it deletable data.
+12. Press Ctrl+Delete and confirm only the content between the outward-facing brackets is deleted.
 13. Press Ctrl+Z and confirm the content returns.
 14. Move to a desired clip beginning and set the Right Bracket.
 15. Continue forward and set the Left Bracket at the desired clip ending.
-16. Confirm Outward brackets announce that the beginning and end are selected and the middle is not selected.
+16. Confirm Inward brackets announce that the beginning and end are selected and the middle is not selected.
 17. Press Ctrl+Delete and confirm the selected beginning and end are deleted, leaving the unselected middle.
 18. Press Ctrl+Z once and confirm both deleted ends return.
 19. Press Ctrl+Y once and confirm both ends are deleted again.
@@ -71,7 +71,7 @@ SOURCE COPY AND PRIMARY PASTE TEST
 6. Confirm Right Bracket and the enclosed selection are announced.
 7. Press Ctrl+C and confirm the filename, copied duration, and cleared brackets are announced.
 8. Set the Source brackets again, use Edit, Copy Source Selection, and confirm it performs the same command.
-9. Create an outward selection by setting Right Bracket earlier and Left Bracket later. Press Ctrl+C and paste into Primary Production. Confirm both selected ends are copied in their original order and the unselected middle is not copied.
+9. Create an inward selection by setting Right Bracket earlier and Left Bracket later. Press Ctrl+C and paste into Primary Production. Confirm both selected ends are copied in their original order and the unselected middle is not copied.
 10. Press Ctrl+Page Up until Primary Production is focused.
 11. Move its playhead to the desired insertion point and press Ctrl+V.
 12. Confirm the pasted duration and insertion time are announced.
@@ -142,6 +142,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.8.1 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.8.2 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

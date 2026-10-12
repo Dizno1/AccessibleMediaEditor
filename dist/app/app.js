@@ -426,7 +426,7 @@ function copySourceSelection(){
   const selectedDuration=plan.selectedRanges.reduce((sum,range)=>sum+range.to-range.from,0);
   mediaClipboard={...structuredClone(location.item),id:null,role:"inserted",inPoint:0,outPoint:selectedDuration,editSegments:logicalSegmentsForRanges(location.item,plan.selectedRanges),workingSource:location.item.workingSource||location.item.source};
   state.markIn=state.markOut=null;state.markHistory=[];updateEditorLabels(state,location.item,location.type);
-  const programState=editorStates.get(PROGRAM_ID);if(programState&&project.items[0])updateEditorLabels(programState,project.items[0],"program");announce(`Copied selected ${readableTime(selectedDuration)} from ${displayName(location.item)}. Brackets cleared.`);cue("add");
+  const programState=editorStates.get(PROGRAM_ID);if(programState&&project.items[0])updateEditorLabels(programState,project.items[0],"program");announce(`Copied ${readableTime(selectedDuration)} from ${displayName(location.item)}.`);cue("add");
 }
 function pasteMediaClipboard(){
   const state=activeState(),location=activeLocation();if(!mediaClipboard)return announce("Copy a Source selection first.",true);if(!state||location?.type!=="program")return announce("Move to Primary Production before pasting.",true);
@@ -482,8 +482,8 @@ function setPoint(which){
   const previous=which==="in"?state.markIn:state.markOut;if(previous===point)return announce(`${which==="in"?"Left":"Right"} Bracket is already set there.`);
   state.markHistory.push({which,previous});if(which==="in")state.markIn=point;else state.markOut=point;updateEditorLabels(state,location.item,location.type);
   const total=location.type==="program"?duration(project):itemDuration(location.item),plan=bracketSelectionPlan(total,state.markIn,state.markOut);
-  const effect=plan.kind==="ending"?`Selected from ${readableTime(state.markIn)} through the end.`:plan.kind==="beginning"?`Selected from the beginning through ${readableTime(state.markOut)}.`:plan.kind==="inside"?`Inward brackets. Content between ${readableTime(state.markIn)} and ${readableTime(state.markOut)} selected.`:plan.kind==="outside"?`Outward brackets. Beginning and end selected. Content between ${readableTime(state.markOut)} and ${readableTime(state.markIn)} not selected.`:"Both brackets are at the same position. Move one bracket before using the selection.";
-  announce(`${which==="in"?"Left":"Right"} Bracket set. ${effect}${location.type==="source"?" Press Ctrl+C to copy or Ctrl+Delete to delete the selection.":" Press Ctrl+Delete to delete the selection."}`);
+  const effect=plan.kind==="ending"?`Selected from ${readableTime(state.markIn)} to end.`:plan.kind==="beginning"?`Selected from beginning to ${readableTime(state.markOut)}.`:plan.kind==="inside"?`Outward brackets. Selected between ${readableTime(state.markIn)} and ${readableTime(state.markOut)}.`:plan.kind==="outside"?`Inward brackets. Beginning and end selected. Middle not selected.`:`Brackets meet at ${readableTime(point)}. Selection empty.`;
+  announce(`${which==="in"?"Left":"Right"} Bracket. ${effect}`);
 }
 function removeProgramRange(base,from,to){
   const next=structuredClone(base),kept=[];let offset=0;
@@ -509,7 +509,7 @@ async function commitPrimaryEdit(){
   else next=removeLogicalRanges(project,location.item.id,plan.selectedRanges,location.type==="source");
   if(next===project)return announce("That edit would remove the entire file or no media. Nothing changed.",true);
   const editedItem=location.type==="source"?(next.sources||[]).find(item=>item.id===location.item.id):next.items.find(item=>item.id===location.item.id);
-  const itemId=location.item.id,deleted=plan.kind==="ending"?"End deleted.":plan.kind==="beginning"?"Beginning deleted.":plan.kind==="inside"?"Content between inward brackets deleted.":"Beginning and end deleted. Content between outward brackets kept.";state.markIn=state.markOut=null;state.markHistory=[];rememberChange(next,`${deleted} Duration ${readableTime(location.type==="program"?duration(next):itemDuration(editedItem))}.`);
+  const itemId=location.item.id,deleted=plan.kind==="ending"?"End deleted.":plan.kind==="beginning"?"Beginning deleted.":plan.kind==="inside"?"Selection between outward brackets deleted.":"Beginning and end deleted. Middle between inward brackets kept.";state.markIn=state.markOut=null;state.markHistory=[];rememberChange(next,`${deleted} Duration ${readableTime(location.type==="program"?duration(next):itemDuration(editedItem))}.`);
   const edited=location.type==="source"?sourceItem(itemId):(sequenceItem(itemId)||next.items[0]),currentState=editorStates.get(location.type==="program"?PROGRAM_ID:itemId),nextPoint=plan.kind==="ending"?plan.selectedRanges[0].from:plan.kind==="inside"?plan.selectedRanges[0].from:0;if(currentState)setEditorPosition(currentState,Math.min(nextPoint,location.type==="program"?duration(next):itemDuration(edited)),true);
   if(location.type==="program"&&next.items.length>1){updateStatus("Production edit is ready for immediate playback. Multi-item export rendering is not included in this build.");return;}
   if(location.type==="source"){updateStatus("Source working timeline edited. Original file unchanged.");return;}
@@ -539,7 +539,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.1. Shared bracket selections for copying and deleting, with user-selected Primary Production.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.2. Correct bracket orientation language and concise editing announcements.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

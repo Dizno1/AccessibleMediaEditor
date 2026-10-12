@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.8.1 establishes a unified Primary Production player, user-controlled Primary reassignment, accurate edited-timeline playhead positions, anchored quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
+Accessible Media Editor build 0.8.2 establishes a unified Primary Production player, user-controlled Primary reassignment, accurate edited-timeline playhead positions, anchored quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
 
 ## Product purpose
 
@@ -172,7 +172,7 @@ The supplied Accessible Video Suite prototype contains implementation that may b
 - FastAPI application structure.
 - Media upload and format normalization.
 - Keyboard-controlled playback.
-- Precise time navigation and logical Left and Right Brackets. A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Inward-facing brackets select the content between them. Outward-facing brackets select the beginning and end while leaving the middle unselected. Either bracket may be placed first. The operation determines the result: Ctrl+C copies the selected Source content, Ctrl+Delete deletes the selected content, and future Cut, Move, and effects commands act on that same selection.
+- Precise time navigation and logical Left and Right Brackets. A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Outward-facing brackets select the content between them. Inward-facing brackets select the beginning and end while leaving the middle unselected. Either bracket may be placed first. The operation determines the result: Ctrl+C copies the selected Source content, Ctrl+Delete deletes the selected content, and future Cut, Move, and effects commands act on that same selection.
 - Non-destructive removal segments.
 - Mute-range export.
 - Media-library upload and listing.

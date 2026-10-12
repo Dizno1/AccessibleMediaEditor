@@ -88,21 +88,21 @@ test("all four logical bracket arrangements produce the intended selection plan"
   assert.deepEqual(bracketSelectionPlan(10,2,7),{kind:"inside",selectedRanges:[{from:2,to:7}],unselectedRange:null});
   assert.deepEqual(bracketSelectionPlan(10,7,2),{kind:"outside",selectedRanges:[{from:0,to:2},{from:7,to:10}],unselectedRange:{from:2,to:7}});
 });
-test("outward-facing brackets delete both ends and retain only the middle",()=>{
+test("inward-facing brackets select both ends so deletion retains only the middle",()=>{
   const primary=addItem(createProject(),{...item("primary",10),editSegments:[{start:0,end:10}]});
   const plan=bracketSelectionPlan(10,7,2);
   const edited=removeLogicalRanges(primary,"primary",plan.selectedRanges);
   assert.deepEqual(edited.items[0].editSegments,[{start:2,end:7}]);
   assert.equal(itemDuration(edited.items[0]),5);
 });
-test("outward-facing Source brackets preserve only the protected middle",()=>{
+test("inward-facing Source brackets select both ends and preserve the unselected middle",()=>{
   const project=addSource(createProject(),{...item("source",12),originalSource:"C:/source-original.mp4",editSegments:[{start:0,end:12}]});
   const plan=bracketSelectionPlan(12,9,3);
   const edited=removeLogicalRanges(project,"source",plan.selectedRanges,true);
   assert.deepEqual(edited.sources[0].editSegments,[{start:3,end:9}]);
   assert.equal(edited.sources[0].originalSource,"C:/source-original.mp4");
 });
-test("copying an outward Source selection copies both selected ends in timeline order",()=>{
+test("copying an inward Source selection copies both selected ends in timeline order",()=>{
   const source={...item("source",12),editSegments:[{start:0,end:12}]};
   const plan=bracketSelectionPlan(12,9,3);
   const segments=logicalSegmentsForRanges(source,plan.selectedRanges);
