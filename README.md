@@ -2,6 +2,24 @@
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
+## Build 0.8.1
+
+Build 0.8.1 makes bracket geometry a shared selection model instead of a deletion model.
+
+- A lone Left Bracket selects everything to its right.
+- A lone Right Bracket selects everything to its left.
+- Inward-facing brackets, Left then Right on the timeline, select the content between them.
+- Outward-facing brackets, Right then Left on the timeline, select both ends and leave the middle unselected.
+- Either bracket may be placed first.
+- Ctrl+C copies the selected Source content, including both selected ends of an outward selection.
+- Ctrl+Delete deletes the same selected content.
+- Spoken confirmations describe the selection without assuming which operation will follow.
+- The model is shared by Primary Production and every Source editor.
+- Make Selected Source Primary swaps the selected Source with the current Primary without deleting either file or its edits.
+- The Primary swap is available as a Media Management button and Project menu command.
+- Ctrl+Z and Ctrl+Y reverse and reapply bracket edits and Primary swaps.
+- Item Properties uses Left Bracket and Right Bracket terminology.
+
 ## Build 0.7.5
 
 Build 0.7.5 registers Ctrl+Z and Ctrl+Y as real application shortcuts instead of menu text only. It also keeps the logical playhead anchored throughout a quiet Space audition. Pressing a bracket during an audition first returns to the anchor, preventing a moving audition position from becoming an unintended deletion boundary.
@@ -106,7 +124,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.7.5 proves normalization, dedicated and nondestructively editable Source editors, accurate edited-timeline playback positions, anchored quiet auditioning, logical bracket selection, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.8.1 proves normalization, dedicated and nondestructively editable Source editors, accurate edited-timeline playback positions, anchored quiet auditioning, shared orientation-based bracket selection for Copy and Delete, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

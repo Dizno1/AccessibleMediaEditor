@@ -1,4 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.7.5 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.8.1 TESTING GUIDE
 
 FIRST IMPORT REGRESSION TEST
 
@@ -37,8 +37,29 @@ SINGLE BRACKET LOGIC TEST
 7. Press Ctrl+Delete.
 8. Confirm everything to the left of the Right Bracket is deleted and the content to its right remains.
 9. Press Ctrl+Z and confirm the beginning returns.
-10. Set both brackets and press Ctrl+Delete.
-11. Confirm only the content enclosed between the brackets is deleted.
+10. Set the Left Bracket at an earlier time and the Right Bracket at a later time.
+11. Confirm Inward brackets and the selected content are announced without calling it deletable data.
+12. Press Ctrl+Delete and confirm only the content between the inward-facing brackets is deleted.
+13. Press Ctrl+Z and confirm the content returns.
+14. Move to a desired clip beginning and set the Right Bracket.
+15. Continue forward and set the Left Bracket at the desired clip ending.
+16. Confirm Outward brackets announce that the beginning and end are selected and the middle is not selected.
+17. Press Ctrl+Delete and confirm the selected beginning and end are deleted, leaving the unselected middle.
+18. Press Ctrl+Z once and confirm both deleted ends return.
+19. Press Ctrl+Y once and confirm both ends are deleted again.
+
+CHANGE PRIMARY PRODUCTION TEST
+
+1. Import several files at once.
+2. In Source Media, select the file that should be Primary.
+3. Activate Make Selected Source Primary.
+4. Confirm the selected filename is announced as Primary Production.
+5. Confirm the former Primary is announced as moved to Source Media.
+6. Confirm the new Primary plays in the unified Primary Production editor.
+7. Confirm the former Primary has its own Source editor and retains its edits.
+8. Press Ctrl+Z once and confirm the original Primary and Source roles return.
+9. Press Ctrl+Y once and confirm the swap is reapplied.
+10. Repeat the command through Project, Make Selected Source Primary.
 
 SOURCE COPY AND PRIMARY PASTE TEST
 
@@ -50,11 +71,12 @@ SOURCE COPY AND PRIMARY PASTE TEST
 6. Confirm Right Bracket and the enclosed selection are announced.
 7. Press Ctrl+C and confirm the filename, copied duration, and cleared brackets are announced.
 8. Set the Source brackets again, use Edit, Copy Source Selection, and confirm it performs the same command.
-9. Press Ctrl+Page Up until Primary Production is focused.
-10. Move its playhead to the desired insertion point and press Ctrl+V.
-11. Confirm the pasted duration and insertion time are announced.
-12. Move to another Primary position, use Edit, Paste into Primary Production, and confirm it performs the same command.
-13. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
+9. Create an outward selection by setting Right Bracket earlier and Left Bracket later. Press Ctrl+C and paste into Primary Production. Confirm both selected ends are copied in their original order and the unselected middle is not copied.
+10. Press Ctrl+Page Up until Primary Production is focused.
+11. Move its playhead to the desired insertion point and press Ctrl+V.
+12. Confirm the pasted duration and insertion time are announced.
+13. Move to another Primary position, use Edit, Paste into Primary Production, and confirm it performs the same command.
+14. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
 14. Confirm no separate Inserted Video editor region was created.
 15. Press Ctrl+Z and confirm the pasted material is removed from Primary Production.
 16. Confirm the complete original Source file remains available and unchanged.
@@ -120,6 +142,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.7.5 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.8.1 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

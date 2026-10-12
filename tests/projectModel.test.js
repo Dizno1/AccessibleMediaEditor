@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, bracketSelectionRange } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -60,7 +60,7 @@ test("a lone Right Bracket selects everything to its left",()=>{
   assert.deepEqual(edited.items[0].editSegments,[{start:4.25,end:10}]);
   assert.equal(itemDuration(edited.items[0]),5.75);
 });
-test("paired brackets select only the content between them",()=>{
+test("copying uses the content between two brackets",()=>{
   assert.deepEqual(bracketSelectionRange(10,2.125,7.875),{from:2.125,to:7.875,kind:"between"});
 });
 test("a Source edit changes only its nondestructive working timeline",()=>{
@@ -81,4 +81,51 @@ test("an edited Source pause converts original media time back to edited timelin
 test("Undo and Redo are registered keyboard shortcuts rather than menu labels only",()=>{
   assert.ok(shortcuts.some(([name,key])=>name==="undo"&&key.ctrl&&key.key==="z"));
   assert.ok(shortcuts.some(([name,key])=>name==="redo"&&key.ctrl&&key.key==="y"));
+});
+test("all four logical bracket arrangements produce the intended selection plan",()=>{
+  assert.deepEqual(bracketSelectionPlan(10,4,null),{kind:"ending",selectedRanges:[{from:4,to:10}]});
+  assert.deepEqual(bracketSelectionPlan(10,null,4),{kind:"beginning",selectedRanges:[{from:0,to:4}]});
+  assert.deepEqual(bracketSelectionPlan(10,2,7),{kind:"inside",selectedRanges:[{from:2,to:7}],unselectedRange:null});
+  assert.deepEqual(bracketSelectionPlan(10,7,2),{kind:"outside",selectedRanges:[{from:0,to:2},{from:7,to:10}],unselectedRange:{from:2,to:7}});
+});
+test("outward-facing brackets delete both ends and retain only the middle",()=>{
+  const primary=addItem(createProject(),{...item("primary",10),editSegments:[{start:0,end:10}]});
+  const plan=bracketSelectionPlan(10,7,2);
+  const edited=removeLogicalRanges(primary,"primary",plan.selectedRanges);
+  assert.deepEqual(edited.items[0].editSegments,[{start:2,end:7}]);
+  assert.equal(itemDuration(edited.items[0]),5);
+});
+test("outward-facing Source brackets preserve only the protected middle",()=>{
+  const project=addSource(createProject(),{...item("source",12),originalSource:"C:/source-original.mp4",editSegments:[{start:0,end:12}]});
+  const plan=bracketSelectionPlan(12,9,3);
+  const edited=removeLogicalRanges(project,"source",plan.selectedRanges,true);
+  assert.deepEqual(edited.sources[0].editSegments,[{start:3,end:9}]);
+  assert.equal(edited.sources[0].originalSource,"C:/source-original.mp4");
+});
+test("copying an outward Source selection copies both selected ends in timeline order",()=>{
+  const source={...item("source",12),editSegments:[{start:0,end:12}]};
+  const plan=bracketSelectionPlan(12,9,3);
+  const segments=logicalSegmentsForRanges(source,plan.selectedRanges);
+  assert.deepEqual(segments,[{start:0,end:3},{start:9,end:12}]);
+  assert.equal(segments.reduce((sum,segment)=>sum+segment.end-segment.start,0),6);
+});
+test("copying inward and single-bracket selections uses the same selected ranges as deletion",()=>{
+  const source={...item("source",10),editSegments:[{start:0,end:10}]};
+  assert.deepEqual(logicalSegmentsForRanges(source,bracketSelectionPlan(10,2,7).selectedRanges),[{start:2,end:7}]);
+  assert.deepEqual(logicalSegmentsForRanges(source,bracketSelectionPlan(10,4,null).selectedRanges),[{start:4,end:10}]);
+  assert.deepEqual(logicalSegmentsForRanges(source,bracketSelectionPlan(10,null,4).selectedRanges),[{start:0,end:4}]);
+});
+test("a Source can become Primary while the old Primary becomes a Source",()=>{
+  const original=addItem(createProject(),{...item("original",8),role:"primary",editSegments:[{start:1,end:8}]});
+  const project=addSource(original,{...item("replacement",5),role:"source",editSegments:[{start:0,end:4}]});
+  const swapped=makeSourcePrimary(project,"replacement");
+  assert.equal(swapped.items[0].id,"replacement");
+  assert.equal(swapped.items[0].role,"primary");
+  assert.equal(swapped.sources[0].id,"original");
+  assert.equal(swapped.sources[0].role,"source");
+  assert.deepEqual(swapped.sources[0].editSegments,[{start:1,end:8}]);
+  const restored=makeSourcePrimary(swapped,"original");
+  assert.equal(restored.items[0].id,"original");
+  assert.equal(restored.sources[0].id,"replacement");
+  assert.deepEqual(restored.items[0].editSegments,[{start:1,end:8}]);
 });

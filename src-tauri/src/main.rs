@@ -162,12 +162,12 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
         .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste into Primary Production Ctrl+V","pasteMedia")?)
-        .separator().item(&item(app,"Apply Marked Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
+        .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
-        .item(&item(app,"Item Properties Alt+Enter","properties")?).separator()
+        .item(&item(app,"Item Properties Alt+Enter","properties")?).item(&item(app,"Make Selected Source Primary","makeSourcePrimary")?).separator()
         .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set Left Bracket [","setIn")?).item(&item(app,"Set Right Bracket ]","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")

@@ -14,6 +14,18 @@ export function updateItem(project, id, patch) { const next = structuredClone(pr
 export function addSource(project, item) { const next = structuredClone(project); next.sources = next.sources || []; next.sources.push(item); next.dirty = true; return next; }
 export function removeSource(project, id) { const next = structuredClone(project); next.sources = (next.sources || []).filter(item => item.id !== id); next.dirty = true; return next; }
 export function updateSource(project, id, patch) { const next = structuredClone(project); const item = (next.sources || []).find(source => source.id === id); if (!item) return project; Object.assign(item, patch); next.dirty = true; return next; }
+export function makeSourcePrimary(project, sourceId) {
+  if (!project.items.length) return project;
+  const sourceIndex = (project.sources || []).findIndex(item => item.id === sourceId);
+  if (sourceIndex < 0) return project;
+  const next = structuredClone(project);
+  const oldPrimary = { ...next.items[0], role: "source" };
+  const newPrimary = { ...next.sources[sourceIndex], role: "primary" };
+  next.items[0] = newPrimary;
+  next.sources[sourceIndex] = oldPrimary;
+  next.dirty = true;
+  return next;
+}
 export function appendSourceSelection(project, source, newId) {
   const next = structuredClone(project); const copy = structuredClone(source);
   copy.id = newId; copy.role = "inserted"; copy.label = `${source.label || source.name} - selection`;
@@ -118,5 +130,37 @@ export function bracketSelectionRange(totalDuration, leftBracket = null, rightBr
   if (left != null) return { from: left, to: total, kind: "ending" };
   if (right != null) return { from: 0, to: right, kind: "beginning" };
   return null;
+}
+export function bracketSelectionPlan(totalDuration, leftBracket = null, rightBracket = null) {
+  const total = Math.max(0, Number(totalDuration) || 0);
+  const left = leftBracket == null ? null : Math.max(0, Math.min(total, Number(leftBracket) || 0));
+  const right = rightBracket == null ? null : Math.max(0, Math.min(total, Number(rightBracket) || 0));
+  if (left == null && right == null) return null;
+  if (left != null && right == null) return { kind: "ending", selectedRanges: [{ from: left, to: total }] };
+  if (left == null && right != null) return { kind: "beginning", selectedRanges: [{ from: 0, to: right }] };
+  if (left === right) return { kind: "empty", selectedRanges: [] };
+  if (left < right) return { kind: "inside", selectedRanges: [{ from: left, to: right }], unselectedRange: null };
+  return { kind: "outside", selectedRanges: [{ from: 0, to: right }, { from: left, to: total }], unselectedRange: { from: right, to: left } };
+}
+export function logicalSegmentsForRanges(item, ranges) {
+  const output = [];
+  for (const range of ranges) {
+    const from = Math.max(0, Number(range.from) || 0);
+    const to = Math.max(from, Number(range.to) || 0);
+    let logical = 0;
+    for (const segment of normalizedSegments(item)) {
+      const length = segment.end - segment.start;
+      const start = Math.max(from, logical);
+      const end = Math.min(to, logical + length);
+      if (end > start) output.push({ start: segment.start + start - logical, end: segment.start + end - logical });
+      logical += length;
+    }
+  }
+  return output;
+}
+export function removeLogicalRanges(project, id, ranges, sourceCollection = false) {
+  return [...ranges]
+    .sort((a, b) => b.from - a.from)
+    .reduce((current, range) => removeLogicalRange(current, id, range.from, range.to, sourceCollection), project);
 }
 export function serializable(project) { const copy = structuredClone(project); delete copy.path; delete copy.dirty; return copy; }

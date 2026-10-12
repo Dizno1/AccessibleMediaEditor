@@ -51,6 +51,7 @@
         <p id="selected-source-summary">No source media selected.</p>
         <div class="button-row">
           <button type="button" id="activate-source-button" disabled>Edit Selected Source Media</button>
+          <button type="button" id="make-source-primary-button" disabled>Make Selected Source Primary</button>
           <button type="button" id="insert-source-button" hidden disabled>Insert Selection at Primary Playhead</button>
           <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source</button>
@@ -96,14 +97,14 @@
       <input type="number" id="item-duration" min="0.001" step="0.001">
       <div id="trim-fields">
         <fieldset class="time-fields">
-          <legend>In point</legend>
+          <legend>Left Bracket time</legend>
           <label for="item-in-hours">Hours</label><input type="number" id="item-in-hours" min="0" step="1">
           <label for="item-in-minutes">Minutes</label><input type="number" id="item-in-minutes" min="0" max="59" step="1">
           <label for="item-in-seconds">Seconds</label><input type="number" id="item-in-seconds" min="0" max="59" step="1">
           <label for="item-in-milliseconds">Milliseconds</label><input type="number" id="item-in-milliseconds" min="0" max="999" step="1">
         </fieldset>
         <fieldset class="time-fields">
-          <legend>Out point</legend>
+          <legend>Right Bracket time</legend>
           <label for="item-out-hours">Hours</label><input type="number" id="item-out-hours" min="0" step="1">
           <label for="item-out-minutes">Minutes</label><input type="number" id="item-out-minutes" min="0" max="59" step="1">
           <label for="item-out-seconds">Seconds</label><input type="number" id="item-out-seconds" min="0" max="59" step="1">
@@ -197,7 +198,7 @@
         <li>Ctrl+C: Copy the marked selection from the active Source editor.</li>
         <li>Ctrl+V: Paste copied media into Primary Production at its playhead.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
-        <li>Ctrl+Delete: Commit the marked Primary edit.</li>
+        <li>Ctrl+Delete: Apply the bracketed edit in Primary Production or the active Source editor.</li>
       </ul>
       <button type="submit">Close</button>
     </form>
@@ -208,7 +209,7 @@
       <h2 id="testing-guide-heading">Testing Guide</h2>
       <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
       <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
-      <p><strong>Primary and Source Media:</strong> The first opened file becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted.</p>
+      <p><strong>Primary and Source Media:</strong> The first file returned by the Windows dialog becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted. Select a Source and use Make Selected Source Primary when Windows returns the files in an unexpected order. The former Primary moves to Source Media.</p>
       <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>
       <p><strong>Dedicated media editors:</strong> Every playable Primary and Source item has its own titled editor section, preview player, playhead slider, position, marks, and controls.</p>
       <p><strong>Activating media:</strong> Arrow to an item in Primary Sequence or Source Media to activate it, or press Enter to move directly into its editor. Opening another source does not take control away from the Primary editor.</p>
@@ -219,7 +220,7 @@
       <p><strong>Setting edit points:</strong> Left bracket sets the left boundary. Right bracket sets the right boundary. Ctrl+G opens exact-time fields.</p>
       <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
       <p><strong>Building the production:</strong> Mark a selection in a Source editor, press Ctrl+C or choose Copy Source Selection from the Edit menu, move to Primary Production, position its playhead, and press Ctrl+V or choose Paste into Primary Production from the Edit menu. Copying clears the Source brackets. To paste at the end, press End before pasting.</p>
-      <p><strong>Committing an edit:</strong> Press Ctrl+Delete to remove the bracketed content. A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Paired brackets select only the content between them. Content outside the bracketed area remains unchanged.</p>
+      <p><strong>Using bracketed selections:</strong> A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Inward-facing brackets, Left then Right on the timeline, select the content between them. Outward-facing brackets, Right then Left on the timeline, select the beginning and end while leaving the middle unselected. Either bracket may be placed first. The command determines what happens: Ctrl+C copies the selected Source content, while Ctrl+Delete deletes the selected content.</p>
       <p><strong>Editing a Source:</strong> The same brackets and Ctrl+Delete edit the active Source working timeline. Source playback and Ctrl+C use the edited timeline. The original Source file remains unchanged.</p>
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
