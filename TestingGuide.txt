@@ -1,4 +1,17 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.8.3 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.8.4 TESTING GUIDE
+
+COMPLETED BRACKET CLEANUP TEST
+
+1. In a Source editor, set brackets and press Ctrl+C.
+2. Confirm the selection is copied and its brackets are cleared.
+3. Move to Primary Production, set one or two brackets, and press Ctrl+V.
+4. Confirm the selection is pasted and the old Primary brackets are cleared.
+5. Immediately press Ctrl+Z. Confirm the Paste is undone, rather than hearing that an old bracket was removed.
+6. Create a bracket selection and press Ctrl+Delete.
+7. Confirm the edit is applied and its brackets are cleared.
+8. Immediately press Ctrl+Z. Confirm the deleted media is restored.
+9. Set an unfinished bracket and press Escape. Confirm the unfinished bracket is canceled without changing media.
+10. Reassign a Source as Primary and confirm brackets from the old arrangement do not remain.
 
 FIRST IMPORT REGRESSION TEST
 
@@ -162,6 +175,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.8.3 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.8.4 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
 
 AudioStudio Pro recording and processing are not implemented in this build.
