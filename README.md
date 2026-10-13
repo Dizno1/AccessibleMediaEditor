@@ -158,4 +158,3 @@ Build 0.8.4 proves normalization, dedicated and nondestructively editable Source
 - `npm run desktop:build`
 
 Windows installers are produced as MSI and NSIS packages by the GitHub Actions workflow.
-#10/13/2026-Force Commit with this edit.
