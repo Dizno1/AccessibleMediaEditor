@@ -4,6 +4,16 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.8.6
+
+Build 0.8.6 makes Space audition the actual editing decision.
+
+- With brackets set, Space plays the complete selected content.
+- Inward brackets audition both selected ends in timeline order.
+- Without brackets, Space plays continuously from the current playhead.
+- Pressing Space again stops the audition and returns to the original playhead.
+- X remains ordinary Play/Pause, while U and I remain short precision scrub samples.
+
 ## Build 0.8.5
 
 Build 0.8.5 restores audible U/I scrubbing on Windows.
@@ -157,7 +167,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.8.5 proves normalization, dedicated and nondestructively editable Source editors, stabilized edited-timeline playback positions, audible and quiet precision scrubbing, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.8.6 proves normalization, dedicated and nondestructively editable Source editors, stabilized edited-timeline playback positions, complete selection audition, audible and quiet precision scrubbing, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
 
 ## Developer commands
 

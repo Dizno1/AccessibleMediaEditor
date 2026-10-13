@@ -197,7 +197,7 @@ function createEditor(item,type){
   const position=document.createElement("p"),context=document.createElement("p");section.append(position,context);
   const transport=document.createElement("div");transport.className="button-row";
   const play=document.createElement("button"),audition=document.createElement("button");
-  play.type=audition.type="button";play.textContent="Play or Pause (X)";audition.textContent="Audition Around Playhead (Space)";transport.append(play,audition);section.append(transport);
+  play.type=audition.type="button";play.textContent="Play or Pause (X)";audition.textContent="Audition Selection or From Playhead (Space)";transport.append(play,audition);section.append(transport);
   const edit=document.createElement("div");edit.className="button-row";
   const inButton=document.createElement("button"),outButton=document.createElement("button"),commitButton=document.createElement("button"),goto=document.createElement("button"),properties=document.createElement("button"),split=document.createElement("button");
   [inButton,outButton,commitButton,goto,properties,split].forEach(button=>button.type="button");
@@ -229,7 +229,7 @@ function createEditor(item,type){
   slider.addEventListener("focus",()=>activateMedia(stateId,false));
   slider.addEventListener("input",()=>{activateMedia(stateId,false);cancelAudition(state,false);setEditorPosition(state,Number(slider.value),true);});
   play.addEventListener("click",()=>{activateMedia(stateId,false);togglePlayback();});
-  audition.addEventListener("click",()=>{activateMedia(stateId,false);auditionAround();});
+  audition.addEventListener("click",()=>{activateMedia(stateId,false);auditionSelection();});
   inButton.addEventListener("click",()=>{activateMedia(stateId,false);setPoint("in");});
   outButton.addEventListener("click",()=>{activateMedia(stateId,false);setPoint("out");});
   commitButton.addEventListener("click",()=>{activateMedia(stateId,false);commitPrimaryEdit();});
@@ -274,7 +274,9 @@ function handleTimeUpdate(idValue){
   const logicalNow=location.type==="program"?(state.currentItemOffset||0)+(currentProgramItem?sourceToLogicalTime(currentProgramItem,state.video.currentTime):0):["sequence","source"].includes(location.type)?sourceToLogicalTime(location.item,state.video.currentTime):state.video.currentTime;
   if(state.audition){
     if(logicalNow>=state.audition.end){
-      const point=state.audition.returnPoint,quiet=state.audition.quiet;cancelAudition(state,false);setEditorPosition(state,point,true);if(!quiet)updateStatus(`Playhead ${readableTime(point)}.`);return;
+      const audition=state.audition;
+      if(audition.ranges&&audition.rangeIndex<audition.ranges.length-1){audition.rangeIndex++;playAuditionRange(state,audition);return;}
+      const point=audition.returnPoint,quiet=audition.quiet;cancelAudition(state,false);setEditorPosition(state,point,true);if(!quiet)updateStatus(`Playhead ${readableTime(point)}.`);return;
     }
     return;
   }
@@ -495,6 +497,20 @@ async function auditionAround(before=1,after=1,quiet=false){
     if(!quiet)updateStatus(`Auditioning around ${readableTime(point)}.`);
   }catch(error){if(state.audition===audition)cancelAudition(state,true);if(error?.name!=="AbortError"&&!quiet)announce(`Audition failed. ${error}`,true);}
 }
+async function playAuditionRange(state,audition){
+  if(state.audition!==audition)return;
+  const range=audition.ranges[audition.rangeIndex];audition.end=range.to;state.video.pause();setEditorPosition(state,range.from,false);
+  try{await waitForMediaReady(state.video);if(state.audition!==audition)return;await state.video.play();}catch(error){if(state.audition===audition)cancelAudition(state,true);if(error?.name!=="AbortError")announce(`Audition failed. ${error}`,true);}
+}
+function auditionSelection(){
+  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before preview.",true);
+  if(state.audition){cancelAudition(state,true);return;}
+  if(!state.video.paused)state.video.pause();
+  const bounds=editorBounds(location.item,location.type),total=location.type==="program"?duration(project):itemDuration(location.item),plan=bracketSelectionPlan(total,state.markIn,state.markOut);
+  const ranges=(plan?.selectedRanges?.length?plan.selectedRanges:[{from:state.cursor,to:bounds.end}]).filter(range=>range.to-range.from>0.0005);
+  if(!ranges.length)return announce("There is no media to audition from this position.");
+  const audition={returnPoint:state.cursor,end:ranges[0].to,timer:null,quiet:true,ranges,rangeIndex:0};state.audition=audition;playAuditionRange(state,audition);
+}
 function movePlayhead(amount,label="Playhead"){const state=activeState();if(!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);announce(`${label} ${readableTime(state.cursor)}.`);}
 function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.5,true);}
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const bounds=editorBounds(location.item,location.type);setEditorPosition(state,end?bounds.end:bounds.start,true);announce(`${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
@@ -554,7 +570,7 @@ const actions={
   previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,makeSourcePrimary:promoteSelectedSource,removeItem:removeActive,split:splitSelected,undo,redo,
-  preview:togglePlayback,playPause:togglePlayback,audition:()=>auditionAround(),setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
+  preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
   copyMedia:copySourceSelection,pasteMedia:pasteMediaClipboard,insertSource:copySourceSelection,appendSource:pasteMediaClipboard,trimPrimary:commitPrimaryEdit,
   scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
@@ -562,7 +578,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.5. Scrubbing waits for media seek completion and produces an audible sample without screen-reader chatter.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.6. Space auditions the complete bracket selection or plays continuously from the current playhead.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

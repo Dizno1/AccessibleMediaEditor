@@ -171,7 +171,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Go to Exact Time... Ctrl+G","goToTime")?).item(&item(app,"Set Left Bracket [","setIn")?).item(&item(app,"Set Right Bracket ]","setOut")?).separator()
         .item(&item(app,"Move Earlier Ctrl+Up","moveEarlier")?).item(&item(app,"Move Later Ctrl+Down","moveLater")?).build()?;
     let playback = SubmenuBuilder::new(app, "Playback")
-        .item(&item(app,"Play or Pause X","playPause")?).item(&item(app,"Audition Around Playhead Space","audition")?).separator()
+        .item(&item(app,"Play or Pause X","playPause")?).item(&item(app,"Audition Selection or From Playhead Space","audition")?).separator()
         .item(&item(app,"Scrub Back 1 Second U","scrubBack1")?).item(&item(app,"Scrub Forward 1 Second I","scrubForward1")?)
         .item(&item(app,"Scrub Back 100 Milliseconds Shift+U","scrubBack100ms")?).item(&item(app,"Scrub Forward 100 Milliseconds Shift+I","scrubForward100ms")?)
         .item(&item(app,"Scrub Back 10 Milliseconds Ctrl+Alt+U","scrubBack10ms")?).item(&item(app,"Scrub Forward 10 Milliseconds Ctrl+Alt+I","scrubForward10ms")?)
