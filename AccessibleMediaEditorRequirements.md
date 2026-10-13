@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.8.4 establishes a unified Primary Production player, user-controlled Primary reassignment, stabilized pause-to-bracket positions, anchored quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
+Accessible Media Editor build 0.8.5 establishes a unified Primary Production player, user-controlled Primary reassignment, stabilized pause-to-bracket positions, seek-aware audible and quiet audition and scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and format-selectable single-media saving. Multi-item export rendering remains the next development stage after continuous Primary Production playback is verified.
 
 ## Product purpose
 

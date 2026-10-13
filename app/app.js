@@ -125,6 +125,15 @@ function cancelAudition(state,reset=false){
   const point=state.audition.returnPoint;state.audition=null;
   if(reset)setEditorPosition(state,point,true);
 }
+function waitForMediaReady(video){
+  if(!video.seeking&&video.readyState>=2)return Promise.resolve();
+  return new Promise(resolve=>{
+    let finished=false;
+    const done=()=>{if(finished)return;finished=true;clearTimeout(timer);video.removeEventListener("seeked",done);video.removeEventListener("canplay",done);video.removeEventListener("loadedmetadata",done);resolve();};
+    const timer=setTimeout(done,500);
+    video.addEventListener("seeked",done);video.addEventListener("canplay",done);video.addEventListener("loadedmetadata",done);
+  });
+}
 function sequencePoint(globalTime){
   const total=duration(project),point=Math.max(0,Math.min(total,Number(globalTime)||0));let offset=0;
   for(let index=0;index<project.items.length;index++){
@@ -265,7 +274,7 @@ function handleTimeUpdate(idValue){
   const logicalNow=location.type==="program"?(state.currentItemOffset||0)+(currentProgramItem?sourceToLogicalTime(currentProgramItem,state.video.currentTime):0):["sequence","source"].includes(location.type)?sourceToLogicalTime(location.item,state.video.currentTime):state.video.currentTime;
   if(state.audition){
     if(logicalNow>=state.audition.end){
-      const point=state.audition.returnPoint;cancelAudition(state,false);setEditorPosition(state,point,true);updateStatus(`Playhead ${readableTime(point)}.`);return;
+      const point=state.audition.returnPoint,quiet=state.audition.quiet;cancelAudition(state,false);setEditorPosition(state,point,true);if(!quiet)updateStatus(`Playhead ${readableTime(point)}.`);return;
     }
     return;
   }
@@ -478,11 +487,16 @@ async function auditionAround(before=1,after=1,quiet=false){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return quiet?undefined:announce("This format requires conversion before preview.",true);cancelAudition(state,true);if(!state.video.paused)state.video.pause();
   const point=state.cursor,bounds=editorBounds(location.item,location.type),start=Math.max(bounds.start,point-before),end=Math.min(bounds.end,point+after);
   setEditorPosition(state,start,false);const audition={returnPoint:point,end,timer:null,quiet};
-  audition.timer=setTimeout(()=>{if(state.audition===audition){cancelAudition(state,true);updateStatus(`Playhead ${readableTime(point)}.`);}},Math.max(300,(end-start)*1000+500));state.audition=audition;
-  try{await state.video.play();if(state.audition===audition)updateStatus(`Auditioning around ${readableTime(point)}.`);}catch(error){if(state.audition===audition)cancelAudition(state,true);if(error?.name!=="AbortError"&&!quiet)announce(`Audition failed. ${error}`,true);}
+  state.audition=audition;
+  try{
+    await waitForMediaReady(state.video);if(state.audition!==audition)return;
+    await state.video.play();if(state.audition!==audition)return;
+    audition.timer=setTimeout(()=>{if(state.audition===audition){cancelAudition(state,true);if(!quiet)updateStatus(`Playhead ${readableTime(point)}.`);}},Math.max(300,(end-start)*1000+250));
+    if(!quiet)updateStatus(`Auditioning around ${readableTime(point)}.`);
+  }catch(error){if(state.audition===audition)cancelAudition(state,true);if(error?.name!=="AbortError"&&!quiet)announce(`Audition failed. ${error}`,true);}
 }
 function movePlayhead(amount,label="Playhead"){const state=activeState();if(!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);announce(`${label} ${readableTime(state.cursor)}.`);}
-function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.2,true);}
+function scrub(amount){const state=activeState();if(!state)return announce("Activate a media editor first.",true);cancelAudition(state,false);setEditorPosition(state,state.cursor+amount,true);auditionAround(0,0.5,true);}
 function jumpPlayhead(end=false){const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);const bounds=editorBounds(location.item,location.type);setEditorPosition(state,end?bounds.end:bounds.start,true);announce(`${end?"End":"Beginning"} ${readableTime(state.cursor)}.`);}
 function setPoint(which){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before editing.",true);
@@ -548,7 +562,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.4. Completed edits clear stale brackets so Undo reaches the edit immediately.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.8.5. Scrubbing waits for media seek completion and produces an audible sample without screen-reader chatter.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

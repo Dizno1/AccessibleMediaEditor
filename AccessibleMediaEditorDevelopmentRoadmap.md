@@ -69,7 +69,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.8.4 includes:
+Build 0.8.5 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -104,7 +104,7 @@ No major authoring feature should be added until all of the following pass with 
 9. Ctrl+PageUp and Ctrl+PageDown identify each destination once without redundant Current or selected announcements.
 10. JAWS testing is completed with Virtual Cursor off and on, followed by an NVDA confirmation pass.
 
-Build 0.8.3 is the rollback version if Build 0.8.4 introduces a regression.
+Build 0.8.4 is the rollback version if Build 0.8.5 introduces a regression.
 
 ## Professional Feature Inventory
 
