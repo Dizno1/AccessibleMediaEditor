@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -133,4 +133,12 @@ test("a Source can become Primary while the old Primary becomes a Source",()=>{
   assert.equal(restored.items[0].id,"original");
   assert.equal(restored.sources[0].id,"replacement");
   assert.deepEqual(restored.items[0].editSegments,[{start:1,end:8}]);
+});
+test("production rendering receives every timeline item in order",()=>{
+  let project=addItem(createProject(),{...item("primary",10),workingSource:"C:/working-primary.mp4",editSegments:[{start:1,end:4}],trackTarget:"both"});
+  project=addItem(project,{...item("inserted",8),kind:"Audio",workingSource:"C:/inserted.m4a",editSegments:[{start:2,end:6}],trackTarget:"audio"});
+  assert.deepEqual(productionRenderItems(project),[
+    {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both"},
+    {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio"}
+  ]);
 });

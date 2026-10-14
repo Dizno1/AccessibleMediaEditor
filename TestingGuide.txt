@@ -1,4 +1,18 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.8.6 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.9.0 TESTING GUIDE
+
+COMPLETE PRODUCTION EXPORT TEST
+
+1. Open one video as Primary and at least two different video or audio files as Sources.
+2. Copy short selections from the Sources and paste them at clearly identifiable Primary playhead positions.
+3. Play Primary Production and confirm the complete sequence order before exporting.
+4. Press Ctrl+E and choose MP4 video.
+5. Confirm progress identifies each production item and then announces the final join.
+6. Choose a filename and location in the Windows Save dialog.
+7. Confirm Complete production saved is announced.
+8. Open the saved file outside Accessible Media Editor.
+9. Confirm every item is present in the expected order, all edits are applied, audio is audible, and the saved duration matches Primary Production.
+10. Repeat with an audio format and confirm the complete production audio is exported.
+11. Confirm every original source file remains unchanged.
 
 COMPLETE SELECTION AUDITION TEST
 
@@ -197,6 +211,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.8.6 immediately plays the complete multi-item Primary Production. It creates and saves an edited working file for one Primary video or audio file, but it does not yet FFmpeg-render a multi-item production for export.
+Build 0.9.0 renders video and audio Primary Production items into one file. Text, image, and transition items are not rendered yet and must be removed before export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

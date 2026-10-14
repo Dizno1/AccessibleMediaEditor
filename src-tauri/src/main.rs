@@ -14,6 +14,15 @@ struct OpenProjectResult { path: String, content: String }
 #[derive(Deserialize)]
 struct EditSegment { start: f64, end: f64 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProductionItem {
+    source: String,
+    segments: Vec<EditSegment>,
+    media_kind: String,
+    track_target: String,
+}
+
 fn app_folder(name: &str) -> Option<std::path::PathBuf> {
     let path = dirs::document_dir()?.join("Accessible Media Editor").join(name);
     fs::create_dir_all(&path).ok()?;
@@ -148,6 +157,82 @@ async fn render_working_edit(app: tauri::AppHandle, source: String, segments: Ve
     Ok(output_text)
 }
 
+fn segment_duration(segments: &[EditSegment]) -> f64 {
+    segments.iter().map(|segment| (segment.end - segment.start).max(0.0)).sum()
+}
+
+fn standard_video_filter(segments: &[EditSegment], with_audio: bool) -> String {
+    let base = segment_filter(segments, true, with_audio);
+    if with_audio {
+        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo];[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[ao]", base)
+    } else {
+        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo]", base)
+    }
+}
+
+fn standard_audio_filter(segments: &[EditSegment]) -> String {
+    format!("{};[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[ao]", segment_filter(segments, false, true))
+}
+
+fn standard_video_encoding(output: String) -> Vec<String> {
+    vec!["-c:v".into(), "h264_mf".into(), "-pix_fmt".into(), "nv12".into(), "-rate_control".into(), "quality".into(), "-quality".into(), "80".into(), "-hw_encoding".into(), "0".into(), "-r".into(), "30".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), "-ar".into(), "48000".into(), "-ac".into(), "2".into(), "-movflags".into(), "+faststart".into(), output]
+}
+
+async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, output: &std::path::Path) -> Result<(), String> {
+    if item.segments.is_empty() { return Err("A production item contains no retained media.".into()); }
+    let duration = segment_duration(&item.segments);
+    if duration <= 0.0 { return Err("A production item has no playable duration.".into()); }
+    let output_text = output.to_string_lossy().into_owned();
+    if item.media_kind.eq_ignore_ascii_case("audio") || item.track_target.eq_ignore_ascii_case("audio") {
+        let filter = standard_audio_filter(&item.segments);
+        let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "color=c=black:s=1280x720:r=30".into(), "-filter_complex".into(), filter, "-map".into(), "1:v:0".into(), "-map".into(), "[ao]".into(), "-t".into(), format!("{:.6}", duration)];
+        args.extend(standard_video_encoding(output_text));
+        return run_ffmpeg(app, args).await;
+    }
+    if item.track_target.eq_ignore_ascii_case("video") {
+        let filter = standard_video_filter(&item.segments, false);
+        let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
+        args.extend(standard_video_encoding(output_text));
+        return run_ffmpeg(app, args).await;
+    }
+    let filter = standard_video_filter(&item.segments, true);
+    let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "[ao]".into()];
+    args.extend(standard_video_encoding(output_text.clone()));
+    if run_ffmpeg(app, args).await.is_ok() { return Ok(()); }
+    let filter = standard_video_filter(&item.segments, false);
+    let mut silent_args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
+    silent_args.extend(standard_video_encoding(output_text));
+    run_ffmpeg(app, silent_args).await
+}
+
+#[tauri::command]
+async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, project_id: String) -> Result<String, String> {
+    if items.len() < 2 { return Err("The production does not contain multiple items to render.".into()); }
+    let mut intermediates = Vec::new();
+    for (index, item) in items.iter().enumerate() {
+        let path = safe_working_path(&format!("{}-{}", project_id, index + 1), "mp4", "production-item")?;
+        window.emit("production-render-progress", format!("Rendering production item {} of {}.", index + 1, items.len())).map_err(|error| error.to_string())?;
+        if let Err(error) = render_production_item(&app, item, &path).await {
+            for previous in &intermediates { let _ = fs::remove_file(previous); }
+            let _ = fs::remove_file(&path);
+            return Err(format!("Item {} could not be rendered. {}", index + 1, error));
+        }
+        intermediates.push(path);
+    }
+    window.emit("production-render-progress", "Joining rendered production items.").map_err(|error| error.to_string())?;
+    let output_path = safe_working_path(&project_id, "mp4", "production")?;
+    let output_text = output_path.to_string_lossy().into_owned();
+    let mut args = vec!["-y".into()];
+    for path in &intermediates { args.push("-i".into());args.push(path.to_string_lossy().into_owned()); }
+    let inputs = (0..intermediates.len()).map(|index| format!("[{}:v:0][{}:a:0]", index, index)).collect::<String>();
+    args.extend(["-filter_complex".into(), format!("{}concat=n={}:v=1:a=1[v][a]", inputs, intermediates.len()), "-map".into(), "[v]".into(), "-map".into(), "[a]".into()]);
+    args.extend(standard_video_encoding(output_text.clone()));
+    let result = run_ffmpeg(&app, args).await;
+    for path in &intermediates { let _ = fs::remove_file(path); }
+    result?;
+    Ok(output_text)
+}
+
 fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::menu::MenuItem<tauri::Wry>> {
     MenuItemBuilder::new(label).id(id).build(app)
 }
@@ -155,7 +240,7 @@ fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::m
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
         .item(&item(app,"Open Media... Ctrl+O","importMedia")?)
-        .item(&item(app,"Export Edited Media... Ctrl+E","exportMedia")?)
+        .item(&item(app,"Export Complete Production... Ctrl+E","exportMedia")?)
         .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+Shift+O","openProject")?)
         .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
@@ -206,7 +291,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,normalize_media,render_working_edit])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

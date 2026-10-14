@@ -122,6 +122,14 @@ export function itemDuration(item) {
   return Math.max(0, end - start);
 }
 export function duration(project) { return project.items.reduce((sum, item) => sum + itemDuration(item), 0); }
+export function productionRenderItems(project) {
+  return project.items.map(item => ({
+    source: item.source,
+    segments: normalizedSegments(item),
+    mediaKind: item.kind,
+    trackTarget: item.kind === "Audio" ? "audio" : (item.trackTarget || "both")
+  }));
+}
 export function bracketSelectionRange(totalDuration, leftBracket = null, rightBracket = null) {
   const total = Math.max(0, Number(totalDuration) || 0);
   const left = leftBracket == null ? null : Math.max(0, Math.min(total, Number(leftBracket) || 0));

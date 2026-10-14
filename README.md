@@ -4,6 +4,20 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.9.0
+
+Build 0.9.0 introduces complete Primary Production rendering.
+
+- Ctrl+E renders every video and audio item in Primary Production in timeline order.
+- Retained edit segments are applied nondestructively from normalized source media.
+- Video is standardized to 1280 by 720 at 30 frames per second for reliable joining.
+- Audio is standardized to stereo AAC at 48 kHz.
+- Audio-only items receive a black video frame.
+- Video-only items and videos without audio receive silence.
+- Rendering announces progress for each item and the final join.
+- The completed production can be saved as MP4, MOV, WebM, M4A, MP3, or WAV.
+- Text, image, and transition rendering remain future stages and are rejected explicitly in this build.
+
 ## Build 0.8.6
 
 Build 0.8.6 makes Space audition the actual editing decision.
@@ -167,7 +181,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.8.6 proves normalization, dedicated and nondestructively editable Source editors, stabilized edited-timeline playback positions, complete selection audition, audible and quiet precision scrubbing, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, Primary reassignment, copy and paste, working keyboard Undo and Redo, continuous Primary Production review, and format-selectable saving for one Primary video or audio file. Conversion progress percentages, multi-item composition export rendering, and AudioStudio Pro recording and processing are not implemented yet.
+Build 0.9.0 adds FFmpeg rendering and format-selectable export for the complete video and audio Primary Production. Text, still-image, transition, caption, and AudioStudio Pro rendering are not implemented yet.
 
 ## Developer commands
 

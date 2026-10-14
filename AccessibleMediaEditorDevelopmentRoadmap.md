@@ -69,7 +69,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.8.6 includes:
+Build 0.9.0 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -87,7 +87,7 @@ Build 0.8.6 includes:
 - Primary and Source nondestructive deletion.
 - Automatic bracket cleanup after completed Copy, Delete, Paste, Primary reassignment, and structural Primary edits.
 - Menu equivalents for established editing commands.
-- Single-media working-file rendering and format-selectable saving.
+- Complete video and audio Primary Production rendering and format-selectable saving.
 
 ## Immediate Stabilization Gate
 
@@ -104,7 +104,7 @@ No major authoring feature should be added until all of the following pass with 
 9. Ctrl+PageUp and Ctrl+PageDown identify each destination once without redundant Current or selected announcements.
 10. JAWS testing is completed with Virtual Cursor off and on, followed by an NVDA confirmation pass.
 
-Build 0.8.5 is the rollback version if Build 0.8.6 introduces a regression.
+Build 0.8.6 is the verified rollback version if Build 0.9.0 introduces a regression.
 
 ## Professional Feature Inventory
 
@@ -444,6 +444,8 @@ Required protections:
 Exit requirement: every item in the Immediate Stabilization Gate passes with JAWS and receives an NVDA confirmation pass.
 
 ### Phase 2 - Render and Export the Complete Production
+
+Build 0.9.0 implements the first complete video and audio rendering path. Real-media verification is required before Phase 2 is considered complete.
 
 - FFmpeg rendering of every Primary Production item in sequence.
 - Video and audio normalization during final render.

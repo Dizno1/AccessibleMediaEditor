@@ -65,7 +65,7 @@
         <p id="output-summary">Open media to begin editing. Project creation is optional from the File menu.</p>
         <div class="button-row">
           <button type="button" id="save-project-button">Save Project (Ctrl+Shift+S)</button>
-          <button type="button" id="export-button" disabled>Save Edited Media (Ctrl+E)</button>
+          <button type="button" id="export-button" disabled>Export Complete Production (Ctrl+E)</button>
         </div>
       </section>
     </div>
@@ -138,8 +138,8 @@
 
   <dialog id="export-dialog" aria-labelledby="export-heading">
     <form method="dialog">
-      <h2 id="export-heading">Save Edited Media</h2>
-      <p>The editor has already created and previewed the edited working media. Choose the format for the saved copy.</p>
+      <h2 id="export-heading">Export Complete Production</h2>
+      <p>The editor will render every video and audio item in Primary Production, then save the complete production in the format you choose.</p>
       <label for="export-format">Save as type</label>
       <select id="export-format">
         <option value="mp4">MP4 video</option>
@@ -176,13 +176,13 @@
       <ul>
         <li>Ctrl+O: Open one or more media files.</li><li>Ctrl+Shift+O: Open Project.</li>
         <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
-        <li>Ctrl+E: Save the edited working media as a new file.</li>
+        <li>Ctrl+E: Render and export the complete Primary Production.</li>
         <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
         <li>Ctrl+Tab or Ctrl+Shift+Tab: Switch between Media Editor and AudioStudio Pro.</li>
         <li>X: Play or pause from the current playhead.</li>
-        <li>Space: Audition around the current playhead and return to it.</li>
+        <li>Space: Audition the complete bracket selection, or play continuously from the current playhead when no brackets are set. Press Space again to stop and return.</li>
         <li>Escape: Close a dialog or cancel a temporary operation.</li>
         <li>B, V, or A: Target both tracks, video only, or audio only.</li>
         <li>U or I: Silently move backward or forward 1 second and play a short media sample. JAWS does not announce each scrub.</li>
@@ -213,7 +213,7 @@
       <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>
       <p><strong>Dedicated media editors:</strong> Every playable Primary and Source item has its own titled editor section, preview player, playhead slider, position, marks, and controls.</p>
       <p><strong>Activating media:</strong> Arrow to an item in Primary Sequence or Source Media to activate it, or press Enter to move directly into its editor. Opening another source does not take control away from the Primary editor.</p>
-      <p><strong>Playback:</strong> X plays or pauses continuously. Space auditions around the playhead and returns to the original position.</p>
+      <p><strong>Playback:</strong> X plays or pauses continuously. With brackets set, Space auditions the complete selection. Without brackets, Space plays continuously from the playhead. Press Space again to stop and return to the original position.</p>
       <p><strong>Scrubbing:</strong> U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Alt+U and Ctrl+Alt+I scrub by 10 milliseconds. Alt+Left Arrow and Alt+Right Arrow move by 1 millisecond. Scrubbing intentionally produces no JAWS status announcement so you can hear the media sample.</p>
       <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the end announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
       <p><strong>Track targeting:</strong> B targets both audio and video. V targets video only. A targets audio only. Audio files always target audio.</p>
@@ -225,7 +225,7 @@
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
       <p><strong>Returning to reading:</strong> Press Insert+Z to turn the Virtual Cursor on again.</p>
       <p><strong>Native Open and Save dialogs:</strong> Virtual Cursor settings do not apply inside Windows file dialogs.</p>
-      <p><strong>Saving edited media:</strong> FFmpeg creates a separate working file without changing the original. After it is ready, press Ctrl+E to save the edited media where you choose.</p>
+      <p><strong>Saving the complete production:</strong> Press Ctrl+E, choose the output format, and continue. FFmpeg renders every video and audio item in Primary Production in timeline order, then opens the Windows Save dialog. Original files remain unchanged.</p>
       <button type="submit">Close Testing Guide</button>
     </form>
   </dialog>
