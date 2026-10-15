@@ -6,3 +6,9 @@ export function clearEditorMarks(state) {
   state.markHistory=[];
   return changed;
 }
+
+export function preserveMarksWhileChangingTarget(state, target) {
+  if (!state || !["audio", "video", "both"].includes(target)) return false;
+  state.trackTarget=target;
+  return true;
+}

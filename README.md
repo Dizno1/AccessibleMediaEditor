@@ -4,6 +4,15 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.1
+
+Build 0.10.1 prevents track targeting from interrupting an edit in progress.
+
+- Pressing A, V, or B changes only the active track target.
+- Target changes do not rebuild the editor.
+- The playhead, Left Bracket, Right Bracket, bracket history, focus, and playback state remain unchanged.
+- A regression test covers setting a Left Bracket, changing to Audio Only, and then completing the selection with a Right Bracket.
+
 ## Build 0.10.0
 
 Build 0.10.0 introduces independent Primary Production track replacement.

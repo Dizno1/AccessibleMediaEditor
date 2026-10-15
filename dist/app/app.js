@@ -7,7 +7,7 @@ import {
   addTrackReplacement, removeTrackReplacement, productionRenderReplacements
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
-import { clearEditorMarks } from "./editorState.js";
+import { clearEditorMarks, preserveMarksWhileChangingTarget } from "./editorState.js";
 
 const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
@@ -293,7 +293,7 @@ function handlePreviewError(idValue){
   const state=editorStates.get(idValue),location=locateItem(idValue);if(!state||!location||state.unsupported)return;
   state.loading=false;state.unsupported=true;const extension=(location.item.source.split(".").pop()||"this format").toUpperCase();
   state.position.textContent=`${extension} preview is not supported by the current Windows media engine. Conversion is required.`;
-  updateEditorLabels(state,location.item,location.type);
+  const updated=locateItem(state.id);updateEditorLabels(state,updated?.item||location.item,location.type);
   announce(`${extension} preview is not supported yet. Conversion is required.`,true);
 }
 function handleTimeUpdate(idValue){
@@ -611,7 +611,15 @@ async function commitPrimaryEdit(){
     project=updateItem(project,renderItemId,{workingSource:path});if(currentState)currentState.rendering=false;render();announce("Edited working file ready.");
   }catch(error){if(currentState)currentState.rendering=false;announce(`The edit remains available for preview, but the working file could not be created. ${error}`,true);}
 }
-function setTrackTarget(target){const location=activeLocation();if(!location)return announce("Activate a media editor first.",true);if(location.type!=="program"&&location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");if(location.type==="program"){const next=structuredClone(project);next.editTarget=target;next.dirty=true;rememberChange(next,`${targetText(target)} targeted for the next edit.`);}else rememberChange(updateLocated(location.item.id,{trackTarget:target}),`${targetText(target)} targeted.`);}
+function setTrackTarget(target){
+  const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);
+  if(location.type!=="program"&&location.item.kind==="Audio"&&target!=="audio")return announce("Audio media always targets audio.");
+  preserveMarksWhileChangingTarget(state,target);
+  if(location.type==="program")project={...project,editTarget:target};
+  else project=updateLocated(location.item.id,{trackTarget:target});
+  const updated=locateItem(state.id);updateEditorLabels(state,updated?.item||location.item,location.type);
+  announce(`${targetText(target)} targeted for the next edit.`);
+}
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto"),bounds=location?editorBounds(location.item,location.type):null;if(!state||!location||!Number.isFinite(point)||point>bounds.end)return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move the playhead inside the media before splitting.",true);clearProgramMarks();selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
@@ -630,7 +638,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.0. Audio, video, or both tracks can be replaced without changing production duration.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.1. Track targeting preserves the active playhead and brackets.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

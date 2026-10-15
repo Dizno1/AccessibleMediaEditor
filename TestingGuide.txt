@@ -1,4 +1,15 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.1 TESTING GUIDE
+
+TARGET CHANGE BRACKET RETENTION TEST
+
+1. In Primary Production, play to a recognizable point and pause.
+2. Press Left Bracket and confirm its exact time is announced.
+3. Press A and confirm Audio only targeted for the next edit is announced.
+4. Confirm the Left Bracket remains set and the playhead does not move.
+5. Continue playing, pause later, and press Right Bracket.
+6. Confirm JAWS announces an outward selection between the original Left Bracket and the new Right Bracket. It must not announce Selected from beginning.
+7. Press Ctrl+V and confirm audio is replaced only inside that range.
+8. Repeat by placing one bracket, changing to V and B, and placing the other bracket.
 
 TRUE TRACK REPLACEMENT TEST
 
