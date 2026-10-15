@@ -7,7 +7,7 @@ import {
   addTrackReplacement, removeTrackReplacement, productionRenderReplacements
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
-import { clearEditorMarks, preserveMarksWhileChangingTarget } from "./editorState.js";
+import { clearEditorMarks, preserveMarksWhileChangingTarget, copiedTrackTarget, replacementDurationIssue } from "./editorState.js";
 
 const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
@@ -442,7 +442,7 @@ async function confirmExport(){
   try{
     let source=primary.workingSource||primary.source;
     if(project.items.length>1||(project.trackReplacements||[]).length){announce(`Rendering the complete Primary Production with ${(project.trackReplacements||[]).length} track ${(project.trackReplacements||[]).length===1?"replacement":"replacements"}. Please wait.`);source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});announce("Primary Production rendered. Choose where to save it.");}
-    const path=await invoke("export_edited_media",{source,suggestedName:`${stem} Edited.${format}`,format});if(path){announce("Complete production saved.");cue("save");}else announce("Save canceled.");
+    const path=await invoke("export_edited_media",{source,suggestedName:`${stem} Edited.${format}`,format});if(path){announce(`Complete production saved to ${path}.`);cue("save");}else announce("Save canceled.");
   }catch(error){announce(`Production could not be saved. ${error}`,true);}
 }
 function clearAllEditorMarks(){for(const state of editorStates.values())clearEditorMarks(state);}
@@ -484,7 +484,8 @@ function copySourceSelection(){
   const location=activeLocation(),state=activeState();if(!location||location.type!=="source"||!state)return announce("Activate a Source editor first.",true);
   const total=itemDuration(location.item),plan=bracketSelectionPlan(total,state.markIn,state.markOut);if(!plan)return announce("Set a Left or Right Bracket before copying.",true);if(!plan.selectedRanges.length)return announce("The bracketed selection has no duration.",true);
   const selectedDuration=plan.selectedRanges.reduce((sum,range)=>sum+range.to-range.from,0);
-  mediaClipboard={...structuredClone(location.item),id:null,role:"inserted",inPoint:0,outPoint:selectedDuration,editSegments:logicalSegmentsForRanges(location.item,plan.selectedRanges),workingSource:location.item.workingSource||location.item.source};
+  const copyTarget=copiedTrackTarget(location.item.kind,itemTarget(location.item));
+  mediaClipboard={...structuredClone(location.item),id:null,role:"inserted",inPoint:0,outPoint:selectedDuration,editSegments:logicalSegmentsForRanges(location.item,plan.selectedRanges),workingSource:location.item.workingSource||location.item.source,pasteTarget:copyTarget};
   clearEditorMarks(state);updateEditorLabels(state,location.item,location.type);
   const programState=editorStates.get(PROGRAM_ID);if(programState&&project.items[0])updateEditorLabels(programState,project.items[0],"program");announce(`Copied ${readableTime(selectedDuration)} from ${displayName(location.item)}.`);cue("add");
 }
@@ -505,8 +506,13 @@ function pasteMediaReplace(){
   const point=Math.max(0,Math.min(duration(project),state.cursor)),plan=bracketSelectionPlan(duration(project),state.markIn,state.markOut);
   if(plan?.selectedRanges?.length>1)return announce("Track replacement needs one continuous destination range. Use outward brackets or clear the brackets and position the playhead.",true);
   const containing=plan?.selectedRanges?.find(range=>point>=range.from-0.0005&&point<=range.to+0.0005),range=containing||plan?.selectedRanges?.[0]||null;
-  const start=range?range.from:point,limit=range?range.to:null,target=programTarget();
+  const start=range?range.from:point,limit=range?range.to:null,target=mediaClipboard.pasteTarget||programTarget(),clipDuration=itemDuration(mediaClipboard),destinationDuration=range?range.to-range.from:null;
   if(target!=="audio"&&mediaClipboard.kind==="Audio")return announce("An audio-only Source cannot replace a video track. Choose A for Audio Only.",true);
+  const durationIssue=replacementDurationIssue(clipDuration,destinationDuration);
+  if(durationIssue){
+    announce(`Paste canceled. Copied duration ${readableTime(durationIssue.copied)}. Destination selection duration ${readableTime(durationIssue.destination)}. The copied selection is ${readableTime(durationIssue.excess)} longer. Clear the Primary Right Bracket to paste the complete copied selection from the Left Bracket, or shorten the Source selection.`,true);
+    return;
+  }
   const next=addTrackReplacement(project,mediaClipboard,target,start,limit,id());if(next===project)return announce("The copied selection does not fit in the available Primary Production time.",true);
   const edit=next.trackReplacements.at(-1);selectedReplacementId=edit.id;clearProgramMarks();activeMediaId=PROGRAM_ID;
   rememberChange(next,`Replaced ${targetText(target).toLowerCase()} from ${readableTime(edit.timelineStart)} through ${readableTime(edit.timelineEnd)}. Production duration unchanged.`);
@@ -573,8 +579,9 @@ function setPoint(which){
   const previous=which==="in"?state.markIn:state.markOut;if(previous===point)return announce(`${which==="in"?"Left":"Right"} Bracket is already set there.`);
   state.markHistory.push({which,previous});if(which==="in")state.markIn=point;else state.markOut=point;updateEditorLabels(state,location.item,location.type);
   const total=location.type==="program"?duration(project):itemDuration(location.item),plan=bracketSelectionPlan(total,state.markIn,state.markOut);
+  const selectedDuration=plan.selectedRanges.reduce((sum,range)=>sum+range.to-range.from,0),durationAnnouncement=plan.kind==="empty"?"":` Selection duration ${readableTime(selectedDuration)}.`;
   const effect=plan.kind==="ending"?`Selected from ${readableTime(state.markIn)} to end.`:plan.kind==="beginning"?`Selected from beginning to ${readableTime(state.markOut)}.`:plan.kind==="inside"?`Outward brackets. Selected between ${readableTime(state.markIn)} and ${readableTime(state.markOut)}.`:plan.kind==="outside"?`Inward brackets. Beginning and end selected. Middle not selected.`:`Brackets meet at ${readableTime(point)}. Selection empty.`;
-  announce(`${which==="in"?"Left":"Right"} Bracket. ${effect}`);
+  announce(`${which==="in"?"Left":"Right"} Bracket. ${effect}${durationAnnouncement}`);
 }
 function removeProgramRange(base,from,to){
   const next=structuredClone(base),kept=[];let offset=0;
@@ -628,7 +635,7 @@ function cancel(){const state=activeState();if(el["properties-dialog"].open)el["
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
   previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
-  previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},
+  previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,makeSourcePrimary:promoteSelectedSource,removeItem:removeActive,split:splitSelected,undo,redo,
   preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
   copyMedia:copySourceSelection,pasteMedia:pasteMediaReplace,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:commitPrimaryEdit,
@@ -638,7 +645,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.1. Track targeting preserves the active playhead and brackets.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.2. Selection duration, copied track targeting, truncation protection, and export location confirmation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

@@ -90,12 +90,20 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
         };
         run_ffmpeg(&app, args).await?;
     }
+    if !path.is_file() { return Err("The export process completed, but the saved file could not be verified.".into()); }
     Ok(Some(path.to_string_lossy().into_owned()))
 }
 
 #[tauri::command]
 fn open_projects_folder() -> Result<(), String> {
     let folder = app_folder("Projects").ok_or("The Projects folder could not be created.")?;
+    std::process::Command::new("explorer").arg(folder).spawn().map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+fn open_exports_folder() -> Result<(), String> {
+    let folder = app_folder("Exports").ok_or("The Exports folder could not be created.")?;
     std::process::Command::new("explorer").arg(folder).spawn().map_err(|error| error.to_string())?;
     Ok(())
 }
@@ -305,7 +313,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Export Complete Production... Ctrl+E","exportMedia")?)
         .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+Shift+O","openProject")?)
         .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
-        .item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
+        .item(&item(app,"Open Projects Folder","openProjectsFolder")?).item(&item(app,"Open Exports Folder","openExportsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
         .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Replace on Target Track Ctrl+V","pasteMedia")?)
@@ -354,7 +362,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

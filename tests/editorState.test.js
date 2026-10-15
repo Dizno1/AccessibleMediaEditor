@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearEditorMarks, preserveMarksWhileChangingTarget } from "../app/editorState.js";
+import { clearEditorMarks, preserveMarksWhileChangingTarget, copiedTrackTarget, replacementDurationIssue } from "../app/editorState.js";
 
 test("completed operations clear brackets and their undo history",()=>{
   const state={cursor:12.345,markIn:3,markOut:8,markHistory:[{which:"in",previous:null},{which:"out",previous:null}]};
@@ -25,4 +25,18 @@ test("changing A V or B target preserves both active brackets and playhead",()=>
   assert.equal(state.markOut,null);
   assert.deepEqual(state.markHistory,[{which:"in",previous:null}]);
   assert.equal(state.trackTarget,"audio");
+});
+test("the Source target travels with copied media",()=>{
+  assert.equal(copiedTrackTarget("Video","both"),"both");
+  assert.equal(copiedTrackTarget("Video","video"),"video");
+  assert.equal(copiedTrackTarget("Video","audio"),"audio");
+  assert.equal(copiedTrackTarget("Audio","both"),"audio");
+});
+test("a shorter destination is detected before paste can truncate media",()=>{
+  const issue=replacementDurationIssue(33.397,24.585);
+  assert.equal(issue.copied,33.397);
+  assert.equal(issue.destination,24.585);
+  assert.ok(Math.abs(issue.excess-8.812)<0.000001);
+  assert.equal(replacementDurationIssue(20,24.585),null);
+  assert.equal(replacementDurationIssue(33.397,null),null);
 });

@@ -4,6 +4,17 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.2
+
+Build 0.10.2 makes track replacement timing and export results explicit.
+
+- Every bracket announcement includes the selected duration, so users never have to subtract timeline positions.
+- A, V, or B chosen in the Source travels with the copied selection and controls the corresponding paste.
+- Paste is canceled with a precise comparison when a copied selection is longer than a bracketed destination, preventing silent truncation.
+- A single Primary Left Bracket remains the simple way to paste the complete copied selection from that starting point.
+- Export success is announced only after the saved file is verified, and the complete saved path is included.
+- File menu now includes Open Exports Folder.
+
 ## Build 0.10.1
 
 Build 0.10.1 prevents track targeting from interrupting an edit in progress.

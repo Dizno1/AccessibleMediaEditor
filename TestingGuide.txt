@@ -1,4 +1,31 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.2 TESTING GUIDE
+
+SELECTION DURATION AND TRUNCATION PROTECTION TEST
+
+1. In Primary Production, play to approximately 11 seconds, pause, and press Left Bracket.
+2. Continue to approximately 36 seconds, pause, and press Right Bracket.
+3. Confirm the announcement includes both the Right Bracket position and the calculated selection duration of approximately 25 seconds.
+4. In a Source, copy a selection that is several seconds longer than the Primary selection.
+5. Return to Primary Production and press Ctrl+V.
+6. Confirm Paste is canceled and JAWS announces the copied duration, destination duration, and exact difference. No media may be silently truncated.
+7. Undo the Primary Right Bracket, leaving only the Left Bracket, and press Ctrl+V again.
+8. Confirm the complete copied selection is pasted beginning at the Primary Left Bracket.
+
+COPIED TRACK TARGET TEST
+
+1. In a Source Video, press B, bracket a recognizable selection, and press Ctrl+C.
+2. Return to Primary Production after it was previously set to V, and press Ctrl+V without pressing B again.
+3. Confirm both audio and video are replaced because B traveled with the copied selection.
+4. Repeat with V and confirm only video is replaced.
+5. Copy a Source Audio selection and confirm it always travels as Audio Only.
+
+EXPORT LOCATION TEST
+
+1. Press Ctrl+E, choose a format, and continue to the Windows Save dialog.
+2. Save the production.
+3. Confirm success is announced only after the output file exists and includes the complete saved path.
+4. Use File, Open Exports Folder and confirm the correct default Exports folder opens.
+5. Confirm canceling the Save dialog announces Save canceled and does not announce success.
 
 TARGET CHANGE BRACKET RETENTION TEST
 
@@ -15,8 +42,8 @@ TRUE TRACK REPLACEMENT TEST
 
 1. Open a video as Primary and open one audio file and one video file as Sources.
 2. In the audio Source, bracket several recognizable seconds and press Ctrl+C.
-3. Return to Primary Production, position the playhead, press A, and then press Ctrl+V.
-4. Confirm Audio only targeted for the next edit is announced.
+3. Confirm the audio Source uses Audio Only, return to Primary Production, position the playhead, and press Ctrl+V.
+4. Confirm the copied Source target controls the replacement without requiring A again in Primary Production.
 5. Confirm the pasted audio replaces Primary audio while the existing Primary video continues.
 6. Confirm the production duration does not change.
 7. Press Ctrl+Z and confirm the original audio returns. Press Ctrl+Y and confirm the replacement returns.

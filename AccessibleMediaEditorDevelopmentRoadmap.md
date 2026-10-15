@@ -70,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.10.1 includes:
+Build 0.10.2 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -94,6 +94,10 @@ Build 0.10.1 includes:
 - Track replacement preview during Primary playback.
 - FFmpeg audio-only, video-only, and both-track replacement at exact production times.
 - Track-target changes that never rebuild the editor or disturb the active brackets, playhead, focus, or playback state.
+- Bracket announcements that report the calculated selection duration as well as the absolute timeline positions.
+- Source A, V, or B targeting that travels with the copied selection.
+- Paste protection that reports duration differences instead of silently truncating copied media to a shorter destination selection.
+- Verified export completion, complete saved-path announcements, and direct File menu access to the Exports folder.
 
 ## Immediate Stabilization Gate
 
