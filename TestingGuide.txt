@@ -1,4 +1,28 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.9.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.0 TESTING GUIDE
+
+TRUE TRACK REPLACEMENT TEST
+
+1. Open a video as Primary and open one audio file and one video file as Sources.
+2. In the audio Source, bracket several recognizable seconds and press Ctrl+C.
+3. Return to Primary Production, position the playhead, press A, and then press Ctrl+V.
+4. Confirm Audio only targeted for the next edit is announced.
+5. Confirm the pasted audio replaces Primary audio while the existing Primary video continues.
+6. Confirm the production duration does not change.
+7. Press Ctrl+Z and confirm the original audio returns. Press Ctrl+Y and confirm the replacement returns.
+8. Copy a video Source selection, return to Primary, press V, and press Ctrl+V.
+9. Confirm the Source picture replaces Primary picture while Primary audio continues and duration does not change.
+10. Repeat with B and confirm both picture and sound are replaced.
+11. Set outward Primary brackets and replace again. Confirm replacement begins at the first boundary and cannot exceed the selected destination range.
+12. Set inward Primary brackets and confirm replacement is rejected with a request for one continuous range.
+13. Export as MP4 and confirm all A, V, and B replacements occur at the same times heard in Primary playback.
+
+REPLACE VERSUS INSERT TEST
+
+1. Copy a clearly recognizable Source selection and note the Primary duration.
+2. Press Ctrl+V in Primary Production and confirm the targeted track is replaced and duration remains unchanged.
+3. Undo, then press Ctrl+Shift+V at the same playhead.
+4. Confirm the complete media selection is inserted sequentially and production duration increases by the inserted duration.
+5. Confirm Edit menu contains both Paste Replace on Target Track and Paste Insert into Sequence.
 
 COMPLETE PRODUCTION EXPORT TEST
 
@@ -110,7 +134,7 @@ CHANGE PRIMARY PRODUCTION TEST
 9. Press Ctrl+Y once and confirm the swap is reapplied.
 10. Repeat the command through Project, Make Selected Source Primary.
 
-SOURCE COPY AND PRIMARY PASTE TEST
+SOURCE COPY AND PRIMARY INSERT TEST
 
 1. Open a second supported video as Source Media.
 2. Enter its Source editor.
@@ -120,14 +144,14 @@ SOURCE COPY AND PRIMARY PASTE TEST
 6. Confirm Right Bracket and the enclosed selection are announced.
 7. Press Ctrl+C and confirm the filename, copied duration, and cleared brackets are announced.
 8. Set the Source brackets again, use Edit, Copy Source Selection, and confirm it performs the same command.
-9. Create an inward selection by setting Right Bracket earlier and Left Bracket later. Press Ctrl+C and paste into Primary Production. Confirm both selected ends are copied in their original order and the unselected middle is not copied.
+9. Create an inward selection by setting Right Bracket earlier and Left Bracket later. Press Ctrl+C and use Ctrl+Shift+V in Primary Production. Confirm both selected ends are copied in their original order and the unselected middle is not copied.
 10. Press Ctrl+Page Up until Primary Production is focused.
-11. Move its playhead to the desired insertion point and press Ctrl+V.
-12. Confirm the pasted duration and insertion time are announced.
-13. Move to another Primary position, use Edit, Paste into Primary Production, and confirm it performs the same command.
+11. Move its playhead to the desired insertion point and press Ctrl+Shift+V.
+12. Confirm the inserted duration and insertion time are announced.
+13. Move to another Primary position, use Edit, Paste Insert into Sequence, and confirm it performs the same command.
 14. Press Home and X. Confirm Primary Production plays continuously through the original and pasted media.
 14. Confirm no separate Inserted Video editor region was created.
-15. Press Ctrl+Z and confirm the pasted material is removed from Primary Production.
+15. Press Ctrl+Z and confirm the inserted material is removed from Primary Production.
 16. Confirm the complete original Source file remains available and unchanged.
 
 SOURCE REMOVAL TEST
@@ -145,7 +169,7 @@ SOURCE NONDESTRUCTIVE EDIT TEST
 4. Confirm Activate Primary Production first is not announced.
 5. Press Home and X and confirm playback begins at the edited Source beginning.
 6. Set brackets around material in the edited Source and press Ctrl+C.
-7. Paste into Primary Production and confirm the copied material comes from the edited Source timeline.
+7. Use Ctrl+Shift+V to insert into Primary Production and confirm the copied material comes from the edited Source timeline.
 8. Confirm the original Source file remains unchanged.
 
 EDITED SOURCE PLAYHEAD ACCURACY TEST
@@ -211,6 +235,6 @@ KNOWN LIMITS
 
 Every imported video or audio file is converted to an app-owned working format before editing. Large files may require significant conversion time. Progress percentages are not included yet.
 
-Build 0.9.0 renders video and audio Primary Production items into one file. Text, image, and transition items are not rendered yet and must be removed before export.
+Build 0.10.0 renders sequential video and audio items plus A, V, and B track replacements into one file. Text, image, and transition items are not rendered yet and must be removed before export.
 
 AudioStudio Pro recording and processing are not implemented in this build.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -141,4 +141,41 @@ test("production rendering receives every timeline item in order",()=>{
     {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both"},
     {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio"}
   ]);
+});
+test("audio replacement preserves production duration and stores an exact timeline range",()=>{
+  const primary=addItem(createProject(),{...item("primary",60),role:"primary",editSegments:[{start:0,end:60}]});
+  const audio={...item("narration",12),kind:"Audio",source:"C:/narration.m4a",workingSource:"C:/working-narration.m4a",editSegments:[{start:2,end:9}]};
+  const replaced=addTrackReplacement(primary,audio,"audio",20,null,"audio-edit");
+  assert.equal(duration(replaced),60);
+  assert.equal(replaced.trackReplacements.length,1);
+  assert.deepEqual(replaced.trackReplacements[0],{
+    id:"audio-edit",label:"narration",source:"C:/working-narration.m4a",originalSource:"C:/narration.m4a",mediaKind:"Audio",target:"audio",timelineStart:20,timelineEnd:27,segments:[{start:2,end:9}]
+  });
+});
+test("a destination bracket limits replacement without stretching the source",()=>{
+  const primary=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});
+  const clip={...item("clip",20),editSegments:[{start:5,end:15}]};
+  const replaced=addTrackReplacement(primary,clip,"video",8,12,"video-edit");
+  assert.equal(replaced.trackReplacements[0].timelineEnd,12);
+  assert.deepEqual(replaced.trackReplacements[0].segments,[{start:5,end:9}]);
+  assert.equal(duration(replaced),30);
+});
+test("track replacements are passed to FFmpeg in project order",()=>{
+  let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});
+  project=addTrackReplacement(project,{...item("voice",5),kind:"Audio",editSegments:[{start:0,end:5}]},"audio",3,null,"voice-edit");
+  assert.deepEqual(productionRenderReplacements(project),[{
+    source:"C:/voice.mp4",segments:[{start:0,end:5}],mediaKind:"Audio",trackTarget:"audio",timelineStart:3,timelineEnd:8
+  }]);
+});
+test("a saved track replacement can be removed nondestructively",()=>{
+  let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});
+  project=addTrackReplacement(project,{...item("voice",5),kind:"Audio",editSegments:[{start:0,end:5}]},"audio",3,null,"voice-edit");
+  const removed=removeTrackReplacement(project,"voice-edit");
+  assert.equal(removed.trackReplacements.length,0);
+  assert.equal(duration(removed),30);
+  assert.equal(project.trackReplacements.length,1);
+});
+test("Ctrl+V replaces while Ctrl+Shift+V inserts",()=>{
+  assert.ok(shortcuts.some(([name,key])=>name==="pasteMedia"&&key.ctrl&&!key.shift&&key.key==="v"));
+  assert.ok(shortcuts.some(([name,key])=>name==="pasteInsert"&&key.ctrl&&key.shift&&key.key==="v"));
 });

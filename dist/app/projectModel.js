@@ -1,4 +1,4 @@
-export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 2, name, path: null, dirty: false, items: [], sources: [] }; }
+export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 3, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], editTarget: "both" }; }
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);
@@ -122,6 +122,56 @@ export function itemDuration(item) {
   return Math.max(0, end - start);
 }
 export function duration(project) { return project.items.reduce((sum, item) => sum + itemDuration(item), 0); }
+export function addTrackReplacement(project, clip, target, timelineStart, timelineLimit = null, replacementId = null) {
+  const total = duration(project);
+  const start = Math.max(0, Math.min(total, Number(timelineStart) || 0));
+  const available = Math.max(0, total - start);
+  const requested = timelineLimit == null ? available : Math.max(0, Math.min(available, Number(timelineLimit) - start));
+  const clipLength = itemDuration(clip);
+  const length = Math.min(clipLength, requested);
+  if (!length || !["audio", "video", "both"].includes(target)) return project;
+  const next = structuredClone(project);
+  next.trackReplacements = next.trackReplacements || [];
+  next.trackReplacements.push({
+    id: replacementId || `replacement-${Date.now()}`,
+    label: clip.label || clip.name || "Track replacement",
+    source: clip.workingSource || clip.source,
+    originalSource: clip.originalSource || clip.source,
+    mediaKind: clip.kind,
+    target,
+    timelineStart: start,
+    timelineEnd: start + length,
+    segments: logicalSegmentsForRanges(clip, [{ from: 0, to: length }])
+  });
+  next.dirty = true;
+  return next;
+}
+export function removeTrackReplacement(project, replacementId) {
+  const next = structuredClone(project);
+  const before = (next.trackReplacements || []).length;
+  next.trackReplacements = (next.trackReplacements || []).filter(edit => edit.id !== replacementId);
+  if (next.trackReplacements.length === before) return project;
+  next.dirty = true;
+  return next;
+}
+export function productionRenderItems(project) {
+  return project.items.map(item => ({
+    source: item.source,
+    segments: normalizedSegments(item),
+    mediaKind: item.kind,
+    trackTarget: item.kind === "Audio" ? "audio" : (item.trackTarget || "both")
+  }));
+}
+export function productionRenderReplacements(project) {
+  return (project.trackReplacements || []).map(edit => ({
+    source: edit.source,
+    segments: structuredClone(edit.segments || []),
+    mediaKind: edit.mediaKind,
+    trackTarget: edit.target,
+    timelineStart: Number(edit.timelineStart) || 0,
+    timelineEnd: Number(edit.timelineEnd) || 0
+  }));
+}
 export function bracketSelectionRange(totalDuration, leftBracket = null, rightBracket = null) {
   const total = Math.max(0, Number(totalDuration) || 0);
   const left = leftBracket == null ? null : Math.max(0, Math.min(total, Number(leftBracket) || 0));

@@ -46,7 +46,8 @@ Opening an audio file in Media Editor must not automatically open AudioStudio Pr
 - Left Bracket - Place the Left Bracket at the exact logical playhead.
 - Right Bracket - Place the Right Bracket at the exact logical playhead.
 - Ctrl+C - Copy the selected Source content.
-- Ctrl+V - Paste copied media into Primary Production at its playhead.
+- Ctrl+V - Replace the targeted Primary track at the playhead or within one continuous destination selection without changing production duration.
+- Ctrl+Shift+V - Insert copied media into the Primary sequence and increase production duration.
 - Ctrl+X - Reserved for cutting selected content.
 - Ctrl+Delete - Delete selected content nondestructively.
 - Ctrl+K - Split at the playhead.
@@ -69,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.9.0 includes:
+Build 0.10.0 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -88,6 +89,10 @@ Build 0.9.0 includes:
 - Automatic bracket cleanup after completed Copy, Delete, Paste, Primary reassignment, and structural Primary edits.
 - Menu equivalents for established editing commands.
 - Complete video and audio Primary Production rendering and format-selectable saving.
+- Independent A, V, and B track replacement instructions stored in Version 3 project files.
+- Separate Replace and Insert commands.
+- Track replacement preview during Primary playback.
+- FFmpeg audio-only, video-only, and both-track replacement at exact production times.
 
 ## Immediate Stabilization Gate
 
@@ -104,7 +109,7 @@ No major authoring feature should be added until all of the following pass with 
 9. Ctrl+PageUp and Ctrl+PageDown identify each destination once without redundant Current or selected announcements.
 10. JAWS testing is completed with Virtual Cursor off and on, followed by an NVDA confirmation pass.
 
-Build 0.8.6 is the verified rollback version if Build 0.9.0 introduces a regression.
+Build 0.8.6 remains the verified rollback version. Build 0.9.0 is the first complete sequential FFmpeg export milestone.
 
 ## Professional Feature Inventory
 

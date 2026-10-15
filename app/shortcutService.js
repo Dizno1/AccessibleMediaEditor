@@ -7,7 +7,7 @@ export const shortcuts = [
   ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
   ["undo", {ctrl:true,key:"z"}], ["redo", {ctrl:true,key:"y"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
-  ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}],
+  ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}], ["pasteInsert", {ctrl:true,shift:true,key:"v"}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],
   ["setIn", {key:"["}], ["setOut", {key:"]"}],
   ["scrubBack1", {key:"u"}], ["scrubForward1", {key:"i"}],

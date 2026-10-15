@@ -6,7 +6,7 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.9.0 establishes a unified Primary Production player, user-controlled Primary reassignment, stabilized pause-to-bracket positions, complete selection audition, seek-aware audible and quiet scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, Ctrl+C and Ctrl+V media editing with matching Edit menu commands, automatic working-media normalization, immediate nondestructive playback, and FFmpeg rendering and format-selectable export of the complete video and audio Primary Production.
+Accessible Media Editor build 0.10.0 establishes a unified Primary Production player, user-controlled Primary reassignment, stabilized pause-to-bracket positions, complete selection audition, seek-aware audible and quiet scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, automatic working-media normalization, immediate nondestructive playback, and FFmpeg rendering and format-selectable export. Ctrl+V now replaces the selected A, V, or B track without changing production duration. Ctrl+Shift+V separately inserts media and increases production duration. Saved projects preserve exact track replacement ranges.
 
 ## Product purpose
 

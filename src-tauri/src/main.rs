@@ -11,7 +11,7 @@ mod native_media_picker;
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct EditSegment { start: f64, end: f64 }
 
 #[derive(Deserialize)]
@@ -21,6 +21,17 @@ struct ProductionItem {
     segments: Vec<EditSegment>,
     media_kind: String,
     track_target: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TrackReplacement {
+    source: String,
+    segments: Vec<EditSegment>,
+    media_kind: String,
+    track_target: String,
+    timeline_start: f64,
+    timeline_end: f64,
 }
 
 fn app_folder(name: &str) -> Option<std::path::PathBuf> {
@@ -206,8 +217,8 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
 }
 
 #[tauri::command]
-async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, project_id: String) -> Result<String, String> {
-    if items.len() < 2 { return Err("The production does not contain multiple items to render.".into()); }
+async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, replacements: Vec<TrackReplacement>, project_id: String) -> Result<String, String> {
+    if items.is_empty() { return Err("The production contains no media to render.".into()); }
     let mut intermediates = Vec::new();
     for (index, item) in items.iter().enumerate() {
         let path = safe_working_path(&format!("{}-{}", project_id, index + 1), "mp4", "production-item")?;
@@ -220,16 +231,67 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
         intermediates.push(path);
     }
     window.emit("production-render-progress", "Joining rendered production items.").map_err(|error| error.to_string())?;
-    let output_path = safe_working_path(&project_id, "mp4", "production")?;
-    let output_text = output_path.to_string_lossy().into_owned();
+    let base_path = safe_working_path(&project_id, "mp4", "production-base")?;
+    let base_text = base_path.to_string_lossy().into_owned();
     let mut args = vec!["-y".into()];
     for path in &intermediates { args.push("-i".into());args.push(path.to_string_lossy().into_owned()); }
     let inputs = (0..intermediates.len()).map(|index| format!("[{}:v:0][{}:a:0]", index, index)).collect::<String>();
     args.extend(["-filter_complex".into(), format!("{}concat=n={}:v=1:a=1[v][a]", inputs, intermediates.len()), "-map".into(), "[v]".into(), "-map".into(), "[a]".into()]);
-    args.extend(standard_video_encoding(output_text.clone()));
+    args.extend(standard_video_encoding(base_text.clone()));
     let result = run_ffmpeg(&app, args).await;
     for path in &intermediates { let _ = fs::remove_file(path); }
     result?;
+    if replacements.is_empty() { return Ok(base_text); }
+
+    let mut replacement_paths = Vec::new();
+    for (index, replacement) in replacements.iter().enumerate() {
+        window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
+        let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
+        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone() };
+        if let Err(error) = render_production_item(&app, &item, &path).await {
+            let _ = fs::remove_file(&base_path);
+            for previous in &replacement_paths { let _ = fs::remove_file(previous); }
+            return Err(format!("Track replacement {} could not be rendered. {}", index + 1, error));
+        }
+        replacement_paths.push(path);
+    }
+
+    window.emit("production-render-progress", "Applying audio and video track replacements.").map_err(|error| error.to_string())?;
+    let output_path = safe_working_path(&project_id, "mp4", "production")?;
+    let output_text = output_path.to_string_lossy().into_owned();
+    let mut compose_args = vec!["-y".into(), "-i".into(), base_text.clone()];
+    for path in &replacement_paths { compose_args.push("-i".into()); compose_args.push(path.to_string_lossy().into_owned()); }
+    let mut filters = vec!["[0:v:0]setpts=PTS-STARTPTS[v0]".to_string(), "[0:a:0]asetpts=PTS-STARTPTS[a0]".to_string()];
+    let mut video_label = "v0".to_string();
+    let mut audio_label = "a0".to_string();
+    let mut video_count = 0;
+    let mut audio_count = 0;
+    for (index, replacement) in replacements.iter().enumerate() {
+        let input = index + 1;
+        let start = replacement.timeline_start.max(0.0);
+        let end = replacement.timeline_end.max(start);
+        let length = end - start;
+        if replacement.track_target.eq_ignore_ascii_case("video") || replacement.track_target.eq_ignore_ascii_case("both") {
+            video_count += 1;
+            filters.push(format!("[{}:v:0]trim=duration={:.6},setpts=PTS-STARTPTS+{:.6}/TB[rv{}]", input, length, start, video_count));
+            filters.push(format!("[{}][rv{}]overlay=eof_action=pass:enable='between(t,{:.6},{:.6})'[v{}]", video_label, video_count, start, end, video_count));
+            video_label = format!("v{}", video_count);
+        }
+        if replacement.track_target.eq_ignore_ascii_case("audio") || replacement.track_target.eq_ignore_ascii_case("both") {
+            audio_count += 1;
+            let delay = (start * 1000.0).round() as u64;
+            filters.push(format!("[{}]volume=enable='between(t,{:.6},{:.6})':volume=0[ma{}]", audio_label, start, end, audio_count));
+            filters.push(format!("[{}:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,adelay={}|{}[ra{}]", input, length, delay, delay, audio_count));
+            filters.push(format!("[ma{}][ra{}]amix=inputs=2:duration=first:normalize=0[a{}]", audio_count, audio_count, audio_count));
+            audio_label = format!("a{}", audio_count);
+        }
+    }
+    compose_args.extend(["-filter_complex".into(), filters.join(";"), "-map".into(), format!("[{}]", video_label), "-map".into(), format!("[{}]", audio_label)]);
+    compose_args.extend(standard_video_encoding(output_text.clone()));
+    let compose_result = run_ffmpeg(&app, compose_args).await;
+    let _ = fs::remove_file(&base_path);
+    for path in &replacement_paths { let _ = fs::remove_file(path); }
+    compose_result?;
     Ok(output_text)
 }
 
@@ -246,7 +308,8 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
-        .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste into Primary Production Ctrl+V","pasteMedia")?)
+        .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Replace on Target Track Ctrl+V","pasteMedia")?)
+        .item(&item(app,"Paste Insert into Sequence Ctrl+Shift+V","pasteInsert")?)
         .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)

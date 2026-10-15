@@ -4,6 +4,19 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.0
+
+Build 0.10.0 introduces independent Primary Production track replacement.
+
+- A targets audio while preserving the existing video.
+- V targets video while preserving the existing audio.
+- B targets both audio and video.
+- Ctrl+V replaces the targeted track from the Primary playhead or within one continuous Primary bracket range without changing production duration.
+- Ctrl+Shift+V remains the deliberately separate Insert command and increases production duration.
+- Track replacements are nondestructive, persisted in Version 3 project files, immediately available in Primary playback, and reversible with Undo and Redo.
+- FFmpeg applies every replacement at its exact production time during export.
+- Save Project As is distinguished from format-selectable Export Complete Production.
+
 ## Build 0.9.0
 
 Build 0.9.0 introduces complete Primary Production rendering.
