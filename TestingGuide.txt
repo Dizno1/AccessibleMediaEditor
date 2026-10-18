@@ -1,4 +1,16 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.4 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.5 TESTING GUIDE
+
+ATOMIC EXPORT SAFETY TEST
+
+1. Create a production long enough that WebM conversion takes noticeable time.
+2. Press Ctrl+E, choose WebM, and select the destination filename.
+3. Confirm JAWS announces that conversion is in progress and says to wait for Export Complete.
+4. While conversion is running, inspect the destination folder. Confirm the requested final filename does not yet exist.
+5. Confirm only a temporary filename containing ame-exporting may exist while conversion is running.
+6. Do not use the file until the focused Export Complete dialog appears.
+7. After Export Complete appears, confirm the requested final filename exists and the temporary filename is gone.
+8. Open the completed file and confirm its duration matches Primary Production.
+9. Repeat once and close the application during conversion. Confirm no incomplete file appears under the requested final filename.
 
 ORDINARY INSERTION WITH CTRL+V
 

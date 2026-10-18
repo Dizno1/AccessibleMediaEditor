@@ -49,3 +49,11 @@ test("export completion uses a focused path dialog for screen readers",()=>{
   assert.match(app,/el\["export-success-path"\]\.focus\(\)/);
   assert.match(app,/Complete production saved to \$\{path\}/);
 });
+test("export is atomic and never exposes the requested filename while FFmpeg is writing",()=>{
+  const rust=fs.readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
+  assert.match(rust,/ame-exporting/);
+  assert.match(rust,/run_ffmpeg\(&app, args\)\.await/);
+  assert.match(rust,/fs::rename\(&temporary_path, &path\)/);
+  assert.match(rust,/Please wait for Export Complete before using the file/);
+  assert.match(rust,/Export failed\. No completed destination file was created/);
+});

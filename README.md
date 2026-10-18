@@ -4,6 +4,17 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.5
+
+Build 0.10.5 makes export atomic and prevents unfinished output from appearing to be complete.
+
+- FFmpeg writes every export to a protected temporary filename.
+- The requested destination filename is created only after conversion succeeds and the temporary output is verified.
+- Closing or interrupting the application during conversion cannot leave an incomplete file under the requested final filename.
+- JAWS announces that conversion is in progress and explicitly instructs the user to wait for the focused Export Complete dialog.
+- Failed conversions remove the temporary output and report that no completed destination file was created.
+- Existing destination files are not replaced until the new export has completed successfully.
+
 ## Build 0.10.4
 
 Build 0.10.4 restores logical Paste behavior and makes Primary Production solely responsible for replacement targeting.

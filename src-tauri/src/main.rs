@@ -77,9 +77,14 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
     let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Edited Media").set_file_name(&suggested_name).add_filter("Edited media", &[extension]);
     if let Some(folder) = app_folder("Exports") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.save_file() else { return Ok(None); };
-    if extension == "mp4" { fs::copy(&source, &path).map_err(|error| error.to_string())?; }
-    else {
-        let output = path.to_string_lossy().into_owned();
+    let file_stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("AccessibleMediaEditorExport");
+    let temporary_path = path.with_file_name(format!("{}.ame-exporting.{}", file_stem, extension));
+    let _ = fs::remove_file(&temporary_path);
+    window.emit("production-render-progress", format!("Export destination selected. Converting complete production to {}. Please wait for Export Complete before using the file.", extension.to_ascii_uppercase())).map_err(|error| error.to_string())?;
+    let export_result: Result<(), String> = if extension == "mp4" {
+        fs::copy(&source, &temporary_path).map(|_| ()).map_err(|error| error.to_string())
+    } else {
+        let output = temporary_path.to_string_lossy().into_owned();
         let args: Vec<String> = match extension {
             "mov" => vec!["-y".into(), "-i".into(), source, "-c".into(), "copy".into(), output],
             "webm" => vec!["-y".into(), "-i".into(), source, "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
@@ -88,9 +93,21 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
             "m4a" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output],
             _ => unreachable!(),
         };
-        run_ffmpeg(&app, args).await?;
+        run_ffmpeg(&app, args).await
+    };
+    if let Err(error) = export_result {
+        let _ = fs::remove_file(&temporary_path);
+        return Err(format!("Export failed. No completed destination file was created. {}", error));
     }
-    if !path.is_file() { return Err("The export process completed, but the saved file could not be verified.".into()); }
+    let verified = temporary_path.metadata().map(|metadata| metadata.is_file() && metadata.len() > 0).unwrap_or(false);
+    if !verified {
+        let _ = fs::remove_file(&temporary_path);
+        return Err("Export verification failed. No completed destination file was created.".into());
+    }
+    window.emit("production-render-progress", "Conversion finished. Finalizing the completed export.").map_err(|error| error.to_string())?;
+    if path.is_file() { fs::remove_file(&path).map_err(|error| format!("The completed temporary export is safe, but the existing destination could not be replaced. {}", error))?; }
+    fs::rename(&temporary_path, &path).map_err(|error| format!("The completed temporary export could not be finalized. {}", error))?;
+    if !path.is_file() { return Err("The export was finalized, but the completed destination file could not be verified.".into()); }
     Ok(Some(path.to_string_lossy().into_owned()))
 }
 
