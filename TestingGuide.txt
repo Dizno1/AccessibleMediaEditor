@@ -1,4 +1,19 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.3 TESTING GUIDE
+
+BUILD 0.10.3 FINAL STABILIZATION CHECK
+
+1. In a Source Video, press B, set a selection, and press Ctrl+C.
+2. Confirm JAWS announces the copied duration, Source name, and Both audio and video.
+3. Repeat with V and confirm the Copy announcement ends with Video only.
+4. Copy a Source Audio selection and confirm the Copy announcement ends with Audio only.
+5. Set a Primary destination shorter than the copied selection and press Ctrl+V.
+6. Confirm Paste is canceled and the copied duration, destination duration, and difference are announced.
+7. Remove only the Primary Right Bracket, leaving the Left Bracket in place, and press Ctrl+V.
+8. Confirm the complete copied selection starts at the Left Bracket and is not shortened.
+9. Export the production and save it.
+10. Confirm a focused Export Complete dialog reads the complete saved path.
+11. Activate Show Saved File and confirm File Explorer opens the actual containing folder with the exported file selected.
+12. Return to the dialog and activate Close.
 
 SELECTION DURATION AND TRUNCATION PROTECTION TEST
 

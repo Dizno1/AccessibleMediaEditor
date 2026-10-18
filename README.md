@@ -4,6 +4,16 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.3
+
+Build 0.10.3 completes the current track-replacement stabilization pass.
+
+- Copy announces the selected duration, Source name, and stored Audio Only, Video Only, or Both Audio and Video target.
+- Export completion opens a focused, labeled dialog containing the complete verified saved path so JAWS does not have to catch a transient live-region message.
+- The completion dialog provides Show Saved File and Close buttons, and Show Saved File selects the actual export even when it was saved outside the default Exports folder.
+- Automated coverage confirms that shorter bracketed destinations are rejected before truncation.
+- Automated coverage confirms that one Primary Left Bracket replaces from that boundary using the complete copied selection.
+
 ## Build 0.10.2
 
 Build 0.10.2 makes track replacement timing and export results explicit.
