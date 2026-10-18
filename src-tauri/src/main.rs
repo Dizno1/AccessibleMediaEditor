@@ -109,6 +109,14 @@ fn open_exports_folder() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn reveal_exported_file(path: String) -> Result<(), String> {
+    let file = std::path::PathBuf::from(&path);
+    if !file.is_file() { return Err("The saved export could not be found at that location.".into()); }
+    std::process::Command::new("explorer").arg(format!("/select,{}", file.to_string_lossy())).spawn().map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), String> {
     window.set_title(&title).map_err(|error| error.to_string())
 }
@@ -316,8 +324,8 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).item(&item(app,"Open Exports Folder","openExportsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
-        .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Replace on Target Track Ctrl+V","pasteMedia")?)
-        .item(&item(app,"Paste Insert into Sequence Ctrl+Shift+V","pasteInsert")?)
+        .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Ctrl+V","pasteMedia")?)
+        .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
         .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
@@ -336,7 +344,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Move Back 5 Minutes J","moveBack300")?).item(&item(app,"Move Forward 5 Minutes L","moveForward300")?)
         .item(&item(app,"Move Back 1 Millisecond Alt+Left","nudgeBack")?).item(&item(app,"Move Forward 1 Millisecond Alt+Right","nudgeForward")?)
         .item(&item(app,"Jump to Beginning Home","jumpBeginning")?).item(&item(app,"Jump to End End","jumpEnd")?).separator()
-        .item(&item(app,"Target Both Audio and Video B","targetBoth")?).item(&item(app,"Target Video Only V","targetVideo")?).item(&item(app,"Target Audio Only A","targetAudio")?).build()?;
+        .item(&item(app,"Primary Replacement Target Both Audio and Video B","targetBoth")?).item(&item(app,"Primary Replacement Target Video Only V","targetVideo")?).item(&item(app,"Primary Replacement Target Audio Only A","targetAudio")?).build()?;
     let navigate = SubmenuBuilder::new(app, "Navigate")
         .item(&item(app,"Media Editor Workspace","showMediaWorkspace")?).item(&item(app,"AudioStudio Pro Workspace","showAudioWorkspace")?)
         .item(&item(app,"Next Workspace Ctrl+Tab","nextWorkspace")?).item(&item(app,"Previous Workspace Ctrl+Shift+Tab","previousWorkspace")?).separator()
@@ -362,7 +370,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

@@ -160,6 +160,15 @@ test("a destination bracket limits replacement without stretching the source",()
   assert.deepEqual(replaced.trackReplacements[0].segments,[{start:5,end:9}]);
   assert.equal(duration(replaced),30);
 });
+test("a selected Primary range uses the Primary Audio target and complete matching Source selection",()=>{
+  const primary=addItem(createProject(),{...item("primary",60),editSegments:[{start:0,end:60}]});
+  const clip={...item("complete-copy",60),kind:"Video",source:"C:/source-video.mp4",editSegments:[{start:4,end:37.855}]};
+  const replaced=addTrackReplacement(primary,clip,"audio",11.565,45.42,"complete-copy-edit");
+  assert.equal(replaced.trackReplacements[0].timelineStart,11.565);
+  assert.ok(Math.abs(replaced.trackReplacements[0].timelineEnd-45.42)<0.000001);
+  assert.equal(replaced.trackReplacements[0].target,"audio");
+  assert.deepEqual(replaced.trackReplacements[0].segments,[{start:4,end:37.855}]);
+});
 test("track replacements are passed to FFmpeg in project order",()=>{
   let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});
   project=addTrackReplacement(project,{...item("voice",5),kind:"Audio",editSegments:[{start:0,end:5}]},"audio",3,null,"voice-edit");
@@ -175,7 +184,7 @@ test("a saved track replacement can be removed nondestructively",()=>{
   assert.equal(duration(removed),30);
   assert.equal(project.trackReplacements.length,1);
 });
-test("Ctrl+V replaces while Ctrl+Shift+V inserts",()=>{
+test("Ctrl+V is contextual paste while Ctrl+Shift+V remains an explicit insert",()=>{
   assert.ok(shortcuts.some(([name,key])=>name==="pasteMedia"&&key.ctrl&&!key.shift&&key.key==="v"));
   assert.ok(shortcuts.some(([name,key])=>name==="pasteInsert"&&key.ctrl&&key.shift&&key.key==="v"));
 });

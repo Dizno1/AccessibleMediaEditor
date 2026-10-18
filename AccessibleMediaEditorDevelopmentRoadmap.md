@@ -46,8 +46,8 @@ Opening an audio file in Media Editor must not automatically open AudioStudio Pr
 - Left Bracket - Place the Left Bracket at the exact logical playhead.
 - Right Bracket - Place the Right Bracket at the exact logical playhead.
 - Ctrl+C - Copy the selected Source content.
-- Ctrl+V - Replace the targeted Primary track at the playhead or within one continuous destination selection without changing production duration.
-- Ctrl+Shift+V - Insert copied media into the Primary sequence and increase production duration.
+- Ctrl+V - Insert at the Primary playhead when no non-empty Primary range is selected; replace a targeted track only when Primary has one continuous non-empty selected range.
+- Ctrl+Shift+V - Explicitly insert copied media into the Primary sequence and increase production duration.
 - Ctrl+X - Reserved for cutting selected content.
 - Ctrl+Delete - Delete selected content nondestructively.
 - Ctrl+K - Split at the playhead.
@@ -70,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.10.2 includes:
+Build 0.10.4 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -90,14 +90,18 @@ Build 0.10.2 includes:
 - Menu equivalents for established editing commands.
 - Complete video and audio Primary Production rendering and format-selectable saving.
 - Independent A, V, and B track replacement instructions stored in Version 3 project files.
-- Separate Replace and Insert commands.
+- Contextual Ctrl+V: insertion with no non-empty Primary selection, and replacement only with one continuous non-empty Primary selection.
+- Ctrl+Shift+V as an optional explicit Insert command.
 - Track replacement preview during Primary playback.
 - FFmpeg audio-only, video-only, and both-track replacement at exact production times.
 - Track-target changes that never rebuild the editor or disturb the active brackets, playhead, focus, or playback state.
 - Bracket announcements that report the calculated selection duration as well as the absolute timeline positions.
-- Source A, V, or B targeting that travels with the copied selection.
+- Primary-only A, V, or B replacement targeting. Source editors select and copy material without choosing a target.
 - Paste protection that reports duration differences instead of silently truncating copied media to a shorter destination selection.
 - Verified export completion, complete saved-path announcements, and direct File menu access to the Exports folder.
+- Copy announcements that identify the Source and selected duration without attaching a track target to the clipboard selection.
+- A focused Export Complete dialog that preserves the verified saved path for deliberate JAWS review and can reveal the actual saved file in File Explorer.
+- Regression coverage for contextual insertion, Primary-controlled replacement, and shorter-destination rejection.
 
 ## Immediate Stabilization Gate
 

@@ -1,66 +1,68 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.2 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.4 TESTING GUIDE
 
-SELECTION DURATION AND TRUNCATION PROTECTION TEST
+ORDINARY INSERTION WITH CTRL+V
 
-1. In Primary Production, play to approximately 11 seconds, pause, and press Left Bracket.
-2. Continue to approximately 36 seconds, pause, and press Right Bracket.
-3. Confirm the announcement includes both the Right Bracket position and the calculated selection duration of approximately 25 seconds.
-4. In a Source, copy a selection that is several seconds longer than the Primary selection.
-5. Return to Primary Production and press Ctrl+V.
-6. Confirm Paste is canceled and JAWS announces the copied duration, destination duration, and exact difference. No media may be silently truncated.
-7. Undo the Primary Right Bracket, leaving only the Left Bracket, and press Ctrl+V again.
-8. Confirm the complete copied selection is pasted beginning at the Primary Left Bracket.
+1. In a Source editor, set a recognizable selection and press Ctrl+C.
+2. Return to Primary Production and make sure no brackets are set.
+3. Move the Primary playhead to the desired insertion point and press Ctrl+V.
+4. Confirm the copied selection is inserted, the original Primary material is preserved, and production duration increases.
+5. Undo, place both Primary brackets at the same point so the selection is empty, and press Ctrl+V.
+6. Confirm the same insertion occurs at that bracket point. Empty brackets must never replace or remove existing material.
+7. Confirm Ctrl+Shift+V remains available as an optional explicit Insert command but is not required for ordinary insertion.
 
-COPIED TRACK TARGET TEST
+PRIMARY-CONTROLLED AUDIO REPLACEMENT
 
-1. In a Source Video, press B, bracket a recognizable selection, and press Ctrl+C.
-2. Return to Primary Production after it was previously set to V, and press Ctrl+V without pressing B again.
-3. Confirm both audio and video are replaced because B traveled with the copied selection.
-4. Repeat with V and confirm only video is replaced.
-5. Copy a Source Audio selection and confirm it always travels as Audio Only.
+1. In Primary Production, press A. Confirm Audio Only is announced as the Primary replacement target.
+2. Set a non-empty Primary range with Left Bracket and Right Bracket.
+3. Note the announced selection duration.
+4. Move to a Source Audio or Source Video editor. Do not choose A, V, or B there.
+5. Select matching-duration Source material and press Ctrl+C.
+6. Return to Primary Production and press Ctrl+V.
+7. Confirm only Primary audio inside the selected range is replaced by Source audio.
+8. Confirm the existing Primary video continues unchanged and production duration does not change.
+9. Press Ctrl+Z and confirm the original audio returns. Press Ctrl+Y and confirm the replacement returns.
+
+PRIMARY-CONTROLLED VIDEO REPLACEMENT
+
+1. In Primary Production, press V. Confirm Video Only is announced as the Primary replacement target.
+2. Set a non-empty Primary range with Left Bracket and Right Bracket.
+3. In a Source Video editor, select matching-duration material and press Ctrl+C. Do not choose a Source target.
+4. Return to Primary Production and press Ctrl+V.
+5. Confirm only Primary video inside the selected range is replaced by Source video.
+6. Confirm the existing Primary audio continues unchanged and production duration does not change.
+
+BOTH-TRACK REPLACEMENT
+
+1. In Primary Production, press B and select a non-empty range.
+2. In a Source Video editor, select matching-duration material and press Ctrl+C.
+3. Return to Primary Production and press Ctrl+V.
+4. Confirm both picture and sound are replaced only inside the selected Primary range.
+5. Confirm production duration does not change.
+
+REPLACEMENT PROTECTION
+
+1. Select a non-empty range in Primary Production.
+2. Copy a Source selection that is longer than the Primary range.
+3. Return to Primary Production and press Ctrl+V.
+4. Confirm Paste is canceled and JAWS announces the copied duration, destination duration, and difference.
+5. Confirm no Source material is truncated and no Primary material is changed.
+6. Set inward Primary brackets that select two separate ranges and press Ctrl+V.
+7. Confirm replacement is rejected because replacement requires one continuous Primary range.
+
+SOURCE TARGET SCOPE
+
+1. Enter any Source editor and press A, V, or B.
+2. Confirm the application explains that replacement targeting is chosen in Primary Production.
+3. Confirm the Source playhead and Source brackets remain unchanged.
+4. Confirm Copy announces the selected duration and Source name without attaching a track target to the copied material.
 
 EXPORT LOCATION TEST
 
 1. Press Ctrl+E, choose a format, and continue to the Windows Save dialog.
 2. Save the production.
-3. Confirm success is announced only after the output file exists and includes the complete saved path.
-4. Use File, Open Exports Folder and confirm the correct default Exports folder opens.
+3. Confirm a focused Export Complete dialog reads the complete verified saved path.
+4. Activate Show Saved File and confirm File Explorer opens the actual containing folder with the exported file selected.
 5. Confirm canceling the Save dialog announces Save canceled and does not announce success.
-
-TARGET CHANGE BRACKET RETENTION TEST
-
-1. In Primary Production, play to a recognizable point and pause.
-2. Press Left Bracket and confirm its exact time is announced.
-3. Press A and confirm Audio only targeted for the next edit is announced.
-4. Confirm the Left Bracket remains set and the playhead does not move.
-5. Continue playing, pause later, and press Right Bracket.
-6. Confirm JAWS announces an outward selection between the original Left Bracket and the new Right Bracket. It must not announce Selected from beginning.
-7. Press Ctrl+V and confirm audio is replaced only inside that range.
-8. Repeat by placing one bracket, changing to V and B, and placing the other bracket.
-
-TRUE TRACK REPLACEMENT TEST
-
-1. Open a video as Primary and open one audio file and one video file as Sources.
-2. In the audio Source, bracket several recognizable seconds and press Ctrl+C.
-3. Confirm the audio Source uses Audio Only, return to Primary Production, position the playhead, and press Ctrl+V.
-4. Confirm the copied Source target controls the replacement without requiring A again in Primary Production.
-5. Confirm the pasted audio replaces Primary audio while the existing Primary video continues.
-6. Confirm the production duration does not change.
-7. Press Ctrl+Z and confirm the original audio returns. Press Ctrl+Y and confirm the replacement returns.
-8. Copy a video Source selection, return to Primary, press V, and press Ctrl+V.
-9. Confirm the Source picture replaces Primary picture while Primary audio continues and duration does not change.
-10. Repeat with B and confirm both picture and sound are replaced.
-11. Set outward Primary brackets and replace again. Confirm replacement begins at the first boundary and cannot exceed the selected destination range.
-12. Set inward Primary brackets and confirm replacement is rejected with a request for one continuous range.
-13. Export as MP4 and confirm all A, V, and B replacements occur at the same times heard in Primary playback.
-
-REPLACE VERSUS INSERT TEST
-
-1. Copy a clearly recognizable Source selection and note the Primary duration.
-2. Press Ctrl+V in Primary Production and confirm the targeted track is replaced and duration remains unchanged.
-3. Undo, then press Ctrl+Shift+V at the same playhead.
-4. Confirm the complete media selection is inserted sequentially and production duration increases by the inserted duration.
-5. Confirm Edit menu contains both Paste Replace on Target Track and Paste Insert into Sequence.
 
 COMPLETE PRODUCTION EXPORT TEST
 

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearEditorMarks, preserveMarksWhileChangingTarget, copiedTrackTarget, replacementDurationIssue } from "../app/editorState.js";
+import fs from "node:fs";
+import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "../app/editorState.js";
 
 test("completed operations clear brackets and their undo history",()=>{
   const state={cursor:12.345,markIn:3,markOut:8,markHistory:[{which:"in",previous:null},{which:"out",previous:null}]};
@@ -26,12 +27,6 @@ test("changing A V or B target preserves both active brackets and playhead",()=>
   assert.deepEqual(state.markHistory,[{which:"in",previous:null}]);
   assert.equal(state.trackTarget,"audio");
 });
-test("the Source target travels with copied media",()=>{
-  assert.equal(copiedTrackTarget("Video","both"),"both");
-  assert.equal(copiedTrackTarget("Video","video"),"video");
-  assert.equal(copiedTrackTarget("Video","audio"),"audio");
-  assert.equal(copiedTrackTarget("Audio","both"),"audio");
-});
 test("a shorter destination is detected before paste can truncate media",()=>{
   const issue=replacementDurationIssue(33.397,24.585);
   assert.equal(issue.copied,33.397);
@@ -39,4 +34,18 @@ test("a shorter destination is detected before paste can truncate media",()=>{
   assert.ok(Math.abs(issue.excess-8.812)<0.000001);
   assert.equal(replacementDurationIssue(20,24.585),null);
   assert.equal(replacementDurationIssue(33.397,null),null);
+});
+test("Ctrl+V inserts without a selected range and replaces one continuous selected range",()=>{
+  assert.equal(primaryPasteOperation(null),"insert");
+  assert.equal(primaryPasteOperation({kind:"empty",selectedRanges:[]}),"insert");
+  assert.equal(primaryPasteOperation({kind:"inside",selectedRanges:[{from:5,to:7}]}),"replace");
+  assert.equal(primaryPasteOperation({kind:"outside",selectedRanges:[{from:0,to:2},{from:8,to:10}]}),"reject");
+});
+test("export completion uses a focused path dialog for screen readers",()=>{
+  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(html,/id="export-success-dialog"[^>]*aria-labelledby="export-success-heading"[^>]*aria-describedby="export-success-path"/);
+  assert.match(html,/id="export-success-path" tabindex="-1"/);
+  assert.match(app,/el\["export-success-path"\]\.focus\(\)/);
+  assert.match(app,/Complete production saved to \$\{path\}/);
 });

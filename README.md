@@ -4,6 +4,28 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.4
+
+Build 0.10.4 restores logical Paste behavior and makes Primary Production solely responsible for replacement targeting.
+
+- Ctrl+V inserts copied Source material when Primary has no selected range.
+- Empty Primary brackets identify an insertion point; they do not cause replacement or remove existing media.
+- Ctrl+V replaces media only when Primary has a real, non-empty selected range.
+- A, V, or B is chosen in Primary Production and determines whether Paste replaces audio, video, or both inside that Primary range.
+- Source editors only select and copy material. Users do not choose A, V, or B in a Source editor.
+- Ctrl+Shift+V remains an optional explicit Insert command, but ordinary insertion no longer requires it.
+- Replacement rejects a copied selection that is longer than the selected Primary destination instead of truncating it.
+
+## Build 0.10.3
+
+Build 0.10.3 completes the current track-replacement stabilization pass.
+
+- Copy announces the selected duration, Source name, and stored Audio Only, Video Only, or Both Audio and Video target.
+- Export completion opens a focused, labeled dialog containing the complete verified saved path so JAWS does not have to catch a transient live-region message.
+- The completion dialog provides Show Saved File and Close buttons, and Show Saved File selects the actual export even when it was saved outside the default Exports folder.
+- Automated coverage confirms that shorter bracketed destinations are rejected before truncation.
+- Automated coverage confirms that one Primary Left Bracket replaces from that boundary using the complete copied selection.
+
 ## Build 0.10.2
 
 Build 0.10.2 makes track replacement timing and export results explicit.
@@ -208,7 +230,7 @@ Build 0.5.0 corrected the Primary trim and Source-selection workflow.
 - Routine loading and transport announcements no longer repeat filenames.
 - Unsupported preview formats no longer expose working-looking controls. The editor announces that conversion is required.
 
-The first opened file becomes Primary Media. Additional files become Source Media and are excluded from output until inserted. Every supported video or audio item has a titled editor section containing its own preview player, playhead slider, position, marks, track target, and editing controls.
+The first opened file becomes Primary Media. Additional files become Source Media and are excluded from output until inserted or used for replacement. Every supported video or audio item has a titled editor section containing its own preview player, playhead slider, position, brackets, and editing controls. Audio Only, Video Only, and Both Audio and Video replacement targets appear only in Primary Production.
 
 All operations are nondestructive. Source files are not modified.
 

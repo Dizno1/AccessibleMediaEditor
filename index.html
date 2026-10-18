@@ -162,6 +162,17 @@
     </form>
   </dialog>
 
+  <dialog id="export-success-dialog" aria-labelledby="export-success-heading" aria-describedby="export-success-path">
+    <div>
+      <h2 id="export-success-heading">Export Complete</h2>
+      <p id="export-success-path" tabindex="-1"></p>
+      <div class="button-row">
+        <button type="button" id="export-success-show-file">Show Saved File</button>
+        <button type="button" id="export-success-close">Close</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="text-dialog" aria-labelledby="text-heading">
     <form method="dialog">
       <h2 id="text-heading">Add Text Item</h2>
@@ -190,7 +201,7 @@
         <li>X: Play or pause from the current playhead.</li>
         <li>Space: Audition the complete bracket selection, or play continuously from the current playhead when no brackets are set. Press Space again to stop and return.</li>
         <li>Escape: Close a dialog or cancel a temporary operation.</li>
-        <li>B, V, or A: Target both tracks, video only, or audio only.</li>
+        <li>In Primary Production, B, V, or A targets both tracks, video only, or audio only for replacement of a selected range.</li>
         <li>U or I: Silently move backward or forward 1 second and play a short media sample. JAWS does not announce each scrub.</li>
         <li>Shift+U or Shift+I: Scrub backward or forward 100 milliseconds.</li>
         <li>Ctrl+Alt+U or Ctrl+Alt+I: Scrub backward or forward 10 milliseconds.</li>
@@ -202,8 +213,8 @@
         <li>Home or End: Move to the beginning or end.</li>
         <li>Ctrl+G: Enter an exact playhead time using Hours, Minutes, Seconds, and Milliseconds.</li>
         <li>Ctrl+C: Copy the marked selection from the active Source editor.</li>
-        <li>Ctrl+V: Replace the targeted Primary track without changing production duration.</li>
-        <li>Ctrl+Shift+V: Insert copied media into the sequence and increase production duration.</li>
+        <li>Ctrl+V: Insert at the playhead or empty brackets. When Primary contains a non-empty selected range, replace the track chosen with A, V, or B.</li>
+        <li>Ctrl+Shift+V: Explicitly insert copied media into the sequence and increase production duration.</li>
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
         <li>Ctrl+Delete: Apply the bracketed edit in Primary Production or the active Source editor.</li>
       </ul>
@@ -223,11 +234,11 @@
       <p><strong>Playback:</strong> X plays or pauses continuously. With brackets set, Space auditions the complete selection. Without brackets, Space plays continuously from the playhead. Press Space again to stop and return to the original position.</p>
       <p><strong>Scrubbing:</strong> U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Alt+U and Ctrl+Alt+I scrub by 10 milliseconds. Alt+Left Arrow and Alt+Right Arrow move by 1 millisecond. Scrubbing intentionally produces no JAWS status announcement so you can hear the media sample.</p>
       <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the end announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
-      <p><strong>Track targeting:</strong> In Primary Production, B targets both audio and video, V targets video only while preserving existing audio, and A targets audio only while preserving existing video. Audio Source files always target audio while they are being prepared.</p>
+      <p><strong>Track targeting:</strong> Track targets are chosen only in Primary Production. B replaces both audio and video, V replaces video while preserving existing audio, and A replaces audio while preserving existing video. Source editors only select and copy media.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the left boundary. Right bracket sets the right boundary. Ctrl+G opens exact-time fields.</p>
       <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
-      <p><strong>Replacing a track:</strong> Mark a selection in a Source editor and press Ctrl+C. Move to Primary Production, choose A, V, or B, position the playhead or mark a destination range, and press Ctrl+V. Replace preserves production duration and preserves every untargeted track.</p>
-      <p><strong>Inserting into the sequence:</strong> Press Ctrl+Shift+V to insert the copied selection at the Primary playhead. Insert increases production duration. Replace and Insert are deliberately separate commands.</p>
+      <p><strong>Replacing a track:</strong> In Primary Production, choose A, V, or B and mark the non-empty destination range with Left and Right Brackets. In a Source editor, mark a matching selection and press Ctrl+C. Return to Primary Production and press Ctrl+V. The Primary target controls the replacement; no target choice is required in the Source.</p>
+      <p><strong>Inserting into the sequence:</strong> With no Primary selection, Ctrl+V inserts at the playhead. Empty brackets also create an insertion point. Insertion preserves all original media and increases production duration. Ctrl+Shift+V remains an explicit Insert command but is not required for ordinary insertion.</p>
       <p><strong>Using bracketed selections:</strong> A lone Left Bracket selects everything to its right. A lone Right Bracket selects everything to its left. Outward-facing brackets, Left then Right on the timeline, select the content between them. Inward-facing brackets, Right then Left on the timeline, select the beginning and end while leaving the middle unselected. Either bracket may be placed first. The command determines what happens: Ctrl+C copies the selected Source content, while Ctrl+Delete deletes the selected content.</p>
       <p><strong>Editing a Source:</strong> The same brackets and Ctrl+Delete edit the active Source working timeline. Source playback and Ctrl+C use the edited timeline. The original Source file remains unchanged.</p>
       <p><strong>Immediate review:</strong> After Ctrl+Delete, playback, the playhead, Home and End, and U and I scrubbing use the edited timeline immediately. You do not need to export before hearing the result.</p>
