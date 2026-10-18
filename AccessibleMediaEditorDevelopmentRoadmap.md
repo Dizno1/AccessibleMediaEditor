@@ -70,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.10.3 includes:
+Build 0.10.2 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -98,9 +98,6 @@ Build 0.10.3 includes:
 - Source A, V, or B targeting that travels with the copied selection.
 - Paste protection that reports duration differences instead of silently truncating copied media to a shorter destination selection.
 - Verified export completion, complete saved-path announcements, and direct File menu access to the Exports folder.
-- Copy announcements that explicitly identify the Audio Only, Video Only, or Both Audio and Video target stored with the clipboard selection.
-- A focused Export Complete dialog that preserves the verified saved path for deliberate JAWS review and can reveal the actual saved file in File Explorer.
-- Regression coverage for shorter-destination rejection and complete replacement beginning at one Primary Left Bracket.
 
 ## Immediate Stabilization Gate
 

@@ -160,14 +160,6 @@ test("a destination bracket limits replacement without stretching the source",()
   assert.deepEqual(replaced.trackReplacements[0].segments,[{start:5,end:9}]);
   assert.equal(duration(replaced),30);
 });
-test("a single Primary Left Bracket uses the complete copied selection",()=>{
-  const primary=addItem(createProject(),{...item("primary",60),editSegments:[{start:0,end:60}]});
-  const clip={...item("complete-copy",33.855),kind:"Audio",source:"C:/voice.m4a",editSegments:[{start:0,end:33.855}]};
-  const replaced=addTrackReplacement(primary,clip,"audio",11.565,null,"complete-copy-edit");
-  assert.equal(replaced.trackReplacements[0].timelineStart,11.565);
-  assert.ok(Math.abs(replaced.trackReplacements[0].timelineEnd-45.42)<0.000001);
-  assert.deepEqual(replaced.trackReplacements[0].segments,[{start:0,end:33.855}]);
-});
 test("track replacements are passed to FFmpeg in project order",()=>{
   let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});
   project=addTrackReplacement(project,{...item("voice",5),kind:"Audio",editSegments:[{start:0,end:5}]},"audio",3,null,"voice-edit");

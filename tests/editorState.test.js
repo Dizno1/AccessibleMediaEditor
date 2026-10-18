@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, copiedTrackTarget, replacementDurationIssue } from "../app/editorState.js";
 
 test("completed operations clear brackets and their undo history",()=>{
@@ -40,12 +39,4 @@ test("a shorter destination is detected before paste can truncate media",()=>{
   assert.ok(Math.abs(issue.excess-8.812)<0.000001);
   assert.equal(replacementDurationIssue(20,24.585),null);
   assert.equal(replacementDurationIssue(33.397,null),null);
-});
-test("export completion uses a focused path dialog for screen readers",()=>{
-  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
-  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
-  assert.match(html,/id="export-success-dialog"[^>]*aria-labelledby="export-success-heading"[^>]*aria-describedby="export-success-path"/);
-  assert.match(html,/id="export-success-path" tabindex="-1"/);
-  assert.match(app,/el\["export-success-path"\]\.focus\(\)/);
-  assert.match(app,/Complete production saved to \$\{path\}/);
 });

@@ -109,14 +109,6 @@ fn open_exports_folder() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn reveal_exported_file(path: String) -> Result<(), String> {
-    let file = std::path::PathBuf::from(&path);
-    if !file.is_file() { return Err("The saved export could not be found at that location.".into()); }
-    std::process::Command::new("explorer").arg(format!("/select,{}", file.to_string_lossy())).spawn().map_err(|error| error.to_string())?;
-    Ok(())
-}
-
-#[tauri::command]
 fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), String> {
     window.set_title(&title).map_err(|error| error.to_string())
 }
@@ -370,7 +362,7 @@ fn main() {
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }
