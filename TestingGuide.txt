@@ -1,16 +1,17 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.6 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.7 TESTING GUIDE
 
 SCREEN-READER EXPORT CONVERSATION TEST
 
 1. Cause any recognizable editing status message before export, such as a canceled paste.
 2. Press Ctrl+E, select WebM, and activate Continue to Save.
 3. Confirm the old editing message, Main region, Media Editor TabPanel, and Primary Production are not reread.
-4. Confirm the production item, join, track replacement, and Primary Production rendered announcements are spoken in order.
+4. Confirm every production item, joining, track replacement, applying, and Primary Production rendered announcement is spoken once and in order.
 5. Choose the destination filename in the Windows Save dialog.
-6. Confirm conversion start is announced.
-7. If conversion lasts longer than one minute, confirm one elapsed-time update is spoken per minute.
-8. Confirm Export Complete is presented only after finalization and no Finalizing message follows it.
-9. Confirm focus lands directly on Show Saved File and the complete saved path is available from the dialog description.
+6. Confirm no delayed rendering announcement is spoken while the Save dialog is open or after the destination is chosen.
+7. Confirm conversion start is announced.
+8. If conversion lasts longer than one minute, confirm one elapsed-time update is spoken per minute.
+9. Confirm Export Complete is presented only after finalization and no rendering or Finalizing message follows it.
+10. Confirm focus lands directly on Show Saved File and the complete saved path is available from the dialog description.
 
 ATOMIC EXPORT SAFETY TEST
 

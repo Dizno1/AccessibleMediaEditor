@@ -56,12 +56,17 @@ test("export is atomic and never exposes the requested filename while FFmpeg is 
   assert.match(rust,/Please wait for Export Complete before using the file/);
   assert.match(rust,/Export failed\. No completed destination file was created/);
 });
-test("export progress suppresses stale editing history and provides quiet elapsed-time updates",()=>{
+test("export progress announces ordered stages and rejects delayed stage messages",()=>{
   const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
   const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
   const rust=fs.readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
-  assert.match(html,/id="export-progress-dialog"[^>]*aria-labelledby="export-progress-heading"[^>]*aria-describedby="export-progress-message"/);
+  assert.match(html,/id="export-progress-dialog"[^>]*aria-labelledby="export-progress-heading"/);
+  assert.doesNotMatch(html,/id="export-progress-dialog"[^>]*aria-describedby/);
   assert.match(app,/clearAnnouncements\(\);el\["export-dialog"\]\.close\(\);showExportProgress/);
+  assert.match(app,/rendering&&exportPhase!=="rendering"/);
+  assert.match(app,/setExportProgress\(message\);announce\(message\)/);
+  assert.match(app,/exportPhase="choosing-destination"/);
+  assert.match(app,/exportPhase="complete";closeExportProgress\(\);clearAnnouncements\(\)/);
   assert.match(app,/conversion still in progress/);
   assert.match(app,/60000/);
   assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);

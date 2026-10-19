@@ -4,6 +4,16 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.7
+
+Build 0.10.7 restores the useful spoken rendering stages and keeps them in the correct part of the export conversation.
+
+- JAWS again hears each production item, joining, track-replacement, and applying stage while rendering.
+- Delayed rendering events are ignored after the native Save dialog begins, so they cannot leak into destination selection or completion.
+- The changing progress text is no longer the dialog description, preventing repeated full-dialog speech.
+- A short handoff announces that rendering is complete before the native Save dialog opens.
+- Long final format conversion retains the once-per-minute elapsed-time update.
+
 ## Build 0.10.6
 
 Build 0.10.6 corrects the complete screen-reader export conversation.
