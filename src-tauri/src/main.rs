@@ -104,7 +104,6 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
         let _ = fs::remove_file(&temporary_path);
         return Err("Export verification failed. No completed destination file was created.".into());
     }
-    window.emit("production-render-progress", "Conversion finished. Finalizing the completed export.").map_err(|error| error.to_string())?;
     if path.is_file() { fs::remove_file(&path).map_err(|error| format!("The completed temporary export is safe, but the existing destination could not be replaced. {}", error))?; }
     fs::rename(&temporary_path, &path).map_err(|error| format!("The completed temporary export could not be finalized. {}", error))?;
     if !path.is_file() { return Err("The export was finalized, but the completed destination file could not be verified.".into()); }

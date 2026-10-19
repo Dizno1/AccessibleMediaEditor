@@ -29,6 +29,9 @@ const PROGRAM_ID="primary-production";
 let mediaClipboard=null;
 let removedSourceUndoId=null;
 let lastExportPath=null;
+let exportConversionStartedAt=null;
+let exportHeartbeatTimer=null;
+let exportConversionLabel="export";
 const editorStates=new Map();
 const editorNodes=new Map();
 let editorCounter=0;
@@ -40,6 +43,46 @@ function announce(message,urgent=false){
   el["action-status"].textContent=message;
 }
 function updateStatus(message){el["action-status"].textContent=message;}
+function clearAnnouncements(){
+  el["status-announcer"].textContent="";
+  el["alert-announcer"].textContent="";
+  el["action-status"].textContent="";
+}
+function speakWithoutHistory(message){
+  el["status-announcer"].textContent="";
+  requestAnimationFrame(()=>{el["status-announcer"].textContent=message;});
+}
+function setExportProgress(message,speak=true){
+  el["export-progress-message"].textContent=message;
+  if(speak)speakWithoutHistory(message);
+}
+function stopExportHeartbeat(){
+  if(exportHeartbeatTimer)clearInterval(exportHeartbeatTimer);
+  exportHeartbeatTimer=null;exportConversionStartedAt=null;
+}
+function startExportHeartbeat(label="export"){
+  stopExportHeartbeat();exportConversionStartedAt=Date.now();
+  exportConversionLabel=label;
+  exportHeartbeatTimer=setInterval(()=>{
+    const minutes=Math.max(1,Math.floor((Date.now()-exportConversionStartedAt)/60000));
+    setExportProgress(`${exportConversionLabel} conversion still in progress. ${minutes} ${minutes===1?"minute":"minutes"} elapsed. Please continue to wait for Export Complete.`);
+  },60000);
+}
+function showExportProgress(message){
+  clearAnnouncements();setExportProgress(message,false);
+  if(!el["export-progress-dialog"].open)el["export-progress-dialog"].showModal();
+  el["export-progress-heading"].focus();
+}
+function closeExportProgress(){
+  stopExportHeartbeat();
+  if(el["export-progress-dialog"].open)el["export-progress-dialog"].close();
+}
+function handleExportProgress(message){
+  if(!el["export-progress-dialog"].open)return;
+  setExportProgress(message);
+  const match=message.match(/^Export destination selected\. Converting complete production to ([A-Z0-9]+)\./);
+  if(match)startExportHeartbeat(match[1]);
+}
 
 function cue(kind){
   if(!soundCues)return;
@@ -440,20 +483,21 @@ function exportMedia(){
 }
 async function confirmExport(){
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];if(!primary)return;
-  const format=el["export-format"].value,stem=baseName(primary.name||"Edited Media").replace(/\.[^.]+$/,"");el["export-dialog"].close();announce("Preparing the selected export format. Please wait.");
+  const format=el["export-format"].value,stem=baseName(primary.name||"Edited Media").replace(/\.[^.]+$/,"");
+  clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
   try{
     let source=primary.workingSource||primary.source;
     if(project.items.length>1||(project.trackReplacements||[]).length){announce(`Rendering the complete Primary Production with ${(project.trackReplacements||[]).length} track ${(project.trackReplacements||[]).length===1?"replacement":"replacements"}. Please wait.`);source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});announce("Primary Production rendered. Choose where to save it.");}
     const path=await invoke("export_edited_media",{source,suggestedName:`${stem} Edited.${format}`,format});
     if(path){
       const message=`Complete production saved to ${path}.`;
-      lastExportPath=path;
+      closeExportProgress();clearAnnouncements();lastExportPath=path;
       el["export-success-path"].textContent=message;
       el["export-success-dialog"].showModal();
-      el["export-success-path"].focus();
+      el["export-success-show-file"].focus();
       updateStatus(message);cue("save");
-    }else announce("Save canceled.");
-  }catch(error){announce(`Production could not be saved. ${error}`,true);}
+    }else{closeExportProgress();announce("Save canceled.");}
+  }catch(error){closeExportProgress();announce(`Production could not be saved. ${error}`,true);}
 }
 function clearAllEditorMarks(){for(const state of editorStates.values())clearEditorMarks(state);}
 function clearProgramMarks(){clearEditorMarks(editorStates.get(PROGRAM_ID));}
@@ -661,7 +705,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.5. Atomic protected export, logical contextual paste, and Primary-controlled track replacement.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.6. Screen-reader export progress, atomic protected export, and Primary-controlled track replacement.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -679,9 +723,10 @@ el["save-project-button"].addEventListener("click",()=>saveProject(true));el["me
 el["export-button"].addEventListener("click",exportMedia);
 el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>el["export-dialog"].close());
 el["export-success-show-file"].addEventListener("click",async()=>{try{if(!lastExportPath)return announce("No completed export is available.",true);await invoke("reveal_exported_file",{path:lastExportPath});announce("Saved file shown in File Explorer.");}catch(error){announce(String(error),true);}});el["export-success-close"].addEventListener("click",()=>el["export-success-dialog"].close());
+el["export-progress-dialog"].addEventListener("cancel",event=>event.preventDefault());
 el["media-section-tab"].addEventListener("click",()=>activateSection("media-section"));el["output-section-tab"].addEventListener("click",()=>activateSection("output-section"));
 document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();event.stopPropagation();const target=event.key==="ArrowLeft"||event.key==="Home"?"media":"audio";switchWorkspace(1,target);el[target==="media"?"media-editor-tab":"audio-studio-tab"].focus();}));
 el["save-properties-button"].addEventListener("click",saveProperties);el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());el["save-text-button"].addEventListener("click",saveText);el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
-if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>announce(event.payload));}
+if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
 render();el["import-media-button"].focus();

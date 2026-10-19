@@ -45,8 +45,7 @@ test("export completion uses a focused path dialog for screen readers",()=>{
   const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
   const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
   assert.match(html,/id="export-success-dialog"[^>]*aria-labelledby="export-success-heading"[^>]*aria-describedby="export-success-path"/);
-  assert.match(html,/id="export-success-path" tabindex="-1"/);
-  assert.match(app,/el\["export-success-path"\]\.focus\(\)/);
+  assert.match(app,/el\["export-success-show-file"\]\.focus\(\)/);
   assert.match(app,/Complete production saved to \$\{path\}/);
 });
 test("export is atomic and never exposes the requested filename while FFmpeg is writing",()=>{
@@ -56,4 +55,14 @@ test("export is atomic and never exposes the requested filename while FFmpeg is 
   assert.match(rust,/fs::rename\(&temporary_path, &path\)/);
   assert.match(rust,/Please wait for Export Complete before using the file/);
   assert.match(rust,/Export failed\. No completed destination file was created/);
+});
+test("export progress suppresses stale editing history and provides quiet elapsed-time updates",()=>{
+  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  const rust=fs.readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
+  assert.match(html,/id="export-progress-dialog"[^>]*aria-labelledby="export-progress-heading"[^>]*aria-describedby="export-progress-message"/);
+  assert.match(app,/clearAnnouncements\(\);el\["export-dialog"\]\.close\(\);showExportProgress/);
+  assert.match(app,/conversion still in progress/);
+  assert.match(app,/60000/);
+  assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);
 });

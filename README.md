@@ -4,6 +4,18 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.6
+
+Build 0.10.6 corrects the complete screen-reader export conversation.
+
+- Continuing from the format dialog clears stale editing announcements before focus changes.
+- A modal Export in Progress dialog prevents focus from falling back into unrelated editor content.
+- The existing production-item, join, replacement, and save-dialog announcements remain intact.
+- Final format conversion announces an elapsed-time update once per minute without excessive speech.
+- Delayed native progress events are ignored after the progress dialog closes.
+- The logically late Finalizing announcement was removed so nothing can announce finalization after Export Complete.
+- Export Complete moves focus directly to Show Saved File and exposes the verified path through the dialog description.
+
 ## Build 0.10.5
 
 Build 0.10.5 makes export atomic and prevents unfinished output from appearing to be complete.

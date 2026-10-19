@@ -70,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.10.5 includes:
+Build 0.10.6 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -101,6 +101,8 @@ Build 0.10.5 includes:
 - Verified export completion, complete saved-path announcements, and direct File menu access to the Exports folder.
 - Atomic export through a protected temporary file. The requested destination filename never exists until conversion succeeds and the output is verified.
 - Persistent spoken conversion status instructing the user to wait for Export Complete before using an exported file.
+- A dedicated modal Export in Progress experience that clears stale editing status, preserves ordered rendering announcements, provides one elapsed-time conversion update per minute, and prevents focus from falling into unrelated editor content.
+- Deterministic completion ordering with focus placed on Show Saved File only after the verified final filename exists.
 - Copy announcements that identify the Source and selected duration without attaching a track target to the clipboard selection.
 - A focused Export Complete dialog that preserves the verified saved path for deliberate JAWS review and can reveal the actual saved file in File Explorer.
 - Regression coverage for contextual insertion, Primary-controlled replacement, and shorter-destination rejection.

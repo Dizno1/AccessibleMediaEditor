@@ -162,10 +162,17 @@
     </form>
   </dialog>
 
+  <dialog id="export-progress-dialog" aria-labelledby="export-progress-heading" aria-describedby="export-progress-message">
+    <div>
+      <h2 id="export-progress-heading" tabindex="-1">Export in Progress</h2>
+      <p id="export-progress-message" tabindex="-1">Preparing export. Please wait.</p>
+    </div>
+  </dialog>
+
   <dialog id="export-success-dialog" aria-labelledby="export-success-heading" aria-describedby="export-success-path">
     <div>
       <h2 id="export-success-heading">Export Complete</h2>
-      <p id="export-success-path" tabindex="-1"></p>
+      <p id="export-success-path"></p>
       <div class="button-row">
         <button type="button" id="export-success-show-file">Show Saved File</button>
         <button type="button" id="export-success-close">Close</button>
