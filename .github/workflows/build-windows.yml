@@ -61,6 +61,11 @@ jobs:
           if ($tauriVersion -notmatch "tauri v2\.11\.5") {
             throw "Unexpected Tauri runtime. Build requires tauri v2.11.5."
           }
+          $shellVersion = cargo tree --manifest-path src-tauri/Cargo.toml -p tauri-plugin-shell --depth 0
+          Write-Host $shellVersion
+          if ($shellVersion -notmatch "tauri-plugin-shell v2\.4\.1") {
+            throw "Unexpected shell plugin. Build requires tauri-plugin-shell v2.4.1."
+          }
       - name: Build installers for manual testing
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: npm run desktop:build
