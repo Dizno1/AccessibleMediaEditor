@@ -70,7 +70,7 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.10.7 includes:
+Build 0.10.8 includes:
 
 - Optional project workflow.
 - Multiple-file import through the Windows file picker.
@@ -93,7 +93,7 @@ Build 0.10.7 includes:
 - Contextual Ctrl+V: insertion with no non-empty Primary selection, and replacement only with one continuous non-empty Primary selection.
 - Ctrl+Shift+V as an optional explicit Insert command.
 - Track replacement preview during Primary playback.
-- Atomic complete-production export with ordered, phase-gated JAWS rendering and conversion progress.
+- Atomic complete-production export with queued, deduplicated, phase-gated JAWS rendering and conversion progress.
 - FFmpeg audio-only, video-only, and both-track replacement at exact production times.
 - Track-target changes that never rebuild the editor or disturb the active brackets, playhead, focus, or playback state.
 - Bracket announcements that report the calculated selection duration as well as the absolute timeline positions.

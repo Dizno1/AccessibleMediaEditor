@@ -33,6 +33,8 @@ let exportConversionStartedAt=null;
 let exportHeartbeatTimer=null;
 let exportConversionLabel="export";
 let exportPhase="idle";
+let exportNarrationChain=Promise.resolve();
+let exportNarratedMessages=new Set();
 const editorStates=new Map();
 const editorNodes=new Map();
 let editorCounter=0;
@@ -52,6 +54,26 @@ function clearAnnouncements(){
 function setExportProgress(message){
   el["export-progress-message"].textContent=message;
 }
+function resetExportNarration(){
+  exportNarrationChain=Promise.resolve();
+  exportNarratedMessages=new Set();
+  el["export-progress-announcer"].textContent="";
+}
+function queueExportAnnouncement(message,hold=2000){
+  if(exportNarratedMessages.has(message))return exportNarrationChain;
+  exportNarratedMessages.add(message);
+  exportNarrationChain=exportNarrationChain.then(()=>new Promise(resolve=>{
+    if(!el["export-progress-dialog"].open){resolve();return;}
+    setExportProgress(message);
+    const region=el["export-progress-announcer"];
+    region.textContent="";
+    requestAnimationFrame(()=>{
+      region.textContent=message;
+      setTimeout(resolve,hold);
+    });
+  }));
+  return exportNarrationChain;
+}
 function stopExportHeartbeat(){
   if(exportHeartbeatTimer)clearInterval(exportHeartbeatTimer);
   exportHeartbeatTimer=null;exportConversionStartedAt=null;
@@ -62,17 +84,18 @@ function startExportHeartbeat(label="export"){
   exportHeartbeatTimer=setInterval(()=>{
     const minutes=Math.max(1,Math.floor((Date.now()-exportConversionStartedAt)/60000));
     const message=`${exportConversionLabel} conversion still in progress. ${minutes} ${minutes===1?"minute":"minutes"} elapsed. Please continue to wait for Export Complete.`;
-    setExportProgress(message);announce(message);
+    queueExportAnnouncement(message);
   },60000);
 }
 function showExportProgress(message){
-  clearAnnouncements();setExportProgress(message);
+  clearAnnouncements();resetExportNarration();setExportProgress(message);
   if(!el["export-progress-dialog"].open)el["export-progress-dialog"].showModal();
   el["export-progress-heading"].focus();
 }
 function closeExportProgress(){
   stopExportHeartbeat();
   if(el["export-progress-dialog"].open)el["export-progress-dialog"].close();
+  el["export-progress-announcer"].textContent="";
 }
 function handleExportProgress(message){
   if(!el["export-progress-dialog"].open)return;
@@ -81,7 +104,7 @@ function handleExportProgress(message){
   if(rendering&&exportPhase!=="rendering")return;
   if(match&&!['choosing-destination','converting'].includes(exportPhase))return;
   if(!rendering&&!match)return;
-  setExportProgress(message);announce(message);
+  queueExportAnnouncement(message);
   if(match){exportPhase="converting";startExportHeartbeat(match[1]);}
 }
 
@@ -488,11 +511,10 @@ async function confirmExport(){
   exportPhase="rendering";clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
   try{
     let source=primary.workingSource||primary.source;
-    if(project.items.length>1||(project.trackReplacements||[]).length){announce(`Rendering the complete Primary Production with ${(project.trackReplacements||[]).length} track ${(project.trackReplacements||[]).length===1?"replacement":"replacements"}. Please wait.`);source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});await new Promise(resolve=>setTimeout(resolve,750));}
+    if(project.items.length>1||(project.trackReplacements||[]).length){source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});await exportNarrationChain;}
     exportPhase="choosing-destination";
     const destinationMessage="Primary Production rendered. Choose where to save it.";
-    setExportProgress(destinationMessage);announce(destinationMessage);
-    await new Promise(resolve=>setTimeout(resolve,900));
+    await queueExportAnnouncement(destinationMessage,2500);
     const path=await invoke("export_edited_media",{source,suggestedName:`${stem} Edited.${format}`,format});
     if(path){
       const message=`Complete production saved to ${path}.`;
@@ -710,7 +732,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.7. Ordered screen-reader export progress, atomic protected export, and Primary-controlled track replacement.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.8. Queued screen-reader export narration, atomic protected export, and Primary-controlled track replacement.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

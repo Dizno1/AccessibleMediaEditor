@@ -1,11 +1,11 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.7 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.8 TESTING GUIDE
 
 SCREEN-READER EXPORT CONVERSATION TEST
 
 1. Cause any recognizable editing status message before export, such as a canceled paste.
 2. Press Ctrl+E, select WebM, and activate Continue to Save.
 3. Confirm the old editing message, Main region, Media Editor TabPanel, and Primary Production are not reread.
-4. Confirm every production item, joining, track replacement, applying, and Primary Production rendered announcement is spoken once and in order.
+4. Confirm every production item, joining, track replacement, applying, and Primary Production rendered announcement is spoken once and in order. Rapid FFmpeg stages must queue instead of interrupting one another.
 5. Choose the destination filename in the Windows Save dialog.
 6. Confirm no delayed rendering announcement is spoken while the Save dialog is open or after the destination is chosen.
 7. Confirm conversion start is announced.

@@ -62,9 +62,13 @@ test("export progress announces ordered stages and rejects delayed stage message
   const rust=fs.readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
   assert.match(html,/id="export-progress-dialog"[^>]*aria-labelledby="export-progress-heading"/);
   assert.doesNotMatch(html,/id="export-progress-dialog"[^>]*aria-describedby/);
+  assert.match(html,/id="export-progress-announcer"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
   assert.match(app,/clearAnnouncements\(\);el\["export-dialog"\]\.close\(\);showExportProgress/);
   assert.match(app,/rendering&&exportPhase!=="rendering"/);
-  assert.match(app,/setExportProgress\(message\);announce\(message\)/);
+  assert.match(app,/function queueExportAnnouncement\(message,hold=2000\)/);
+  assert.match(app,/if\(exportNarratedMessages\.has\(message\)\)return exportNarrationChain/);
+  assert.match(app,/await exportNarrationChain/);
+  assert.match(app,/await queueExportAnnouncement\(destinationMessage,2500\)/);
   assert.match(app,/exportPhase="choosing-destination"/);
   assert.match(app,/exportPhase="complete";closeExportProgress\(\);clearAnnouncements\(\)/);
   assert.match(app,/conversion still in progress/);

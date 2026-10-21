@@ -4,6 +4,16 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.10.8
+
+Build 0.10.8 completes the screen-reader export narration stabilization.
+
+- Rendering-stage messages use a dedicated polite live region instead of the general editing history.
+- Messages are queued and spoken once in their original order even when FFmpeg finishes stages rapidly.
+- The Windows Save dialog cannot open until all queued rendering messages and the destination handoff have been presented.
+- Exact duplicate progress events are ignored.
+- Rendering messages cannot leak into the Save dialog, final conversion, or Export Complete dialog.
+
 ## Build 0.10.7
 
 Build 0.10.7 restores the useful spoken rendering stages and keeps them in the correct part of the export conversation.
