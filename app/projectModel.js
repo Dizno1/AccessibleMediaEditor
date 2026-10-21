@@ -52,6 +52,29 @@ export function splitItem(project, id, point, newId) {
   const second={...structuredClone(first),id:newId,inPoint:point,label:`${first.label||first.name} - Part 2`};
   first.outPoint=point; first.label=`${first.label||first.name} - Part 1`; next.items.splice(index+1,0,second); next.dirty=true; return next;
 }
+export function splitItemAtLogicalPoint(project, id, logicalPoint, newId) {
+  const next=structuredClone(project),index=next.items.findIndex(item=>item.id===id);
+  if(index<0)return project;
+  const first=next.items[index],total=logicalDuration(first),point=Math.max(0,Math.min(total,Number(logicalPoint)||0));
+  if(!["Video","Audio"].includes(first.kind)||point<=0.0005||point>=total-0.0005)return project;
+  const left=[],right=[];let offset=0;
+  for(const segment of normalizedSegments(first)){
+    const length=segment.end-segment.start,nextOffset=offset+length;
+    if(nextOffset<=point)left.push({...segment});
+    else if(offset>=point)right.push({...segment});
+    else{
+      const sourceSplit=segment.start+(point-offset);
+      if(sourceSplit>segment.start)left.push({start:segment.start,end:sourceSplit});
+      if(sourceSplit<segment.end)right.push({start:sourceSplit,end:segment.end});
+    }
+    offset=nextOffset;
+  }
+  if(!left.length||!right.length)return project;
+  const originalLabel=first.label||first.name;
+  const second={...structuredClone(first),id:newId,role:"sequence",label:`${originalLabel} - Part 2`,editSegments:right,inPoint:0,outPoint:Number(first.duration)||0,workingSource:null};
+  first.label=`${originalLabel} - Part 1`;first.editSegments=left;first.inPoint=0;first.outPoint=Number(first.duration)||0;first.workingSource=null;
+  next.items.splice(index+1,0,second);next.dirty=true;return next;
+}
 export function normalizedSegments(item) {
   const sourceDuration = Math.max(0, Number(item?.duration) || 0);
   if (!sourceDuration) return [];

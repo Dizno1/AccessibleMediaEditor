@@ -4,6 +4,18 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
+## Build 0.11.0
+
+Build 0.11.0 begins Phase 3 by repairing Split at Playhead for the continuous Primary Production editor.
+
+- Ctrl+K identifies the sequence item under the global Primary playhead and splits it at the correct item-relative logical time.
+- Previously trimmed or nondestructively edited items split correctly across retained media segments.
+- Total production duration and original files remain unchanged.
+- The second segment is selected in Primary Production contents, while focus and the playhead remain in Primary Production.
+- The confirmation reports the exact split time and both resulting durations.
+- Ctrl+Z restores the unsplit item.
+- Source editors no longer expose a Split button that cannot be used.
+
 ## Build 0.10.8
 
 Build 0.10.8 completes the screen-reader export narration stabilization.

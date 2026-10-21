@@ -342,7 +342,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
         .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Ctrl+V","pasteMedia")?)
         .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
-        .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
+        .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split Primary at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;

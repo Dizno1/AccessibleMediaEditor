@@ -1,4 +1,16 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.10.8 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.11.0 TESTING GUIDE
+
+PRIMARY PRODUCTION SPLIT TEST
+
+1. Open at least two media files and activate Primary Production.
+2. Move the Primary playhead to a point inside the current item and press Ctrl+K.
+3. Confirm the announcement gives the exact production split time, both resulting segment durations, and says the second segment is selected.
+4. Confirm focus remains in Primary Production and playback continues correctly across the new boundary.
+5. Move to Media Library and confirm Primary Production contents contains two separately selectable parts of the split item.
+6. Confirm total production duration has not changed.
+7. Press Ctrl+Z and confirm the original unsplit item is restored.
+8. Activate a Source editor and confirm its controls do not include Split at Playhead.
+9. Press Ctrl+K in a Source editor and confirm the application says to move to Primary Production without changing the Source.
 
 SCREEN-READER EXPORT CONVERSATION TEST
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, splitItemAtLogicalPoint, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -20,6 +20,17 @@ test("a clip splits nondestructively at an exact point",()=>{
   const result=splitItem(source,"clip",4.25,"second");
   assert.equal(result.items.length,2); assert.equal(result.items[0].outPoint,4.25); assert.equal(result.items[1].inPoint,4.25);
   assert.equal(duration(result),8);
+});
+test("Primary Production splits an edited item at a logical playhead without changing duration",()=>{
+  const source=addItem(createProject(),{...item("edited",12),editSegments:[{start:1,end:4},{start:7,end:12}],role:"primary"});
+  const result=splitItemAtLogicalPoint(source,"edited",4.5,"second");
+  assert.equal(result.items.length,2);
+  assert.deepEqual(result.items[0].editSegments,[{start:1,end:4},{start:7,end:8.5}]);
+  assert.deepEqual(result.items[1].editSegments,[{start:8.5,end:12}]);
+  assert.equal(itemDuration(result.items[0]),4.5);
+  assert.equal(itemDuration(result.items[1]),3.5);
+  assert.equal(duration(result),8);
+  assert.equal(result.items[1].role,"sequence");
 });
 test("source media is excluded from output duration until inserted",()=>{
   const primary=addItem(createProject(),item("primary",10));
