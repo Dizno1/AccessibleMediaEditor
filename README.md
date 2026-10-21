@@ -4,9 +4,9 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
-## Build 0.11.3 Recovery
+## Build 0.11.4 Recovery
 
-Build 0.11.3 restores the exact working 0.10.8 application foundation after Builds 0.11.0 and 0.11.1 opened an empty about:blank webview. The Rust desktop dependencies are pinned to Tauri 2.11.5, tauri-build 2.6.3, window-state 2.4.1, and shell 2.3.6 so GitHub cannot silently install the Tauri 2.12.5 runtime found inside the failed 0.11.1 MSI. Split at Playhead is deliberately removed from this recovery build. It will be reintroduced only after packaged Windows startup is confirmed.
+Build 0.11.4 restores the exact working 0.10.8 application foundation after Builds 0.11.0 and 0.11.1 opened an empty about:blank webview. The complete Rust desktop stack is pinned to the coherent versions recorded by the known working AccessibleAudioStudio lock, including Tauri core, code generation, macros, runtime, WebView runtime, utilities, windowing, menus, tray, and WebView libraries. This prevents Cargo from combining Tauri 2.11 components with incompatible Tauri 2.12 transitive components. Split at Playhead is deliberately removed from this recovery build. It will be reintroduced only after packaged Windows startup is confirmed.
 
 ## Build 0.10.8
 
