@@ -3,7 +3,7 @@
 use std::fs;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
-use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Emitter, Manager};
 use tauri_plugin_shell::ShellExt;
 
 mod native_media_picker;
@@ -342,7 +342,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Undo Ctrl+Z","undo")?).item(&item(app,"Redo Ctrl+Y","redo")?)
         .item(&item(app,"Copy Source Selection Ctrl+C","copyMedia")?).item(&item(app,"Paste Ctrl+V","pasteMedia")?)
         .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
-        .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split Primary at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
+        .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
         .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
@@ -379,14 +379,7 @@ fn main() {
         .setup(|app| {
             let _ = app_folder("Projects");
             let _ = app_folder("Exports");
-            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("Accessible Media Editor")
-                .inner_size(1100.0, 760.0)
-                .min_inner_size(720.0, 520.0)
-                .resizable(true)
-                .center()
-                .build()?;
-            window.set_menu(build_menu(app.handle())?)?;
+            if let Some(window)=app.get_webview_window("main") { window.set_menu(build_menu(app.handle())?)?; }
             app.on_menu_event(|app,event| {
                 let action=event.id.as_ref();
                 if action=="exitApp" { app.exit(0); return; }

@@ -1,11 +1,21 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Accessible Media Editor",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "identifier": "org.opendoordesign.accessiblemediaeditor",
   "build": { "frontendDist": "../dist", "devUrl": null, "beforeDevCommand": "node scripts/prepare-dist.js", "beforeBuildCommand": "node scripts/prepare-dist.js" },
   "app": {
-    "windows": [],
+    "windows": [{
+      "label": "main",
+      "title": "Accessible Media Editor",
+      "width": 1100,
+      "height": 760,
+      "minWidth": 720,
+      "minHeight": 520,
+      "resizable": true,
+      "center": true,
+      "url": "index.html"
+    }],
     "security": { "csp": null, "assetProtocol": { "enable": true, "scope": ["**"] } },
     "withGlobalTauri": true
   },

@@ -223,7 +223,7 @@
         <li>Ctrl+C: Copy the marked selection from the active Source editor.</li>
         <li>Ctrl+V: Insert at the playhead or empty brackets. When Primary contains a non-empty selected range, replace the track chosen with A, V, or B.</li>
         <li>Ctrl+Shift+V: Explicitly insert copied media into the sequence and increase production duration.</li>
-        <li>Ctrl+K: In Primary Production, split the item under the playhead into two sequence items without changing duration or the source file.</li>
+        <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
         <li>Ctrl+Delete: Apply the bracketed edit in Primary Production or the active Source editor.</li>
       </ul>
       <button type="submit">Close</button>
@@ -243,7 +243,6 @@
       <p><strong>Scrubbing:</strong> U and I scrub by one second. Shift+U and Shift+I scrub by 100 milliseconds. Ctrl+Alt+U and Ctrl+Alt+I scrub by 10 milliseconds. Alt+Left Arrow and Alt+Right Arrow move by 1 millisecond. Scrubbing intentionally produces no JAWS status announcement so you can hear the media sample.</p>
       <p><strong>Quiet interaction:</strong> List choices and routine transport announcements are intentionally brief. Moving between sections does not add a second announcement after JAWS identifies the region. Reaching the end announces once. Rapid scrubbing does not announce expected interrupted-playback errors.</p>
       <p><strong>Track targeting:</strong> Track targets are chosen only in Primary Production. B replaces both audio and video, V replaces video while preserving existing audio, and A replaces audio while preserving existing video. Source editors only select and copy media.</p>
-      <p><strong>Split at Playhead:</strong> In Primary Production, move to a point inside an item and press Ctrl+K. The item becomes two separately selectable sequence items, total duration does not change, and the second segment is selected. Ctrl+Z restores the unsplit item. Split is intentionally unavailable in Source editors.</p>
       <p><strong>Setting edit points:</strong> Left bracket sets the left boundary. Right bracket sets the right boundary. Ctrl+G opens exact-time fields.</p>
       <p><strong>Canceling marks:</strong> Ctrl+Z removes the most recently set uncommitted mark. Escape cancels all uncommitted marks in the active editor.</p>
       <p><strong>Replacing a track:</strong> In Primary Production, choose A, V, or B and mark the non-empty destination range with Left and Right Brackets. In a Source editor, mark a matching selection and press Ctrl+C. Return to Primary Production and press Ctrl+V. The Primary target controls the replacement; no target choice is required in the Source.</p>

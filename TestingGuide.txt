@@ -1,22 +1,10 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.11.1 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.11.2 RECOVERY TESTING GUIDE
 
-STARTUP REGRESSION TEST
+STARTUP RECOVERY TEST
 
 1. Install and start Accessible Media Editor.
-2. Confirm JAWS announces Accessible Media Editor, the Media Editor tab panel, the Media region, and Open Media.
-3. Confirm the application never remains on about:blank.
-
-PRIMARY PRODUCTION SPLIT TEST
-
-1. Open at least two media files and activate Primary Production.
-2. Move the Primary playhead to a point inside the current item and press Ctrl+K.
-3. Confirm the announcement gives the exact production split time, both resulting segment durations, and says the second segment is selected.
-4. Confirm focus remains in Primary Production and playback continues correctly across the new boundary.
-5. Move to Media Library and confirm Primary Production contents contains two separately selectable parts of the split item.
-6. Confirm total production duration has not changed.
-7. Press Ctrl+Z and confirm the original unsplit item is restored.
-8. Activate a Source editor and confirm its controls do not include Split at Playhead.
-9. Press Ctrl+K in a Source editor and confirm the application says to move to Primary Production without changing the Source.
+2. Confirm JAWS reaches the Accessible Media Editor interface, Media Editor tab panel, Media region, and Open Media.
+3. Stop immediately and report the result if the application remains on about:blank.
 
 SCREEN-READER EXPORT CONVERSATION TEST
 

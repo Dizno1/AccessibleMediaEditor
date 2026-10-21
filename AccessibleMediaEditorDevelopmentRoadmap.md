@@ -70,10 +70,9 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.11.1 includes:
+Build 0.10.8 includes:
 
 - Optional project workflow.
-- Explicit loading of the bundled application page at Windows startup instead of permitting an empty about:blank webview.
 - Multiple-file import through the Windows file picker.
 - Local FFmpeg normalization to application-owned working files.
 - Original-file preservation.
@@ -108,7 +107,6 @@ Build 0.11.1 includes:
 - Copy announcements that identify the Source and selected duration without attaching a track target to the clipboard selection.
 - A focused Export Complete dialog that preserves the verified saved path for deliberate JAWS review and can reveal the actual saved file in File Explorer.
 - Regression coverage for contextual insertion, Primary-controlled replacement, and shorter-destination rejection.
-- Logical Split at Playhead in the continuous Primary Production, including previously edited items, exact segment-duration announcements, sequence-list selection, and Undo.
 
 ## Immediate Stabilization Gate
 

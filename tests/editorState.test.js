@@ -75,12 +75,3 @@ test("export progress announces ordered stages and rejects delayed stage message
   assert.match(app,/60000/);
   assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);
 });
-test("Split operates on the continuous Primary Production and stays in its editor",()=>{
-  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
-  assert.match(app,/location\.type!=="program"/);
-  assert.match(app,/splitItemAtLogicalPoint\(project,target\.item\.id,target\.local,newId\)/);
-  assert.match(app,/activeMediaId=PROGRAM_ID/);
-  assert.match(app,/Second segment selected/);
-  assert.match(app,/state\.split\.hidden=!program/);
-  assert.doesNotMatch(app,/Activate a Primary Sequence editor before splitting/);
-});

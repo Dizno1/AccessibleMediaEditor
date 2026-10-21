@@ -4,17 +4,9 @@ Accessible Media Editor is a screen-reader-first Windows application for direct 
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 
-## Build 0.11.1
+## Build 0.11.2 Recovery
 
-Build 0.11.1 retains the repaired Split at Playhead behavior and fixes the packaged Windows startup regression that could open an empty `about:blank` webview. The main application window is now created explicitly with the bundled `index.html` application page.
-
-- Ctrl+K identifies the sequence item under the global Primary playhead and splits it at the correct item-relative logical time.
-- Previously trimmed or nondestructively edited items split correctly across retained media segments.
-- Total production duration and original files remain unchanged.
-- The second segment is selected in Primary Production contents, while focus and the playhead remain in Primary Production.
-- The confirmation reports the exact split time and both resulting durations.
-- Ctrl+Z restores the unsplit item.
-- Source editors no longer expose a Split button that cannot be used.
+Build 0.11.2 restores the exact working 0.10.8 application foundation after Builds 0.11.0 and 0.11.1 opened an empty about:blank webview. The Rust desktop dependencies are pinned to Tauri 2.11.5, tauri-build 2.6.3, and window-state 2.4.1 so GitHub cannot silently install the Tauri 2.12.5 runtime found inside the failed 0.11.1 MSI. Split at Playhead is deliberately removed from this recovery build. It will be reintroduced only after packaged Windows startup is confirmed.
 
 ## Build 0.10.8
 
