@@ -344,7 +344,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
         .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
-        .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
+        .item(&item(app,"Media... Ctrl+O","insertMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).item(&item(app,"Make Selected Source Primary","makeSourcePrimary")?).separator()
@@ -379,9 +379,15 @@ fn main() {
         .setup(|app| {
             let _ = app_folder("Projects");
             let _ = app_folder("Exports");
-            if let Some(window)=app.get_webview_window("main") { window.set_menu(build_menu(app.handle())?)?; }
+            if let Some(window)=app.get_webview_window("main") {
+                // A native-menu problem must never prevent the editor interface from loading.
+                if let Ok(menu) = build_menu(app.handle()) {
+                    let _ = window.set_menu(menu);
+                }
+            }
             app.on_menu_event(|app,event| {
-                let action=event.id.as_ref();
+                let raw_action=event.id.as_ref();
+                let action=if raw_action=="insertMedia" { "importMedia" } else { raw_action };
                 if action=="exitApp" { app.exit(0); return; }
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
             }); Ok(())
