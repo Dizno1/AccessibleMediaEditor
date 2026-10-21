@@ -1,5 +1,5 @@
 import {
-  createProject, addItem, moveItem, removeItem, updateItem, splitItem,
+  createProject, addItem, moveItem, removeItem, updateItem, splitItemAtLogicalPoint,
   addSource, removeSource, updateSource, makeSourcePrimary, appendSourceSelection,
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
@@ -32,6 +32,9 @@ let lastExportPath=null;
 let exportConversionStartedAt=null;
 let exportHeartbeatTimer=null;
 let exportConversionLabel="export";
+let exportPhase="idle";
+let exportNarrationChain=Promise.resolve();
+let exportNarratedMessages=new Set();
 const editorStates=new Map();
 const editorNodes=new Map();
 let editorCounter=0;
@@ -48,13 +51,28 @@ function clearAnnouncements(){
   el["alert-announcer"].textContent="";
   el["action-status"].textContent="";
 }
-function speakWithoutHistory(message){
-  el["status-announcer"].textContent="";
-  requestAnimationFrame(()=>{el["status-announcer"].textContent=message;});
-}
-function setExportProgress(message,speak=true){
+function setExportProgress(message){
   el["export-progress-message"].textContent=message;
-  if(speak)speakWithoutHistory(message);
+}
+function resetExportNarration(){
+  exportNarrationChain=Promise.resolve();
+  exportNarratedMessages=new Set();
+  el["export-progress-announcer"].textContent="";
+}
+function queueExportAnnouncement(message,hold=2000){
+  if(exportNarratedMessages.has(message))return exportNarrationChain;
+  exportNarratedMessages.add(message);
+  exportNarrationChain=exportNarrationChain.then(()=>new Promise(resolve=>{
+    if(!el["export-progress-dialog"].open){resolve();return;}
+    setExportProgress(message);
+    const region=el["export-progress-announcer"];
+    region.textContent="";
+    requestAnimationFrame(()=>{
+      region.textContent=message;
+      setTimeout(resolve,hold);
+    });
+  }));
+  return exportNarrationChain;
 }
 function stopExportHeartbeat(){
   if(exportHeartbeatTimer)clearInterval(exportHeartbeatTimer);
@@ -65,23 +83,29 @@ function startExportHeartbeat(label="export"){
   exportConversionLabel=label;
   exportHeartbeatTimer=setInterval(()=>{
     const minutes=Math.max(1,Math.floor((Date.now()-exportConversionStartedAt)/60000));
-    setExportProgress(`${exportConversionLabel} conversion still in progress. ${minutes} ${minutes===1?"minute":"minutes"} elapsed. Please continue to wait for Export Complete.`);
+    const message=`${exportConversionLabel} conversion still in progress. ${minutes} ${minutes===1?"minute":"minutes"} elapsed. Please continue to wait for Export Complete.`;
+    queueExportAnnouncement(message);
   },60000);
 }
 function showExportProgress(message){
-  clearAnnouncements();setExportProgress(message,false);
+  clearAnnouncements();resetExportNarration();setExportProgress(message);
   if(!el["export-progress-dialog"].open)el["export-progress-dialog"].showModal();
   el["export-progress-heading"].focus();
 }
 function closeExportProgress(){
   stopExportHeartbeat();
   if(el["export-progress-dialog"].open)el["export-progress-dialog"].close();
+  el["export-progress-announcer"].textContent="";
 }
 function handleExportProgress(message){
   if(!el["export-progress-dialog"].open)return;
-  setExportProgress(message);
+  const rendering=/^(Rendering production item|Joining rendered production items|Rendering track replacement|Applying audio and video track replacements)/.test(message);
   const match=message.match(/^Export destination selected\. Converting complete production to ([A-Z0-9]+)\./);
-  if(match)startExportHeartbeat(match[1]);
+  if(rendering&&exportPhase!=="rendering")return;
+  if(match&&!['choosing-destination','converting'].includes(exportPhase))return;
+  if(!rendering&&!match)return;
+  queueExportAnnouncement(message);
+  if(match){exportPhase="converting";startExportHeartbeat(match[1]);}
 }
 
 function cue(kind){
@@ -252,7 +276,7 @@ function updateEditorLabels(state,item,type){
   state.insertSelection.disabled=unavailable||(source?!item.duration:!mediaClipboard);state.appendSelection.disabled=!source;
   state.play.disabled=unavailable;state.auditionButton.disabled=unavailable;state.slider.disabled=unavailable;
   state.commitButton.disabled=(!program&&!source)||unavailable||state.rendering;
-  state.split.hidden=true;state.properties.hidden=program;
+  state.split.hidden=!program;state.properties.hidden=program;
   state.both.disabled=item.kind!=="Video";state.videoOnly.disabled=item.kind!=="Video";state.audioOnly.disabled=!["Video","Audio"].includes(item.kind);
   const target=type==="program"?programTarget():itemTarget(item);state.both.setAttribute("aria-pressed",String(target==="both"));state.videoOnly.setAttribute("aria-pressed",String(target==="video"));state.audioOnly.setAttribute("aria-pressed",String(target==="audio"));
   state.targetFieldset.hidden=type!=="program";
@@ -484,20 +508,23 @@ function exportMedia(){
 async function confirmExport(){
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];if(!primary)return;
   const format=el["export-format"].value,stem=baseName(primary.name||"Edited Media").replace(/\.[^.]+$/,"");
-  clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
+  exportPhase="rendering";clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
   try{
     let source=primary.workingSource||primary.source;
-    if(project.items.length>1||(project.trackReplacements||[]).length){announce(`Rendering the complete Primary Production with ${(project.trackReplacements||[]).length} track ${(project.trackReplacements||[]).length===1?"replacement":"replacements"}. Please wait.`);source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});announce("Primary Production rendered. Choose where to save it.");}
+    if(project.items.length>1||(project.trackReplacements||[]).length){source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});await exportNarrationChain;}
+    exportPhase="choosing-destination";
+    const destinationMessage="Primary Production rendered. Choose where to save it.";
+    await queueExportAnnouncement(destinationMessage,2500);
     const path=await invoke("export_edited_media",{source,suggestedName:`${stem} Edited.${format}`,format});
     if(path){
       const message=`Complete production saved to ${path}.`;
-      closeExportProgress();clearAnnouncements();lastExportPath=path;
+      exportPhase="complete";closeExportProgress();clearAnnouncements();lastExportPath=path;
       el["export-success-path"].textContent=message;
       el["export-success-dialog"].showModal();
       el["export-success-show-file"].focus();
       updateStatus(message);cue("save");
-    }else{closeExportProgress();announce("Save canceled.");}
-  }catch(error){closeExportProgress();announce(`Production could not be saved. ${error}`,true);}
+    }else{exportPhase="idle";closeExportProgress();announce("Save canceled.");}
+  }catch(error){exportPhase="idle";closeExportProgress();announce(`Production could not be saved. ${error}`,true);}
 }
 function clearAllEditorMarks(){for(const state of editorStates.values())clearEditorMarks(state);}
 function clearProgramMarks(){clearEditorMarks(editorStates.get(PROGRAM_ID));}
@@ -689,7 +716,18 @@ function setTrackTarget(target){
 }
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto"),bounds=location?editorBounds(location.item,location.type):null;if(!state||!location||!Number.isFinite(point)||point>bounds.end)return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
-function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move the playhead inside the media before splitting.",true);clearProgramMarks();selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
+function splitSelected(){
+  const location=activeLocation(),state=activeState();
+  if(!location||location.type!=="program"||!state)return announce("Move to Primary Production before splitting.",true);
+  const globalPoint=state.cursor,target=sequencePoint(globalPoint);
+  if(!target)return announce("Primary Production has no media to split.",true);
+  const newId=id(),next=splitItemAtLogicalPoint(project,target.item.id,target.local,newId);
+  if(next===project)return announce("Move the playhead inside a Primary Production item before splitting.",true);
+  const first=next.items[target.index],second=next.items[target.index+1];
+  clearProgramMarks();selectedId=second.id;activeMediaId=PROGRAM_ID;
+  rememberChange(next,`Split at ${readableTime(globalPoint)}. First segment ${readableTime(itemDuration(first))}. Second segment ${readableTime(itemDuration(second))}. Second segment selected.`);
+  const program=editorStates.get(PROGRAM_ID);if(program){setEditorPosition(program,globalPoint,true);program.section.focus();}
+}
 function cancel(){const state=activeState();if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open)el["export-dialog"].close();else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
 
 const actions={
@@ -705,7 +743,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.6. Screen-reader export progress, atomic protected export, and Primary-controlled track replacement.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.0. Logical Primary Production splitting and stable screen-reader export.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

@@ -70,9 +70,10 @@ Shortcuts must be checked against Windows, Chromium WebView, JAWS, and native ap
 
 ## Current Working Foundation
 
-Build 0.11.0 includes:
+Build 0.11.1 includes:
 
 - Optional project workflow.
+- Explicit loading of the bundled application page at Windows startup instead of permitting an empty about:blank webview.
 - Multiple-file import through the Windows file picker.
 - Local FFmpeg normalization to application-owned working files.
 - Original-file preservation.

@@ -3,7 +3,7 @@
 use std::fs;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_shell::ShellExt;
 
 mod native_media_picker;
@@ -379,7 +379,14 @@ fn main() {
         .setup(|app| {
             let _ = app_folder("Projects");
             let _ = app_folder("Exports");
-            if let Some(window)=app.get_webview_window("main") { window.set_menu(build_menu(app.handle())?)?; }
+            let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+                .title("Accessible Media Editor")
+                .inner_size(1100.0, 760.0)
+                .min_inner_size(720.0, 520.0)
+                .resizable(true)
+                .center()
+                .build()?;
+            window.set_menu(build_menu(app.handle())?)?;
             app.on_menu_event(|app,event| {
                 let action=event.id.as_ref();
                 if action=="exitApp" { app.exit(0); return; }

@@ -1,4 +1,10 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.11.0 TESTING GUIDE
+ACCESSIBLE MEDIA EDITOR BUILD 0.11.1 TESTING GUIDE
+
+STARTUP REGRESSION TEST
+
+1. Install and start Accessible Media Editor.
+2. Confirm JAWS announces Accessible Media Editor, the Media Editor tab panel, the Media region, and Open Media.
+3. Confirm the application never remains on about:blank.
 
 PRIMARY PRODUCTION SPLIT TEST
 
