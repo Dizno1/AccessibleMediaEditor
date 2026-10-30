@@ -257,6 +257,20 @@
     </form>
   </dialog>
 
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      var invoke = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+      if (invoke) invoke("log_frontend_startup", { message: "HTML DOMContentLoaded completed." }).catch(function () {});
+    });
+    window.addEventListener("error", function (event) {
+      var invoke = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+      if (invoke) invoke("log_frontend_startup", { message: "Frontend error: " + (event.message || "Unknown error") }).catch(function () {});
+    });
+    window.addEventListener("unhandledrejection", function (event) {
+      var invoke = window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke;
+      if (invoke) invoke("log_frontend_startup", { message: "Frontend promise rejection: " + String(event.reason) }).catch(function () {});
+    });
+  </script>
   <script type="module" src="app/app.js"></script>
 </body>
 </html>

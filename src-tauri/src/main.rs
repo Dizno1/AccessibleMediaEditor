@@ -1,12 +1,38 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
+use std::io::Write;
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 use tauri_plugin_shell::ShellExt;
 
 mod native_media_picker;
+
+fn startup_log_path() -> std::path::PathBuf {
+    let base = dirs::document_dir().unwrap_or_else(std::env::temp_dir);
+    base.join("Accessible Media Editor").join("Logs").join("StartupLog.txt")
+}
+
+fn write_startup_log(message: &str) {
+    let path = startup_log_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(path) {
+        let elapsed = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|value| value.as_millis())
+            .unwrap_or(0);
+        let _ = writeln!(file, "{} {}", elapsed, message);
+    }
+}
+
+#[tauri::command]
+fn log_frontend_startup(message: String) -> Result<(), String> {
+    write_startup_log(&message);
+    Ok(())
+}
 
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
@@ -344,7 +370,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
         .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
-        .item(&item(app,"Media... Ctrl+O","insertMedia")?).item(&item(app,"Text...","addText")?)
+        .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).item(&item(app,"Make Selected Source Primary","makeSourcePrimary")?).separator()
@@ -373,26 +399,44 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
+    write_startup_log("Build 0.10.9 Recovery executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
+            write_startup_log("Tauri setup entered.");
             let _ = app_folder("Projects");
             let _ = app_folder("Exports");
             if let Some(window)=app.get_webview_window("main") {
-                // A native-menu problem must never prevent the editor interface from loading.
-                if let Ok(menu) = build_menu(app.handle()) {
-                    let _ = window.set_menu(menu);
+                write_startup_log("Main WebView window found.");
+                match window.url() {
+                    Ok(url) => write_startup_log(&format!("Initial WebView URL: {}", url)),
+                    Err(error) => write_startup_log(&format!("Initial WebView URL unavailable: {}", error)),
                 }
+                let menu = build_menu(app.handle()).map_err(|error| {
+                    write_startup_log(&format!("Native menu creation failed: {}", error));
+                    error
+                })?;
+                window.set_menu(menu).map_err(|error| {
+                    write_startup_log(&format!("Native menu installation failed: {}", error));
+                    error
+                })?;
+                write_startup_log("Native menu installed.");
+            } else {
+                write_startup_log("Main WebView window was not found.");
             }
             app.on_menu_event(|app,event| {
-                let raw_action=event.id.as_ref();
-                let action=if raw_action=="insertMedia" { "importMedia" } else { raw_action };
+                let action=event.id.as_ref();
                 if action=="exitApp" { app.exit(0); return; }
                 if let Some(window)=app.get_webview_window("main") { let _=window.emit("menu-action",action); }
-            }); Ok(())
+            });
+            write_startup_log("Tauri setup completed.");
+            Ok(())
         })
-        .invoke_handler(tauri::generate_handler![pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![log_frontend_startup,pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
-        .expect("error while running Accessible Media Editor");
+        .unwrap_or_else(|error| {
+            write_startup_log(&format!("Tauri runtime stopped with an error: {}", error));
+            panic!("error while running Accessible Media Editor: {}", error);
+        });
 }

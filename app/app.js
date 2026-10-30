@@ -13,6 +13,7 @@ const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
 const convertFileSrc=window.__TAURI__?.core?.convertFileSrc;
 const el=Object.fromEntries([...document.querySelectorAll("[id]")].map(node=>[node.id,node]));
+if(invoke)invoke("log_frontend_startup",{message:"Frontend application module loaded."}).catch(()=>{});
 
 let project=createProject();
 let selectedId=null;
@@ -732,7 +733,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.6 Startup Recovery. Working 0.10.8 dependency declarations restored with protected native-menu startup.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.9 Recovery. Working Build 0.10.8 application with startup diagnostics.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -757,3 +758,4 @@ el["save-properties-button"].addEventListener("click",saveProperties);el["cancel
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
 render();el["import-media-button"].focus();
+if(invoke)invoke("log_frontend_startup",{message:"Frontend initialization completed and Open Media received focus."}).catch(()=>{});

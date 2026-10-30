@@ -1,10 +1,4 @@
-ACCESSIBLE MEDIA EDITOR BUILD 0.11.6 STARTUP RECOVERY TESTING GUIDE
-
-STARTUP RECOVERY TEST
-
-1. Install and start Accessible Media Editor.
-2. Confirm JAWS reaches the Accessible Media Editor interface, Media Editor tab panel, Media region, and Open Media.
-3. Stop immediately and report the result if the application remains on about:blank.
+ACCESSIBLE MEDIA EDITOR BUILD 0.10.8 TESTING GUIDE
 
 SCREEN-READER EXPORT CONVERSATION TEST
 

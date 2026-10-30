@@ -1,0 +1,14 @@
+Accessible Media Editor Build 0.10.9 Recovery
+
+This build restores the known working Build 0.10.8 application and adds startup diagnostics only.
+
+Install the MSI produced by GitHub Actions and launch Accessible Media Editor.
+
+If the editor opens normally, confirm that the Open Media button is available and that Alt+F4 closes the application.
+
+If the editor is blank or does not close, use File Explorer to open:
+
+Documents\Accessible Media Editor\Logs
+
+Send StartupLog.txt for diagnosis. Do not uninstall the application before copying the log.
+
