@@ -163,6 +163,23 @@ fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), S
     window.set_title(&title).map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn frontend_ready(window: tauri::WebviewWindow) -> Result<(), String> {
+    write_startup_log("Frontend reported ready. Showing the completed application window.");
+    window.show().map_err(|error| {
+        let message = format!("Application window could not be shown: {}", error);
+        write_startup_log(&message);
+        message
+    })?;
+    window.set_focus().map_err(|error| {
+        let message = format!("Application window could not receive focus: {}", error);
+        write_startup_log(&message);
+        message
+    })?;
+    write_startup_log("Application window shown and focused after frontend initialization.");
+    Ok(())
+}
+
 fn segment_filter(segments: &[EditSegment], with_video: bool, with_audio: bool) -> String {
     let mut parts = Vec::new();
     for (index, segment) in segments.iter().enumerate() {
@@ -433,7 +450,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![log_frontend_startup,pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .unwrap_or_else(|error| {
             write_startup_log(&format!("Tauri runtime stopped with an error: {}", error));

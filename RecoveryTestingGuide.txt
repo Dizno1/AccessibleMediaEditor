@@ -1,6 +1,8 @@
-Accessible Media Editor Build 0.10.9 Recovery
+Accessible Media Editor Build 0.10.10 Recovery
 
-This build restores the known working Build 0.10.8 application and adds startup diagnostics only.
+This build restores the known working Build 0.10.8 application and corrects the blank-window startup handoff identified by Build 0.10.9 diagnostics.
+
+The application window remains hidden while the HTML and JavaScript initialize. After the frontend reports that it is ready, Tauri explicitly shows and focuses the completed application window.
 
 Install the MSI produced by GitHub Actions and launch Accessible Media Editor.
 

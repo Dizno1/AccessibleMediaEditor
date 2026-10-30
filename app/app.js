@@ -733,7 +733,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.9 Recovery. Working Build 0.10.8 application with startup diagnostics.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.10 Recovery. The application window is exposed only after frontend initialization completes.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -757,5 +757,10 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
 el["save-properties-button"].addEventListener("click",saveProperties);el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());el["save-text-button"].addEventListener("click",saveText);el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
-render();el["import-media-button"].focus();
-if(invoke)invoke("log_frontend_startup",{message:"Frontend initialization completed and Open Media received focus."}).catch(()=>{});
+render();
+if(invoke){
+  invoke("frontend_ready").then(()=>{
+    el["import-media-button"].focus();
+    return invoke("log_frontend_startup",{message:"Frontend initialization completed, application window shown, and Open Media received focus."});
+  }).catch(error=>invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{}));
+}else el["import-media-button"].focus();
