@@ -43,6 +43,7 @@ let editorCounter=0;
 function announce(message,urgent=false){
   if(["format-selection","rendering","choosing-destination","converting"].includes(exportPhase))return;
   const region=el[urgent?"alert-announcer":"status-announcer"];
+  el[urgent?"status-announcer":"alert-announcer"].textContent="";
   region.textContent="";
   requestAnimationFrame(()=>{region.textContent=message;});
   el["action-status"].textContent=message;
@@ -609,6 +610,7 @@ function pasteMediaReplace(){
   const shortage=replacementDurationShortage(clipDuration,destinationDuration);
   if(shortage){
     pendingReplacement={clip:structuredClone(mediaClipboard),target,start,limit,shortage};
+    clearAnnouncements();
     el["replacement-duration-message"].textContent=`The Source is ${readableTime(shortage.uncovered)} shorter than the Primary selection. Choose whether to replace only the matching duration, repeat the Source until the complete selection is filled, or cancel without changing the production.`;
     el["replacement-duration-dialog"].showModal();
     el["replacement-use-shorter"].focus();
@@ -751,7 +753,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.12. Stable startup, timestamp-normalized WebM export, and explicit shorter-replacement choices.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.13. Stable startup, timestamp-normalized WebM export, and replacement choices without stale alerts.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -769,9 +771,9 @@ el["save-project-button"].addEventListener("click",()=>saveProject(true));el["me
 el["export-button"].addEventListener("click",exportMedia);
 el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>{el["export-dialog"].close();exportPhase="idle";clearAnnouncements();});
 el["export-format"].addEventListener("change",()=>localStorage.setItem("ame-export-format",el["export-format"].value));
-el["replacement-use-shorter"].addEventListener("click",()=>{const request=pendingReplacement;pendingReplacement=null;el["replacement-duration-dialog"].close();completeTrackReplacement(request,false);});
-el["replacement-loop"].addEventListener("click",()=>{const request=pendingReplacement;pendingReplacement=null;el["replacement-duration-dialog"].close();completeTrackReplacement(request,true);});
-el["replacement-cancel"].addEventListener("click",()=>{pendingReplacement=null;el["replacement-duration-dialog"].close();announce("Replacement canceled. Primary brackets preserved for adjustment.");});
+el["replacement-use-shorter"].addEventListener("click",()=>{const request=pendingReplacement;pendingReplacement=null;el["replacement-duration-dialog"].close();clearAnnouncements();completeTrackReplacement(request,false);});
+el["replacement-loop"].addEventListener("click",()=>{const request=pendingReplacement;pendingReplacement=null;el["replacement-duration-dialog"].close();clearAnnouncements();completeTrackReplacement(request,true);});
+el["replacement-cancel"].addEventListener("click",()=>{pendingReplacement=null;el["replacement-duration-dialog"].close();clearAnnouncements();announce("Replacement canceled. Primary brackets preserved for adjustment.");});
 el["replacement-duration-dialog"].addEventListener("cancel",event=>{event.preventDefault();cancel();});
 el["export-success-show-file"].addEventListener("click",async()=>{try{if(!lastExportPath)return announce("No completed export is available.",true);await invoke("reveal_exported_file",{path:lastExportPath});announce("Saved file shown in File Explorer.");}catch(error){announce(String(error),true);}});el["export-success-close"].addEventListener("click",()=>el["export-success-dialog"].close());
 el["export-progress-dialog"].addEventListener("cancel",event=>event.preventDefault());

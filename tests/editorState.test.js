@@ -84,3 +84,9 @@ test("export progress announces ordered stages and rejects delayed stage message
   assert.match(app,/60000/);
   assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);
 });
+test("a current announcement clears the opposite live region so stale alerts cannot return",()=>{
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(app,/el\[urgent\?"status-announcer":"alert-announcer"\]\.textContent=""/);
+  assert.match(app,/clearAnnouncements\(\);completeTrackReplacement\(request,false\)/);
+  assert.match(app,/clearAnnouncements\(\);completeTrackReplacement\(request,true\)/);
+});
