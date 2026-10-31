@@ -125,6 +125,43 @@
     </form>
   </dialog>
 
+  <dialog id="short-source-dialog" aria-labelledby="short-source-heading">
+    <form method="dialog">
+      <h2 id="short-source-heading">Source Is Shorter Than Primary Selection</h2>
+      <p id="short-source-message"></p>
+      <div class="button-row">
+        <button type="button" id="short-source-replace">Replace Matching Duration</button>
+        <button type="button" id="short-source-loop">Loop Source to Fill Selection</button>
+        <button type="button" id="short-source-cancel">Cancel and Adjust Selection</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="image-placement-dialog" aria-labelledby="image-placement-heading">
+    <form method="dialog">
+      <h2 id="image-placement-heading">Insert Still Image</h2>
+      <p id="image-placement-name"></p>
+      <fieldset>
+        <legend>Image timing</legend>
+        <label><input type="radio" name="image-timing" id="image-use-range" value="range"> Match the retained Primary Production range</label>
+        <p id="image-range-summary"></p>
+        <label><input type="radio" name="image-timing" id="image-use-exact" value="exact"> Enter an exact duration</label>
+      </fieldset>
+      <fieldset class="time-fields" id="image-duration-fields">
+        <legend>Exact image duration</legend>
+        <label for="image-duration-hours">Hours</label><input type="number" id="image-duration-hours" min="0" step="1">
+        <label for="image-duration-minutes">Minutes</label><input type="number" id="image-duration-minutes" min="0" max="59" step="1">
+        <label for="image-duration-seconds">Seconds</label><input type="number" id="image-duration-seconds" min="0" max="59" step="1">
+        <label for="image-duration-milliseconds">Milliseconds</label><input type="number" id="image-duration-milliseconds" min="0" max="999" step="1">
+      </fieldset>
+      <p>The image will fill the video frame without stretching. Empty space will be black.</p>
+      <div class="button-row">
+        <button type="button" id="insert-image-confirm">Insert Image</button>
+        <button type="button" id="insert-image-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="go-to-time-dialog" aria-labelledby="go-to-time-heading">
     <form method="dialog">
       <h2 id="go-to-time-heading">Go to Exact Time</h2>
@@ -160,18 +197,6 @@
         <button type="button" id="export-cancel">Cancel</button>
       </div>
     </form>
-  </dialog>
-
-  <dialog id="replacement-duration-dialog" aria-labelledby="replacement-duration-heading" aria-describedby="replacement-duration-message">
-    <div>
-      <h2 id="replacement-duration-heading">Source Is Shorter Than Primary Selection</h2>
-      <p id="replacement-duration-message"></p>
-      <div class="button-row">
-        <button type="button" id="replacement-use-shorter">Replace Matching Duration</button>
-        <button type="button" id="replacement-loop">Loop Source to Fill Selection</button>
-        <button type="button" id="replacement-cancel">Cancel and Adjust Selection</button>
-      </div>
-    </div>
   </dialog>
 
   <dialog id="export-progress-dialog" aria-labelledby="export-progress-heading">

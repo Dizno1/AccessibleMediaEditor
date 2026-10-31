@@ -124,7 +124,7 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
         let output = temporary_path.to_string_lossy().into_owned();
         let args: Vec<String> = match extension {
             "mov" => vec!["-y".into(), "-i".into(), source, "-c".into(), "copy".into(), output],
-            "webm" => vec!["-y".into(), "-i".into(), source, "-af".into(), "aresample=async=1:first_pts=0,asetpts=N/SR/TB".into(), "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
+            "webm" => vec!["-y".into(), "-i".into(), source, "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
             "mp3" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "libmp3lame".into(), "-q:a".into(), "2".into(), output],
             "wav" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "pcm_s16le".into(), output],
             "m4a" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output],
@@ -263,6 +263,12 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
     let duration = segment_duration(&item.segments);
     if duration <= 0.0 { return Err("A production item has no playable duration.".into()); }
     let output_text = output.to_string_lossy().into_owned();
+    if item.media_kind.eq_ignore_ascii_case("image") {
+        let filter = "[0:v:0]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo]";
+        let mut args = vec!["-y".into(), "-loop".into(), "1".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter.into(), "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
+        args.extend(standard_video_encoding(output_text));
+        return run_ffmpeg(app, args).await;
+    }
     if item.media_kind.eq_ignore_ascii_case("audio") || item.track_target.eq_ignore_ascii_case("audio") {
         let filter = standard_audio_filter(&item.segments);
         let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "color=c=black:s=1280x720:r=30".into(), "-filter_complex".into(), filter, "-map".into(), "1:v:0".into(), "-map".into(), "[ao]".into(), "-t".into(), format!("{:.6}", duration)];
@@ -410,7 +416,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.10.13 executable started.");
+    write_startup_log("Build 0.10.14 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())

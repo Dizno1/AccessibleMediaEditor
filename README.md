@@ -1,5 +1,13 @@
 # Accessible Media Editor
 
+## Build 0.10.14
+
+- Still images can be displayed for an exact human-readable duration.
+- After an Audio Only replacement, the Primary Production brackets remain available.
+- An imported image can match that retained audio range exactly; completing the image placement clears the brackets.
+- Images are scaled to fit a 1280 by 720 production frame without stretching, with black padding when needed.
+- Still images render in sequence items and video-only replacement ranges during export.
+
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).

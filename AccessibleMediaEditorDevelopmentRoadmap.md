@@ -1,5 +1,13 @@
 # Accessible Media Editor Development Roadmap
 
+## Implemented in Build 0.10.14
+
+- Exact-duration still-image placement.
+- Still-image placement matched to the retained range from the most recent Audio Only replacement.
+- Immediate image preview over the underlying Primary Production video.
+- FFmpeg rendering of still images with aspect-ratio preservation and silent audio where required.
+- The retained range clears after image placement; Escape remains available when the user wants to clear it manually.
+
 ## Purpose
 
 Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, accessible multimedia authoring, and professional audio work. It must be useful for a person making one simple edit without requiring a project, while also growing into a structured professional production environment.

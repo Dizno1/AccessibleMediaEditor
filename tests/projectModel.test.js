@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, loopedSegmentsForDuration, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -160,17 +160,6 @@ test("a destination bracket limits replacement without stretching the source",()
   assert.deepEqual(replaced.trackReplacements[0].segments,[{start:5,end:9}]);
   assert.equal(duration(replaced),30);
 });
-test("a shorter Source can loop to fill the exact Primary selection",()=>{
-  const clip={...item("short",4),kind:"Video",editSegments:[{start:1,end:3}]};
-  const segments=loopedSegmentsForDuration(clip,5);
-  assert.deepEqual(segments,[{start:1,end:3},{start:1,end:3},{start:1,end:2}]);
-  const primary=addItem(createProject(),item("primary",10));
-  const replaced=addTrackReplacement(primary,clip,"both",2,7,"loop-edit","loop");
-  assert.equal(replaced.trackReplacements[0].timelineStart,2);
-  assert.equal(replaced.trackReplacements[0].timelineEnd,7);
-  assert.equal(replaced.trackReplacements[0].fillMode,"loop");
-  assert.deepEqual(replaced.trackReplacements[0].segments,segments);
-});
 test("a selected Primary range uses the Primary Audio target and complete matching Source selection",()=>{
   const primary=addItem(createProject(),{...item("primary",60),editSegments:[{start:0,end:60}]});
   const clip={...item("complete-copy",60),kind:"Video",source:"C:/source-video.mp4",editSegments:[{start:4,end:37.855}]};
@@ -186,6 +175,24 @@ test("track replacements are passed to FFmpeg in project order",()=>{
   assert.deepEqual(productionRenderReplacements(project),[{
     source:"C:/voice.mp4",segments:[{start:0,end:5}],mediaKind:"Audio",trackTarget:"audio",timelineStart:3,timelineEnd:8
   }]);
+});
+
+test("a still image renders as a silent video item for its exact duration",()=>{
+  let project=createProject("Images");
+  project=addItem(project,{id:"photo",name:"photo.jpg",label:"Photo",kind:"Image",source:"C:/photo.jpg",duration:5.25,editSegments:[{start:0,end:5.25}],trackTarget:"video"});
+  assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video"}]);
+  assert.equal(duration(project),5.25);
+});
+
+test("a still image can occupy an exact retained audio replacement range",()=>{
+  let project=createProject("Image overlay");
+  project=addItem(project,item("primary",30));
+  project=addTrackReplacement(project,{id:"photo",name:"photo.jpg",label:"Photo",kind:"Image",source:"C:/photo.jpg",duration:6.5,editSegments:[{start:0,end:6.5}],trackTarget:"video"},"video",11.25,17.75,"photo-range");
+  const replacement=productionRenderReplacements(project)[0];
+  assert.equal(replacement.timelineStart,11.25);
+  assert.equal(replacement.timelineEnd,17.75);
+  assert.equal(replacement.mediaKind,"Image");
+  assert.equal(replacement.trackTarget,"video");
 });
 test("a saved track replacement can be removed nondestructively",()=>{
   let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});

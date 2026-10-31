@@ -122,34 +122,13 @@ export function itemDuration(item) {
   return Math.max(0, end - start);
 }
 export function duration(project) { return project.items.reduce((sum, item) => sum + itemDuration(item), 0); }
-export function loopedSegmentsForDuration(clip, requestedDuration) {
-  const sourceSegments=normalizedSegments(clip);
-  const wanted=Math.max(0,Number(requestedDuration)||0);
-  if (!sourceSegments.length || wanted<=0) return [];
-  const result=[];
-  let remaining=wanted;
-  while (remaining>0.0005) {
-    let added=false;
-    for (const segment of sourceSegments) {
-      const length=Math.max(0,segment.end-segment.start);
-      if (!length) continue;
-      const take=Math.min(length,remaining);
-      result.push({start:segment.start,end:segment.start+take});
-      remaining-=take;
-      added=true;
-      if (remaining<=0.0005) break;
-    }
-    if (!added) break;
-  }
-  return result;
-}
-export function addTrackReplacement(project, clip, target, timelineStart, timelineLimit = null, replacementId = null, fillMode = "leave") {
+export function addTrackReplacement(project, clip, target, timelineStart, timelineLimit = null, replacementId = null) {
   const total = duration(project);
   const start = Math.max(0, Math.min(total, Number(timelineStart) || 0));
   const available = Math.max(0, total - start);
   const requested = timelineLimit == null ? available : Math.max(0, Math.min(available, Number(timelineLimit) - start));
   const clipLength = itemDuration(clip);
-  const length = fillMode === "loop" ? requested : Math.min(clipLength, requested);
+  const length = Math.min(clipLength, requested);
   if (!length || !["audio", "video", "both"].includes(target)) return project;
   const next = structuredClone(project);
   next.trackReplacements = next.trackReplacements || [];
@@ -162,8 +141,7 @@ export function addTrackReplacement(project, clip, target, timelineStart, timeli
     target,
     timelineStart: start,
     timelineEnd: start + length,
-    segments: fillMode === "loop" ? loopedSegmentsForDuration(clip,length) : logicalSegmentsForRanges(clip, [{ from: 0, to: length }]),
-    ...(fillMode === "loop" ? {fillMode} : {})
+    segments: logicalSegmentsForRanges(clip, [{ from: 0, to: length }])
   });
   next.dirty = true;
   return next;
@@ -181,7 +159,7 @@ export function productionRenderItems(project) {
     source: item.source,
     segments: normalizedSegments(item),
     mediaKind: item.kind,
-    trackTarget: item.kind === "Audio" ? "audio" : (item.trackTarget || "both")
+    trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both")
   }));
 }
 export function productionRenderReplacements(project) {

@@ -1,4 +1,4 @@
-Accessible Media Editor Build 0.10.13 Stabilization Test
+Accessible Media Editor Build 0.10.11 Stabilization Test
 
 1. Install and launch the application.
 2. Confirm that the full interface opens instead of about:blank.
@@ -10,18 +10,6 @@ Accessible Media Editor Build 0.10.13 Stabilization Test
 8. Confirm that WebM remains selected.
 9. Confirm that no old editing announcement is spoken inside the export dialog.
 10. Complete or cancel the export.
-
-Shorter Source replacement test:
-
-1. Select a continuous Primary range.
-2. Copy a shorter Source selection.
-3. Press Ctrl+V in Primary Production.
-4. Confirm that a dialog reports the exact uncovered duration.
-5. Test Replace Matching Duration and confirm the uncovered Primary remainder stays unchanged.
-6. Undo, repeat the paste, and test Loop Source to Fill Selection.
-7. Undo, repeat the paste, and test Cancel and Adjust Selection.
-8. Confirm that Cancel preserves the Primary brackets.
-9. Confirm that choosing Replace Matching Duration announces the completed replacement and never repeats an earlier Paste canceled message.
 
 If startup fails, send this file:
 

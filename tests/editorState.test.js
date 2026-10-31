@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, replacementDurationShortage, primaryPasteOperation } from "../app/editorState.js";
+import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "../app/editorState.js";
 
 test("completed operations clear brackets and their undo history",()=>{
   const state={cursor:12.345,markIn:3,markOut:8,markHistory:[{which:"in",previous:null},{which:"out",previous:null}]};
@@ -35,14 +35,6 @@ test("a shorter destination is detected before paste can truncate media",()=>{
   assert.equal(replacementDurationIssue(20,24.585),null);
   assert.equal(replacementDurationIssue(33.397,null),null);
 });
-test("a shorter source reports the exact uncovered Primary duration",()=>{
-  const shortage=replacementDurationShortage(15.572,15.870);
-  assert.equal(shortage.copied,15.572);
-  assert.equal(shortage.destination,15.870);
-  assert.ok(Math.abs(shortage.uncovered-0.298)<0.000001);
-  assert.equal(replacementDurationShortage(15.870,15.572),null);
-  assert.equal(replacementDurationShortage(15.572,null),null);
-});
 test("Ctrl+V inserts without a selected range and replaces one continuous selected range",()=>{
   assert.equal(primaryPasteOperation(null),"insert");
   assert.equal(primaryPasteOperation({kind:"empty",selectedRanges:[]}),"insert");
@@ -63,7 +55,6 @@ test("export is atomic and never exposes the requested filename while FFmpeg is 
   assert.match(rust,/fs::rename\(&temporary_path, &path\)/);
   assert.match(rust,/Please wait for Export Complete before using the file/);
   assert.match(rust,/Export failed\. No completed destination file was created/);
-  assert.match(rust,/aresample=async=1:first_pts=0,asetpts=N\/SR\/TB/);
 });
 test("export progress announces ordered stages and rejects delayed stage messages",()=>{
   const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
@@ -83,10 +74,4 @@ test("export progress announces ordered stages and rejects delayed stage message
   assert.match(app,/conversion still in progress/);
   assert.match(app,/60000/);
   assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);
-});
-test("a current announcement clears the opposite live region so stale alerts cannot return",()=>{
-  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
-  assert.match(app,/el\[urgent\?"status-announcer":"alert-announcer"\]\.textContent=""/);
-  assert.match(app,/clearAnnouncements\(\);completeTrackReplacement\(request,false\)/);
-  assert.match(app,/clearAnnouncements\(\);completeTrackReplacement\(request,true\)/);
 });

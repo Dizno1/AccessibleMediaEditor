@@ -21,14 +21,6 @@ export function replacementDurationIssue(copiedDuration, destinationDuration) {
   return excess>0.0005 ? {copied,destination,excess} : null;
 }
 
-export function replacementDurationShortage(copiedDuration, destinationDuration) {
-  const copied=Math.max(0,Number(copiedDuration)||0);
-  if (destinationDuration == null) return null;
-  const destination=Math.max(0,Number(destinationDuration)||0);
-  const uncovered=destination-copied;
-  return uncovered>0.0005 ? {copied,destination,uncovered} : null;
-}
-
 export function primaryPasteOperation(selectionPlan) {
   if (!selectionPlan || selectionPlan.kind === "empty") return "insert";
   return selectionPlan.selectedRanges?.length === 1 ? "replace" : "reject";

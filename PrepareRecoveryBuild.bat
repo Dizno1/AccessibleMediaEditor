@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 
-echo Preparing Accessible Media Editor Build 0.10.11.
+echo Preparing Accessible Media Editor Build 0.10.14.
 echo Git history and application source files will be preserved.
 
 if exist "src-tauri\Cargo.lock" del /q "src-tauri\Cargo.lock"
