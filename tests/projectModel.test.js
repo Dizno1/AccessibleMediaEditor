@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, loopedSegmentsForDuration, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -159,6 +159,17 @@ test("a destination bracket limits replacement without stretching the source",()
   assert.equal(replaced.trackReplacements[0].timelineEnd,12);
   assert.deepEqual(replaced.trackReplacements[0].segments,[{start:5,end:9}]);
   assert.equal(duration(replaced),30);
+});
+test("a shorter Source can loop to fill the exact Primary selection",()=>{
+  const clip={...item("short",4),kind:"Video",editSegments:[{start:1,end:3}]};
+  const segments=loopedSegmentsForDuration(clip,5);
+  assert.deepEqual(segments,[{start:1,end:3},{start:1,end:3},{start:1,end:2}]);
+  const primary=addItem(createProject(),item("primary",10));
+  const replaced=addTrackReplacement(primary,clip,"both",2,7,"loop-edit","loop");
+  assert.equal(replaced.trackReplacements[0].timelineStart,2);
+  assert.equal(replaced.trackReplacements[0].timelineEnd,7);
+  assert.equal(replaced.trackReplacements[0].fillMode,"loop");
+  assert.deepEqual(replaced.trackReplacements[0].segments,segments);
 });
 test("a selected Primary range uses the Primary Audio target and complete matching Source selection",()=>{
   const primary=addItem(createProject(),{...item("primary",60),editSegments:[{start:0,end:60}]});

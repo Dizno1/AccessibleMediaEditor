@@ -124,7 +124,7 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
         let output = temporary_path.to_string_lossy().into_owned();
         let args: Vec<String> = match extension {
             "mov" => vec!["-y".into(), "-i".into(), source, "-c".into(), "copy".into(), output],
-            "webm" => vec!["-y".into(), "-i".into(), source, "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
+            "webm" => vec!["-y".into(), "-i".into(), source, "-af".into(), "aresample=async=1:first_pts=0,asetpts=N/SR/TB".into(), "-c:v".into(), "libvpx-vp9".into(), "-crf".into(), "30".into(), "-b:v".into(), "0".into(), "-c:a".into(), "libopus".into(), output],
             "mp3" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "libmp3lame".into(), "-q:a".into(), "2".into(), output],
             "wav" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "pcm_s16le".into(), output],
             "m4a" => vec!["-y".into(), "-i".into(), source, "-vn".into(), "-c:a".into(), "aac".into(), "-b:a".into(), "192k".into(), output],
@@ -410,7 +410,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.10.11 executable started.");
+    write_startup_log("Build 0.10.12 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())

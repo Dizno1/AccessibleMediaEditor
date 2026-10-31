@@ -162,6 +162,18 @@
     </form>
   </dialog>
 
+  <dialog id="replacement-duration-dialog" aria-labelledby="replacement-duration-heading" aria-describedby="replacement-duration-message">
+    <div>
+      <h2 id="replacement-duration-heading">Source Is Shorter Than Primary Selection</h2>
+      <p id="replacement-duration-message"></p>
+      <div class="button-row">
+        <button type="button" id="replacement-use-shorter">Replace Matching Duration</button>
+        <button type="button" id="replacement-loop">Loop Source to Fill Selection</button>
+        <button type="button" id="replacement-cancel">Cancel and Adjust Selection</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="export-progress-dialog" aria-labelledby="export-progress-heading">
     <div>
       <h2 id="export-progress-heading" tabindex="-1">Export in Progress</h2>
