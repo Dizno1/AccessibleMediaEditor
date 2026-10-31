@@ -75,3 +75,9 @@ test("export progress announces ordered stages and rejects delayed stage message
   assert.match(app,/60000/);
   assert.doesNotMatch(rust,/Conversion finished\. Finalizing the completed export/);
 });
+test("batch import skips one invalid file and continues processing the remaining files",()=>{
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(app,/if\(!supportedMediaPath\(path\)\)\{skipped\.push/);
+  assert.match(app,/catch\(error\)\{skipped\.push\(\{name,reason:String\(error\)\}\)/);
+  assert.match(app,/files were\"\} skipped without canceling the import/);
+});

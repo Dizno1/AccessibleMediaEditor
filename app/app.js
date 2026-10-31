@@ -131,6 +131,10 @@ function kindFromPath(path){
   if(["mp3","wav","m4a","aac","flac","ogg","opus","wma","aif","aiff"].includes(ext))return"Audio";
   return"Video";
 }
+function supportedMediaPath(path){
+  const ext=path.includes(".")?path.split(".").pop().toLowerCase():"";
+  return["png","jpg","jpeg","gif","webp","bmp","tif","tiff","heic","heif","mp3","wav","m4a","aac","flac","ogg","opus","wma","aif","aiff","mp4","mov","webm","wmv","mkv","avi","m4v","mpeg","mpg","ts","mts","m2ts","3gp","ogv"].includes(ext);
+}
 function readableTime(seconds){
   const total=Math.max(0,Math.round((Number(seconds)||0)*1000));
   const hours=Math.floor(total/3600000),minutes=Math.floor(total/60000)%60,whole=Math.floor(total/1000)%60,milliseconds=total%1000;
@@ -505,18 +509,27 @@ async function importMedia(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
   const previous=project,previousSelectedId=selectedId,previousSourceId=selectedSourceId,previousImageId=selectedImageId,previousActiveId=activeMediaId;
   try{
-    const paths=await invoke("pick_media_files");if(!paths.length)return;announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,mediaIndex=0;
-    for(const path of paths){mediaIndex++;const kind=kindFromPath(path),itemId=id();let workingPath=path;
-      const media={id:itemId,source:workingPath,workingSource:kind==="Image"?workingPath:null,originalSource:path,name:baseName(path),label:baseName(path),kind,duration:kind==="Image"?5:null,inPoint:0,outPoint:null,trackTarget:kind==="Audio"?"audio":kind==="Image"?"video":"both"};
-      if(kind==="Image"){media.role="source";next=addSource(next,media);selectedImageId=media.id;sourceCount++;imageCount++;continue;}
-      announce(`Converting media ${mediaIndex} of ${paths.length}. Please wait.`);workingPath=await invoke("normalize_media",{source:path,mediaKind:kind,itemId});media.source=media.workingSource=workingPath;
-      if(!next.items.length&&!primaryAdded){media.role="primary";next=addItem(next,media,null);selectedId=media.id;activeMediaId=PROGRAM_ID;primaryAdded=true;}
-      else{media.role="source";next=addSource(next,media);selectedSourceId=media.id;sourceCount++;}
+    const paths=await invoke("pick_media_files");if(!paths.length)return;announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
+    for(let mediaIndex=0;mediaIndex<paths.length;mediaIndex++){
+      const path=paths[mediaIndex],name=baseName(path);
+      if(!supportedMediaPath(path)){skipped.push({name,reason:"unsupported file type"});updateStatus(`Skipped ${name}. Processing file ${mediaIndex+1} of ${paths.length}.`);continue;}
+      const kind=kindFromPath(path),itemId=id();let workingPath=path;
+      try{
+        announce(`${kind==="Image"?"Adding":"Converting"} media ${mediaIndex+1} of ${paths.length}. Please wait.`);
+        const media={id:itemId,source:workingPath,workingSource:kind==="Image"?workingPath:null,originalSource:path,name,label:name,kind,duration:kind==="Image"?5:null,inPoint:0,outPoint:null,trackTarget:kind==="Audio"?"audio":kind==="Image"?"video":"both"};
+        if(kind==="Image"){media.role="source";next=addSource(next,media);selectedImageId=media.id;sourceCount++;imageCount++;importedCount++;continue;}
+        workingPath=await invoke("normalize_media",{source:path,mediaKind:kind,itemId});media.source=media.workingSource=workingPath;
+        if(!next.items.length&&!primaryAdded){media.role="primary";next=addItem(next,media,null);selectedId=media.id;activeMediaId=PROGRAM_ID;primaryAdded=true;}
+        else{media.role="source";next=addSource(next,media);selectedSourceId=media.id;sourceCount++;}
+        importedCount++;
+      }catch(error){skipped.push({name,reason:String(error)});updateStatus(`${name} could not be imported. Continuing with file ${mediaIndex+2} of ${paths.length}.`);}
     }
     project=next;render();if(primaryAdded)editorStates.get(PROGRAM_ID)?.section.focus();if(next!==previous)undoStack.push(previous);
-    if(imageCount&&sourceCount===imageCount)announce(`${imageCount} ${imageCount===1?"image":"images"} added to the Project Image Library. Primary Production was not changed. Use Ctrl+Page Up or Ctrl+Page Down to reach each Source Image.`);
-    else if(primaryAdded)announce(`Primary media added. ${sourceCount} source media ${sourceCount===1?"item":"items"} added. ${imageCount?`${imageCount} added to the Project Image Library. `:""}Loading previews.`);
-    else if(sourceCount)announce(`${sourceCount} source media ${sourceCount===1?"item":"items"} added. ${imageCount?`${imageCount} added to the Project Image Library. `:""}Primary Production was not changed.`);cue("add");
+    const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import${skipped.length===1?`: ${skipped[0].name}.`:"."}`:"";
+    if(!importedCount)return announce(`No media was imported.${skippedText}`,true);
+    if(imageCount&&sourceCount===imageCount&&!primaryAdded)announce(`${imageCount} ${imageCount===1?"image":"images"} added to the Project Image Library. Primary Production was not changed.${skippedText}`);
+    else if(primaryAdded)announce(`Import complete. Primary media added with ${sourceCount} source media ${sourceCount===1?"item":"items"}. ${imageCount?`${imageCount} added to the Project Image Library. `:""}${skippedText}`);
+    else announce(`Import complete. ${sourceCount} source media ${sourceCount===1?"item":"items"} added. ${imageCount?`${imageCount} added to the Project Image Library. `:""}Primary Production was not changed.${skippedText}`);cue("add");
   }catch(error){project=previous;selectedId=previousSelectedId;selectedSourceId=previousSourceId;selectedImageId=previousImageId;activeMediaId=previousActiveId;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();render();announce(`Media import failed and was rolled back. ${error}`,true);}
 }
 
@@ -821,7 +834,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.15. Reusable Project Image Library with deliberate image placement.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.16. Resilient batch import and reusable Project Image Library.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

@@ -1,5 +1,13 @@
 # Accessible Media Editor
 
+## Build 0.10.16
+
+- One invalid or unsupported file no longer cancels an entire multi-file import.
+- Project files, folders, and other unsupported selections are skipped before FFmpeg conversion.
+- A conversion failure is isolated to that file and the remaining selected files continue processing.
+- Import completion reports how many files were skipped and names the file when exactly one was skipped.
+- Successfully imported media remains available even when another selected file fails.
+
 ## Build 0.10.15
 
 - Imported still images enter a reusable Project Image Library; importing an image never changes Primary Production.
