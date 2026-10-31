@@ -1,5 +1,14 @@
 # Accessible Media Editor
 
+## Build 0.10.15
+
+- Imported still images enter a reusable Project Image Library; importing an image never changes Primary Production.
+- Every Source Image receives its own filename-titled editor section and participates in Ctrl+Page Up and Ctrl+Page Down navigation.
+- Place Image in Primary Production is a deliberate command available from both the library and the Source Image section.
+- A retained Primary range from an Audio Only replacement can be reused for image placement; otherwise the image starts at the Primary playhead for an exact human-readable duration.
+- Existing production audio continues beneath the placed image.
+- Source Image transport commands explain that placement must happen in Primary Production instead of failing or pretending the image has a playhead.
+
 ## Build 0.10.14
 
 - Still images can be displayed for an exact human-readable duration.

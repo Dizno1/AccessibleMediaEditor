@@ -1,12 +1,40 @@
 # Accessible Media Editor Development Roadmap
 
-## Implemented in Build 0.10.14
+## Implemented through Build 0.10.15
 
 - Exact-duration still-image placement.
 - Still-image placement matched to the retained range from the most recent Audio Only replacement.
 - Immediate image preview over the underlying Primary Production video.
 - FFmpeg rendering of still images with aspect-ratio preservation and silent audio where required.
 - The retained range clears after image placement; Escape remains available when the user wants to clear it manually.
+- Reusable Project Image Library. Importing an image does not immediately change Primary Production.
+- A filename-titled Source Image section for every imported image, reachable with Ctrl+Page Up and Ctrl+Page Down.
+- Deliberate Place Image in Primary Production controls in the library and Source Image editor.
+
+## Accessible Slideshow and Presentation Authoring
+
+### Quick Slideshow
+
+- Import multiple images into the Project Image Library without altering Primary Production.
+- Reorder images using accessible list commands rather than requiring thumbnail dragging.
+- Apply a default duration to all images or an exact duration to each image.
+- Fit image timing to a selected music track, including an option to keep the final image visible until the music ends.
+- Insert transitions between images and preview the assembled slideshow immediately.
+- Allow video clips inside a slideshow while keeping the same Primary Production workflow.
+
+### Advanced Presentation
+
+- Add title cards, text overlays, narration, captions, speaker notes, video clips, and music.
+- Provide a chronological screen-reader outline that describes each visual element, its on-screen position, duration, and relationship to important content.
+- Warn when text or images may cover important visible content and provide exact placement controls.
+- Export a complete accessible media presentation without requiring PowerPoint.
+
+### Music and Automatic Ducking
+
+- Let users keep music unchanged, mute it, apply a custom level, or automatically duck it beneath narration and video speech.
+- Provide exact gain, fade-in, fade-out, attack, release, and ducking depth values.
+- Audition ducking without screen-reader speech covering the media.
+- Keep every operation nondestructive and fully reversible with Undo and Redo.
 
 ## Purpose
 

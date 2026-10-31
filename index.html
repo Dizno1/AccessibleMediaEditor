@@ -56,6 +56,14 @@
           <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source</button>
         </div>
+        <label for="image-items">Project Image Library</label>
+        <select id="image-items" size="5"><option disabled>No project images</option></select>
+        <p id="selected-image-summary">No project image selected.</p>
+        <div class="button-row">
+          <button type="button" id="activate-image-button" disabled>Go to Selected Source Image</button>
+          <button type="button" id="place-image-button" disabled>Place Selected Image in Primary Production</button>
+          <button type="button" id="remove-image-button" disabled>Remove Image from Project</button>
+        </div>
         <label for="replacement-items">Track replacements</label>
         <select id="replacement-items" size="5">
           <option disabled>No track replacements</option>
@@ -137,10 +145,11 @@
     </form>
   </dialog>
 
-  <dialog id="image-placement-dialog" aria-labelledby="image-placement-heading">
+  <dialog id="image-placement-dialog" aria-labelledby="image-placement-heading" aria-describedby="image-placement-instructions">
     <form method="dialog">
-      <h2 id="image-placement-heading">Insert Still Image</h2>
+      <h2 id="image-placement-heading" tabindex="-1">Place Still Image</h2>
       <p id="image-placement-name"></p>
+      <p id="image-placement-instructions">Choose whether to cover the retained Primary range or display this image at the Primary playhead for an exact duration. Existing audio is preserved.</p>
       <fieldset>
         <legend>Image timing</legend>
         <label><input type="radio" name="image-timing" id="image-use-range" value="range"> Match the retained Primary Production range</label>
