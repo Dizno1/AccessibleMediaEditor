@@ -13,7 +13,6 @@ const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
 const convertFileSrc=window.__TAURI__?.core?.convertFileSrc;
 const el=Object.fromEntries([...document.querySelectorAll("[id]")].map(node=>[node.id,node]));
-if(invoke)invoke("log_frontend_startup",{message:"Frontend application module loaded."}).catch(()=>{});
 
 let project=createProject();
 let selectedId=null;
@@ -25,7 +24,7 @@ let activeSectionIndex=0;
 let undoStack=[];
 let redoStack=[];
 let soundCues=localStorage.getItem("ame-sound-cues")==="on";
-let lastNativeTitle="";
+let lastNativeTitle="Accessible Media Editor";
 const PROGRAM_ID="primary-production";
 let mediaClipboard=null;
 let removedSourceUndoId=null;
@@ -41,6 +40,7 @@ const editorNodes=new Map();
 let editorCounter=0;
 
 function announce(message,urgent=false){
+  if(["format-selection","rendering","choosing-destination","converting"].includes(exportPhase))return;
   const region=el[urgent?"alert-announcer":"status-announcer"];
   region.textContent="";
   requestAnimationFrame(()=>{region.textContent=message;});
@@ -504,11 +504,15 @@ function exportMedia(){
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];
   if(!primary)return announce("Open media before exporting.",true);
   if(project.items.some(item=>!["Video","Audio"].includes(item.kind)))return announce("This build can render video and audio sequence items. Remove text, image, or transition items before exporting.",true);
-  el["export-format"].value=primary.kind==="Audio"?"m4a":"mp4";el["export-dialog"].showModal();el["export-format"].focus();
+  const remembered=localStorage.getItem("ame-export-format");
+  const available=[...el["export-format"].options].some(option=>option.value===remembered);
+  el["export-format"].value=available?remembered:(primary.kind==="Audio"?"m4a":"mp4");
+  exportPhase="format-selection";clearAnnouncements();el["export-dialog"].showModal();el["export-format"].focus();
 }
 async function confirmExport(){
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];if(!primary)return;
   const format=el["export-format"].value,stem=baseName(primary.name||"Edited Media").replace(/\.[^.]+$/,"");
+  localStorage.setItem("ame-export-format",format);
   exportPhase="rendering";clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
   try{
     let source=primary.workingSource||primary.source;
@@ -718,7 +722,7 @@ function setTrackTarget(target){
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto"),bounds=location?editorBounds(location.item,location.type):null;if(!state||!location||!Number.isFinite(point)||point>bounds.end)return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move the playhead inside the media before splitting.",true);clearProgramMarks();selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
-function cancel(){const state=activeState();if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open)el["export-dialog"].close();else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
+function cancel(){const state=activeState();if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
 
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
@@ -733,7 +737,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.10 Recovery. The application window is exposed only after frontend initialization completes.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.11. Stable startup handoff, isolated export announcements, and remembered export format.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -749,7 +753,8 @@ el["insert-source-button"].addEventListener("click",()=>insertSelectedSource(fal
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);
 el["save-project-button"].addEventListener("click",()=>saveProject(true));el["media-editor-tab"].addEventListener("click",()=>switchWorkspace(1,"media"));el["audio-studio-tab"].addEventListener("click",()=>switchWorkspace(1,"audio"));
 el["export-button"].addEventListener("click",exportMedia);
-el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>el["export-dialog"].close());
+el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>{el["export-dialog"].close();exportPhase="idle";clearAnnouncements();});
+el["export-format"].addEventListener("change",()=>localStorage.setItem("ame-export-format",el["export-format"].value));
 el["export-success-show-file"].addEventListener("click",async()=>{try{if(!lastExportPath)return announce("No completed export is available.",true);await invoke("reveal_exported_file",{path:lastExportPath});announce("Saved file shown in File Explorer.");}catch(error){announce(String(error),true);}});el["export-success-close"].addEventListener("click",()=>el["export-success-dialog"].close());
 el["export-progress-dialog"].addEventListener("cancel",event=>event.preventDefault());
 el["media-section-tab"].addEventListener("click",()=>activateSection("media-section"));el["output-section-tab"].addEventListener("click",()=>activateSection("output-section"));
@@ -761,6 +766,6 @@ render();
 if(invoke){
   invoke("frontend_ready").then(()=>{
     el["import-media-button"].focus();
-    return invoke("log_frontend_startup",{message:"Frontend initialization completed, application window shown, and Open Media received focus."});
+    return invoke("log_frontend_startup",{message:"Frontend initialized, window shown, and Open Media received focus."});
   }).catch(error=>invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{}));
 }else el["import-media-button"].focus();

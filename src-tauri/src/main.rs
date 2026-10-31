@@ -1,38 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
+use std::fs::OpenOptions;
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Emitter, Manager};
 use tauri_plugin_shell::ShellExt;
 
 mod native_media_picker;
-
-fn startup_log_path() -> std::path::PathBuf {
-    let base = dirs::document_dir().unwrap_or_else(std::env::temp_dir);
-    base.join("Accessible Media Editor").join("Logs").join("StartupLog.txt")
-}
-
-fn write_startup_log(message: &str) {
-    let path = startup_log_path();
-    if let Some(parent) = path.parent() {
-        let _ = fs::create_dir_all(parent);
-    }
-    if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(path) {
-        let elapsed = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|value| value.as_millis())
-            .unwrap_or(0);
-        let _ = writeln!(file, "{} {}", elapsed, message);
-    }
-}
-
-#[tauri::command]
-fn log_frontend_startup(message: String) -> Result<(), String> {
-    write_startup_log(&message);
-    Ok(())
-}
 
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
@@ -64,6 +41,40 @@ fn app_folder(name: &str) -> Option<std::path::PathBuf> {
     let path = dirs::document_dir()?.join("Accessible Media Editor").join(name);
     fs::create_dir_all(&path).ok()?;
     Some(path)
+}
+
+fn write_startup_log(message: &str) {
+    let Some(folder) = app_folder("Logs") else { return; };
+    let path = folder.join("StartupLog.txt");
+    let milliseconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis())
+        .unwrap_or_default();
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(file, "{} {}", milliseconds, message);
+    }
+}
+
+#[tauri::command]
+fn log_frontend_startup(message: String) {
+    write_startup_log(&message);
+}
+
+#[tauri::command]
+fn frontend_ready(window: tauri::WebviewWindow) -> Result<(), String> {
+    write_startup_log("Frontend reported ready. Showing the completed application window.");
+    window.show().map_err(|error| {
+        let message = format!("Application window could not be shown: {}", error);
+        write_startup_log(&message);
+        message
+    })?;
+    window.set_focus().map_err(|error| {
+        let message = format!("Application window could not receive focus: {}", error);
+        write_startup_log(&message);
+        message
+    })?;
+    write_startup_log("Application window shown and focused after frontend initialization.");
+    Ok(())
 }
 
 #[tauri::command]
@@ -161,23 +172,6 @@ fn reveal_exported_file(path: String) -> Result<(), String> {
 #[tauri::command]
 fn set_window_title(window: tauri::WebviewWindow, title: String) -> Result<(), String> {
     window.set_title(&title).map_err(|error| error.to_string())
-}
-
-#[tauri::command]
-fn frontend_ready(window: tauri::WebviewWindow) -> Result<(), String> {
-    write_startup_log("Frontend reported ready. Showing the completed application window.");
-    window.show().map_err(|error| {
-        let message = format!("Application window could not be shown: {}", error);
-        write_startup_log(&message);
-        message
-    })?;
-    window.set_focus().map_err(|error| {
-        let message = format!("Application window could not receive focus: {}", error);
-        write_startup_log(&message);
-        message
-    })?;
-    write_startup_log("Application window shown and focused after frontend initialization.");
-    Ok(())
 }
 
 fn segment_filter(segments: &[EditSegment], with_video: bool, with_audio: bool) -> String {
@@ -416,7 +410,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.10.9 Recovery executable started.");
+    write_startup_log("Build 0.10.11 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
@@ -426,18 +420,7 @@ fn main() {
             let _ = app_folder("Exports");
             if let Some(window)=app.get_webview_window("main") {
                 write_startup_log("Main WebView window found.");
-                match window.url() {
-                    Ok(url) => write_startup_log(&format!("Initial WebView URL: {}", url)),
-                    Err(error) => write_startup_log(&format!("Initial WebView URL unavailable: {}", error)),
-                }
-                let menu = build_menu(app.handle()).map_err(|error| {
-                    write_startup_log(&format!("Native menu creation failed: {}", error));
-                    error
-                })?;
-                window.set_menu(menu).map_err(|error| {
-                    write_startup_log(&format!("Native menu installation failed: {}", error));
-                    error
-                })?;
+                window.set_menu(build_menu(app.handle())?)?;
                 write_startup_log("Native menu installed.");
             } else {
                 write_startup_log("Main WebView window was not found.");
@@ -452,8 +435,5 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
-        .unwrap_or_else(|error| {
-            write_startup_log(&format!("Tauri runtime stopped with an error: {}", error));
-            panic!("error while running Accessible Media Editor: {}", error);
-        });
+        .expect("error while running Accessible Media Editor");
 }

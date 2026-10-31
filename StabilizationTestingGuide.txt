@@ -1,0 +1,16 @@
+Accessible Media Editor Build 0.10.11 Stabilization Test
+
+1. Install and launch the application.
+2. Confirm that the full interface opens instead of about:blank.
+3. Note whether JAWS repeatedly announces Accessible Media Editor during startup.
+4. Open media and perform one short edit.
+5. Open Export Complete Production and select WebM.
+6. Press Escape to cancel the export dialog.
+7. Open Export Complete Production again.
+8. Confirm that WebM remains selected.
+9. Confirm that no old editing announcement is spoken inside the export dialog.
+10. Complete or cancel the export.
+
+If startup fails, send this file:
+
+Documents\Accessible Media Editor\Logs\StartupLog.txt
