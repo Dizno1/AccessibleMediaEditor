@@ -1,6 +1,8 @@
 # Accessible Media Editor Development Roadmap
 
-## Implemented through Build 0.10.19
+## Implemented through Build 0.10.20
+
+Build 0.10.20 creates an image presentation with a selected video clip between images, optional continuous background music, and automatic music ducking while video audio plays.
 
 - Exact-duration still-image placement.
 - Still-image placement matched to the retained range from the most recent Audio Only replacement.

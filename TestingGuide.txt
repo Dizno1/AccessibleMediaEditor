@@ -331,3 +331,10 @@ Build 0.10.19 Library Removal Test
 8. Repeat one removal using each labeled Remove button. Confirm button and Delete behavior match.
 9. Confirm the original files and any material already used in Primary Production remain unchanged.
 
+Build 0.10.20 presentation test
+1. Add at least three images, one video with audible sound, and one audio file.
+2. In the video Source editor, optionally mark the exact clip with Left and Right Brackets.
+3. Choose Create Slideshow from All Images. Enable the video-between-images option, choose the video and music, and leave automatic ducking checked.
+4. Create the presentation and play Primary Production. Confirm images and video clips alternate in the chosen order.
+5. Export the complete production. Confirm music continues throughout and becomes quieter while each video clip's own audio plays.
+

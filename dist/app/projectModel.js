@@ -1,4 +1,4 @@
-export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 3, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], editTarget: "both" }; }
+export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 4, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, editTarget: "both" }; }
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);
@@ -29,6 +29,19 @@ export function appendImageSlideshow(project, slides, newIds) {
   });
   if(next.items.length===project.items.length)return project;
   next.dirty=true;return next;
+}
+export function createInterleavedPresentation(project, slides, imageIds, videoClip, videoIds, music, duckMusic=true) {
+  if(!slides?.length||imageIds?.length!==slides.length)return project;
+  const next=structuredClone(project),former=next.items.map(item=>({...item,role:"source"}));
+  const output=[];let cursor=0;const duckRanges=[];
+  slides.forEach((slide,index)=>{
+    const seconds=Math.max(.001,Number(slide.duration)||5);
+    output.push({...structuredClone(slide.image),id:imageIds[index],duration:seconds,inPoint:0,outPoint:null,editSegments:[{start:0,end:seconds}],trackTarget:"video",role:index?"inserted":"primary"});cursor+=seconds;
+    if(index<slides.length-1&&videoClip){const clip={...structuredClone(videoClip),id:videoIds[index],role:"inserted",trackTarget:"both"},length=itemDuration(clip);output.push(clip);duckRanges.push({start:cursor,end:cursor+length});cursor+=length;}
+  });
+  next.items=output;next.sources=[...(next.sources||[]),...former.filter(old=>!next.sources?.some(source=>source.id===old.id))];next.trackReplacements=[];
+  next.backgroundMusic=music?{source:music.workingSource||music.source,segments:normalizedSegments(music),volume:.35,duckFactor:.25,duckRanges:duckMusic?duckRanges:[]}:null;
+  next.version=4;next.dirty=true;return next;
 }
 export function makeSourcePrimary(project, sourceId) {
   if (!project.items.length) return project;
@@ -188,6 +201,7 @@ export function productionRenderReplacements(project) {
     timelineEnd: Number(edit.timelineEnd) || 0
   }));
 }
+export function productionRenderBackgroundMusic(project){return project.backgroundMusic?structuredClone(project.backgroundMusic):null;}
 export function bracketSelectionRange(totalDuration, leftBracket = null, rightBracket = null) {
   const total = Math.max(0, Number(totalDuration) || 0);
   const left = leftBracket == null ? null : Math.max(0, Math.min(total, Number(leftBracket) || 0));

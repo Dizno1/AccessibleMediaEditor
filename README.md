@@ -1,5 +1,7 @@
 # Accessible Media Editor
 
+Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.
+
 ## Build 0.10.19
 
 Build 0.10.19 corrects Project Image Library and Source media removal.

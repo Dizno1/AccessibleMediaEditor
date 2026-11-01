@@ -1,10 +1,10 @@
 import {
   createProject, addItem, moveItem, removeItem, updateItem, splitItem,
-  addSource, removeSource, updateSource, moveSource, appendImageSlideshow, makeSourcePrimary, appendSourceSelection,
+  addSource, removeSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, makeSourcePrimary, appendSourceSelection,
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
   bracketSelectionPlan, logicalSegmentsForRanges, removeLogicalRanges, productionRenderItems,
-  addTrackReplacement, removeTrackReplacement, productionRenderReplacements
+  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "./editorState.js";
@@ -105,7 +105,7 @@ function closeExportProgress(){
 }
 function handleExportProgress(message){
   if(!el["export-progress-dialog"].open)return;
-  const rendering=/^(Rendering production item|Joining rendered production items|Rendering track replacement|Applying audio and video track replacements)/.test(message);
+  const rendering=/^(Rendering production item|Joining rendered production items|Rendering track replacement|Applying audio and video track replacements|Applying continuous background music)/.test(message);
   const match=message.match(/^Export destination selected\. Converting complete production to ([A-Z0-9]+)\./);
   if(rendering&&exportPhase!=="rendering")return;
   if(match&&!['choosing-destination','converting'].includes(exportPhase))return;
@@ -183,7 +183,7 @@ function itemListLabel(item,index,source=false){
   return`${role}. ${item.kind}. ${item.label||item.name}`;
 }
 function migrateProject(value){
-  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:3};
+  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],backgroundMusic:value.backgroundMusic||null,editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:4};
   if(next.items[0]&&!next.items[0].role)next.items[0].role="primary";
   next.items.slice(1).forEach(item=>{if(!item.role)item.role="sequence";});
   return next;
@@ -228,11 +228,18 @@ function sourceForItem(item){return convertFileSrc?convertFileSrc(item.source):i
 function setProgramMedia(state,point,autoplay=false){
   const target=sequencePoint(point);if(!target)return false;const source=sourceForItem(target.item),sourceTime=logicalToSourceTime(target.item,target.local);
   state.currentItemId=target.item.id;state.currentItemOffset=target.offset;state.pendingSourceTime=sourceTime;state.video.muted=false;
+  if(target.item.kind==="Image"){
+    state.video.pause();state.video.hidden=true;state.sequenceImage.hidden=false;if(state.sequenceImage.dataset.sourcePath!==target.item.source){state.sequenceImage.dataset.sourcePath=target.item.source;state.sequenceImage.src=source;}state.cursor=point;syncBackgroundMusic(state,point,autoplay);if(autoplay)startProgramImagePlayback(state,target);return true;
+  }
+  state.imagePlaying=false;if(state.imageTimer)cancelAnimationFrame(state.imageTimer);state.sequenceImage.hidden=true;state.video.hidden=false;
   if(state.video.dataset.sourcePath!==target.item.source){state.video.dataset.sourcePath=target.item.source;state.pendingAutoplay=autoplay;state.video.src=source;state.video.load();}
   else{state.video.currentTime=sourceTime;if(autoplay)state.video.play().catch(()=>{});}
+  syncBackgroundMusic(state,point,autoplay);
   syncTrackPreview(state,point,autoplay);
   return true;
 }
+function syncBackgroundMusic(state,point,playing){if(state.type!=="program")return;const music=project.backgroundMusic;if(!music){state.backgroundAudio.pause();return;}const source=sourceForItem({source:music.source});if(state.backgroundAudio.dataset.sourcePath!==music.source){state.backgroundAudio.dataset.sourcePath=music.source;state.backgroundAudio.src=source;state.backgroundAudio.loop=true;}const duck=(music.duckRanges||[]).some(range=>point>=range.start&&point<range.end);state.backgroundAudio.volume=Math.max(0,Math.min(1,(music.volume??.35)*(duck?(music.duckFactor??.25):1)));if(Number.isFinite(state.backgroundAudio.duration)&&state.backgroundAudio.duration>0&&Math.abs(state.backgroundAudio.currentTime-(point%state.backgroundAudio.duration))>.3)state.backgroundAudio.currentTime=point%state.backgroundAudio.duration;if(playing)state.backgroundAudio.play().catch(()=>{});else state.backgroundAudio.pause();}
+function startProgramImagePlayback(state,target){state.imagePlaying=true;state.imageStarted=performance.now()-target.local*1000;const tick=now=>{if(!state.imagePlaying)return;const local=(now-state.imageStarted)/1000,point=target.offset+local;if(local>=itemDuration(target.item)){state.imagePlaying=false;state.cursor=target.offset+itemDuration(target.item);if(target.index<project.items.length-1)setProgramMedia(state,state.cursor,true);else finishAtEnd(state,duration(project));return;}state.cursor=point;state.slider.value=String(point);state.position.textContent=`Position ${readableTime(point)}. Media duration ${readableTime(duration(project))}.`;syncBackgroundMusic(state,point,true);state.imageTimer=requestAnimationFrame(tick);};state.imageTimer=requestAnimationFrame(tick);}
 function activeReplacement(point,target){return[...(project.trackReplacements||[])].reverse().find(edit=>(edit.target===target||edit.target==="both")&&point>=edit.timelineStart-0.0005&&point<edit.timelineEnd-0.0005)||null;}
 function replacementSourceTime(edit,point){const pseudo={duration:(edit.segments||[]).reduce((sum,segment)=>Math.max(sum,Number(segment.end)||0),0),editSegments:edit.segments||[]};return logicalToSourceTime(pseudo,Math.max(0,point-edit.timelineStart));}
 function syncTrackPreview(state,point,autoplay=!state.video.paused){
@@ -302,6 +309,7 @@ function createEditor(item,type){
   const section=document.createElement("section");section.className="editor-section media-item-editor";section.tabIndex=-1;section.dataset.mediaId=stateId;
   const heading=document.createElement("h2");section.append(heading);
   const video=document.createElement("video");video.className="media-preview";video.preload="metadata";video.controls=false;video.tabIndex=-1;video.setAttribute("aria-hidden","true");section.append(video);
+  const sequenceImage=document.createElement("img");sequenceImage.className="media-preview";sequenceImage.hidden=true;sequenceImage.alt="";sequenceImage.setAttribute("aria-hidden","true");section.append(sequenceImage);
   const replacementVideo=document.createElement("video");replacementVideo.className="media-preview replacement-preview";replacementVideo.preload="auto";replacementVideo.controls=false;replacementVideo.tabIndex=-1;replacementVideo.hidden=true;replacementVideo.setAttribute("aria-hidden","true");section.append(replacementVideo);
   const replacementImage=document.createElement("img");replacementImage.className="media-preview replacement-preview";replacementImage.hidden=true;replacementImage.alt="";replacementImage.setAttribute("aria-hidden","true");section.append(replacementImage);
   const replacementAudio=new Audio();replacementAudio.preload="auto";
@@ -326,10 +334,10 @@ function createEditor(item,type){
   [both,videoOnly,audioOnly].forEach(button=>button.type="button");both.textContent="Both Audio and Video (B)";videoOnly.textContent="Video Only (V)";audioOnly.textContent="Audio Only (A)";
   targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);section.append(fieldset);
   el["media-editor-sections"].append(section);
-  const state={id:stateId,type,section,heading,video,replacementVideo,replacementImage,replacementAudio,slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,commitButton,goto,properties,split,insertSelection,appendSelection,targetFieldset:fieldset,both,videoOnly,audioOnly,cursor:0,markIn:null,markOut:null,markHistory:[],audition:null,unsupported:false,loading:!item.duration,rendering:false,monitoring:false,endReached:false,currentItemId:type==="program"?item.id:null,currentItemOffset:0,pendingSourceTime:0,pendingAutoplay:false};
+  const state={id:stateId,type,section,heading,video,sequenceImage,replacementVideo,replacementImage,replacementAudio,backgroundAudio:new Audio(),slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,commitButton,goto,properties,split,insertSelection,appendSelection,targetFieldset:fieldset,both,videoOnly,audioOnly,cursor:0,markIn:null,markOut:null,markHistory:[],audition:null,unsupported:false,loading:!item.duration,rendering:false,monitoring:false,endReached:false,currentItemId:type==="program"?item.id:null,currentItemOffset:0,pendingSourceTime:0,pendingAutoplay:false,imagePlaying:false,imageTimer:null};
   editorStates.set(stateId,state);editorNodes.set(stateId,section);
   if(state.loading)position.textContent="Loading media. Please wait.";
-  video.dataset.sourcePath=item.source;video.src=sourceForItem(item);
+  if(item.kind!=="Image"){video.dataset.sourcePath=item.source;video.src=sourceForItem(item);}else{state.loading=false;setProgramMedia(state,0,false);}
   video.addEventListener("loadedmetadata",()=>{if(type==="program"){
     const current=project.items.find(value=>value.id===state.currentItemId);if(current&&!current.duration&&Number.isFinite(video.duration)){project=updateItem(project,current.id,{duration:video.duration,inPoint:0,outPoint:video.duration,editSegments:[{start:0,end:video.duration}]});state.loading=false;render();announce(`Primary Production loaded. Duration ${readableTime(duration(project))}.`);}
     video.currentTime=state.pendingSourceTime||0;if(state.pendingAutoplay){state.pendingAutoplay=false;video.play().catch(()=>{});}
@@ -337,7 +345,7 @@ function createEditor(item,type){
   video.addEventListener("timeupdate",()=>handleTimeUpdate(stateId));
   video.addEventListener("ended",()=>{if(type!=="program")return;const current=project.items.find(value=>value.id===state.currentItemId),index=project.items.findIndex(value=>value.id===state.currentItemId);if(current&&index<project.items.length-1){const nextPoint=(state.currentItemOffset||0)+itemDuration(current);state.cursor=nextPoint;state.endReached=false;setProgramMedia(state,nextPoint,true);}else finishAtEnd(state,duration(project));});
   video.addEventListener("play",()=>{state.endReached=false;if(type==="program")syncTrackPreview(state,state.cursor,true);monitorPlayback(stateId);});
-  video.addEventListener("pause",()=>{replacementVideo.pause();replacementAudio.pause();});
+  video.addEventListener("pause",()=>{replacementVideo.pause();replacementAudio.pause();if(!state.imagePlaying)state.backgroundAudio.pause();});
   video.addEventListener("error",()=>handlePreviewError(stateId));
   section.addEventListener("focus",()=>{activateMedia(stateId,false);activeSectionIndex=sectionElements().indexOf(section);});
   slider.addEventListener("focus",()=>activateMedia(stateId,false));
@@ -420,7 +428,7 @@ function handleTimeUpdate(idValue){
   state.cursor=logicalNow;state.slider.value=String(state.cursor);state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
 }
 function renderEditors(){
-  const primary=project.items[0];const playable=[...(primary?[{item:primary,type:"program",stateId:PROGRAM_ID}]:[]),...(project.sources||[]).filter(item=>item.kind!=="Image").map(item=>({item,type:"source",stateId:item.id}))].filter(({item})=>["Video","Audio"].includes(item.kind)&&item.source);
+  const primary=project.items[0];const playable=[...(primary?[{item:primary,type:"program",stateId:PROGRAM_ID}]:[]),...(project.sources||[]).filter(item=>item.kind!=="Image").map(item=>({item,type:"source",stateId:item.id}))].filter(({item,type})=>(type==="program"?["Video","Audio","Image"]:["Video","Audio"]).includes(item.kind)&&item.source);
   const wanted=new Set(playable.map(value=>value.stateId));
   for(const [idValue,node]of editorNodes){if(!wanted.has(idValue)){node.remove();editorNodes.delete(idValue);editorStates.delete(idValue);}}
   playable.forEach(({item,type,stateId})=>{
@@ -448,7 +456,10 @@ function renderSlideshowDraft(){
 function openSlideshowDialog(){
   const images=(project.sources||[]).filter(item=>item.kind==="Image");if(!images.length)return announce("Add images to the Project Image Library first.",true);
   const defaultDuration=Number(localStorage.getItem("ame-slideshow-duration"))||5;slideshowDraft=images.map(image=>({image:structuredClone(image),duration:defaultDuration}));writeTime("slideshow-default-duration",defaultDuration);renderSlideshowDraft();
-  el["slideshow-destination"].textContent=project.items.length?"The slideshow will be added to the end of Primary Production.":"The slideshow will become Primary Production.";el["slideshow-dialog"].showModal();el["slideshow-heading"].focus();
+  const videos=[...project.items,...(project.sources||[])].filter(item=>item.kind==="Video"),audio=(project.sources||[]).filter(item=>item.kind==="Audio");
+  el["slideshow-video"].replaceChildren(...videos.map(item=>new Option(item.label||item.name,item.id)));el["slideshow-use-video"].checked=videos.length>0;el["slideshow-use-video"].disabled=!videos.length;
+  el["slideshow-music"].replaceChildren(new Option("No music",""),...audio.map(item=>new Option(item.label||item.name,item.id)));
+  el["slideshow-destination"].textContent="The presentation will replace Primary Production. Existing Primary media will remain available as Source Media.";el["slideshow-dialog"].showModal();el["slideshow-heading"].focus();
 }
 function applyDefaultSlideshowDuration(){
   const seconds=readTime("slideshow-default-duration");if(!Number.isFinite(seconds)||seconds<0.001)return announce("Enter a valid default slide duration.",true);
@@ -463,8 +474,11 @@ function moveSlideshowImage(direction){
   const [slide]=slideshowDraft.splice(index,1);slideshowDraft.splice(target,0,slide);renderSlideshowDraft();el["slideshow-images"].value=slide.image.id;el["slideshow-images"].focus();announce(`${slide.image.label||slide.image.name} moved to slide ${target+1}.`);
 }
 function createSlideshow(){
-  if(!slideshowDraft.length)return announce("There are no images in the slideshow.",true);const previous=project,next=appendImageSlideshow(project,slideshowDraft,slideshowDraft.map(()=>id()));if(next===project)return announce("The slideshow could not be created.",true);
-  project=next;selectedId=next.items.at(-1).id;activeMediaId=PROGRAM_ID;undoStack.push(previous);redoStack=[];el["slideshow-dialog"].close();slideshowDraft=[];render();editorStates.get(PROGRAM_ID)?.section.focus();announce(`Slideshow created with ${next.items.length-previous.items.length} images. Duration added ${readableTime(duration(next)-duration(previous))}.`);cue("add");
+  if(!slideshowDraft.length)return announce("There are no images in the presentation.",true);const previous=project,all=[...project.items,...(project.sources||[])];let video=el["slideshow-use-video"].checked?all.find(item=>item.id===el["slideshow-video"].value):null;const music=(project.sources||[]).find(item=>item.id===el["slideshow-music"].value);
+  if(video){const state=editorStates.get(video.id),plan=state?bracketSelectionPlan(itemDuration(video),state.leftBracket,state.rightBracket):null;if(plan?.selectedRanges?.length===1){video={...structuredClone(video),editSegments:logicalSegmentsForRanges(video,plan.selectedRanges),inPoint:0,outPoint:null};}}
+  const videoCount=video?slideshowDraft.length-1:0;
+  const next=createInterleavedPresentation(project,slideshowDraft,slideshowDraft.map(()=>id()),video,Array.from({length:videoCount},()=>id()),music,el["slideshow-duck-music"].checked);if(next===project)return announce("The presentation could not be created.",true);
+  project=next;selectedId=next.items[0].id;activeMediaId=PROGRAM_ID;undoStack.push(previous);redoStack=[];el["slideshow-dialog"].close();slideshowDraft=[];render();const focus=editorStates.get(PROGRAM_ID)?.section;focus?.focus();setTimeout(()=>announce(`Presentation created with ${next.items.filter(item=>item.kind==="Image").length} images${video?`, ${videoCount} video clips`:""}${music?", and continuous background music":""}${music&&el["slideshow-duck-music"].checked?" with automatic ducking":""}. Primary Production duration ${readableTime(duration(next))}.`),100);cue("add");
 }
 function renderEditorNavigation(playable){
   el["media-editor-navigation"].replaceChildren();
@@ -618,7 +632,7 @@ async function confirmExport(){
   exportPhase="rendering";clearAnnouncements();el["export-dialog"].close();showExportProgress("Rendering complete Primary Production. Please wait.");
   try{
     let source=primary.workingSource||primary.source;
-    if(project.items.length>1||(project.trackReplacements||[]).length){source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),projectId:project.name||primary.id});await exportNarrationChain;}
+    if(project.items.length>1||(project.trackReplacements||[]).length||project.backgroundMusic){source=await invoke("render_production",{items:productionRenderItems(project),replacements:productionRenderReplacements(project),backgroundMusic:productionRenderBackgroundMusic(project),projectId:project.name||primary.id});await exportNarrationChain;}
     exportPhase="choosing-destination";
     const destinationMessage="Primary Production rendered. Choose where to save it.";
     await queueExportAnnouncement(destinationMessage,2500);
@@ -759,6 +773,7 @@ function redo(){if(!redoStack.length)return announce("Nothing to redo.");const p
 function currentLogicalPosition(location,state){
   if(location.type==="program"){
     const current=project.items.find(item=>item.id===state.currentItemId);
+    if(current?.kind==="Image")return state.cursor;
     return(state.currentItemOffset||0)+(current?sourceToLogicalTime(current,state.video.currentTime):0);
   }
   if(["sequence","source"].includes(location.type))return sourceToLogicalTime(location.item,state.video.currentTime);
@@ -767,7 +782,9 @@ function currentLogicalPosition(location,state){
 async function togglePlayback(){
   const location=activeLocation(),state=activeState();if(!location||!state)return announce("Activate a media editor first.",true);if(state.unsupported)return announce("This format requires conversion before preview.",true);cancelAudition(state,true);
   if(state.imageOnly)return announce("This is a reusable Source Image. Place it in Primary Production to play the assembled result.");
-  if(state.video.paused){const bounds=editorBounds(location.item,location.type);if(state.cursor<bounds.start||state.cursor>=bounds.end)setEditorPosition(state,bounds.start,true);else setEditorPosition(state,state.cursor,true);try{await state.video.play();announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
+  if(location.type==="program"&&state.imagePlaying){state.imagePlaying=false;if(state.imageTimer)cancelAnimationFrame(state.imageTimer);syncBackgroundMusic(state,state.cursor,false);announce(`Paused at ${readableTime(state.cursor)}.`);return;}
+  const currentProgram=location.type==="program"?sequencePoint(state.cursor):null;if(currentProgram?.item.kind==="Image"){setProgramMedia(state,state.cursor>=duration(project)?0:state.cursor,true);announce("Playing.");return;}
+  if(state.video.paused){const bounds=editorBounds(location.item,location.type);if(state.cursor<bounds.start||state.cursor>=bounds.end)setEditorPosition(state,bounds.start,true);else setEditorPosition(state,state.cursor,true);try{await state.video.play();syncBackgroundMusic(state,state.cursor,true);announce("Playing.");}catch(error){announce(`Playback failed. ${error}`,true);}}
   else{const point=currentLogicalPosition(location,state);state.video.pause();storeCursor(state,location,point,true);announce(`Paused at ${readableTime(state.cursor)}.`);}
 }
 async function auditionAround(before=1,after=1,quiet=false){
@@ -874,7 +891,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.19. Accessible library removal and focus restoration.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.20. Interleaved image and video presentations with continuous ducked music.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

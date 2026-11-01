@@ -206,9 +206,14 @@
         <label for="slideshow-selected-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-selected-duration-milliseconds" min="0" max="999" step="1">
       </fieldset>
       <button type="button" id="slideshow-update-duration">Apply Duration to Selected Slide</button>
-      <p>This first slideshow build uses direct cuts between images and does not add music. Both features remain next on the roadmap.</p>
+      <label><input type="checkbox" id="slideshow-use-video"> Place the selected video clip between every image</label>
+      <label for="slideshow-video">Video clip</label><select id="slideshow-video"></select>
+      <p>The bracketed selection is used when available; otherwise the complete video is used.</p>
+      <label for="slideshow-music">Continuous background music</label><select id="slideshow-music"><option value="">No music</option></select>
+      <label><input type="checkbox" id="slideshow-duck-music" checked> Automatically lower the music while video audio plays</label>
+      <p>Music repeats or is trimmed to match the complete presentation.</p>
       <div class="button-row">
-        <button type="button" id="slideshow-create">Create Slideshow</button>
+        <button type="button" id="slideshow-create">Create Presentation</button>
         <button type="button" id="slideshow-cancel">Cancel</button>
       </div>
     </form>

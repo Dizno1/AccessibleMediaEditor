@@ -37,6 +37,19 @@ struct TrackReplacement {
     timeline_end: f64,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DuckRange { start: f64, end: f64 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BackgroundMusic {
+    source: String,
+    volume: f64,
+    duck_factor: f64,
+    duck_ranges: Vec<DuckRange>,
+}
+
 fn app_folder(name: &str) -> Option<std::path::PathBuf> {
     let path = dirs::document_dir()?.join("Accessible Media Editor").join(name);
     fs::create_dir_all(&path).ok()?;
@@ -292,7 +305,7 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
 }
 
 #[tauri::command]
-async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, replacements: Vec<TrackReplacement>, project_id: String) -> Result<String, String> {
+async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, replacements: Vec<TrackReplacement>, background_music: Option<BackgroundMusic>, project_id: String) -> Result<String, String> {
     if items.is_empty() { return Err("The production contains no media to render.".into()); }
     let mut intermediates = Vec::new();
     for (index, item) in items.iter().enumerate() {
@@ -316,7 +329,19 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     let result = run_ffmpeg(&app, args).await;
     for path in &intermediates { let _ = fs::remove_file(path); }
     result?;
-    if replacements.is_empty() { return Ok(base_text); }
+    let total_duration: f64 = items.iter().flat_map(|item| item.segments.iter()).map(|segment| (segment.end-segment.start).max(0.0)).sum();
+    let mut active_base=base_path.clone();
+    if let Some(music)=background_music {
+        window.emit("production-render-progress", "Applying continuous background music and automatic ducking.").map_err(|error| error.to_string())?;
+        let mixed_path=safe_working_path(&project_id,"mp4","production-music")?;let mixed_text=mixed_path.to_string_lossy().into_owned();
+        let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start,range.end)).collect::<Vec<_>>().join("+");
+        let duck=if ranges.is_empty(){"1".to_string()}else{format!("if(gt({},0),{:.4},1)",ranges,music.duck_factor.clamp(0.0,1.0))};
+        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume={:.4},volume='{}'[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
+        let mut mix_args=vec!["-y".into(),"-i".into(),base_text.clone(),"-stream_loop".into(),"-1".into(),"-i".into(),music.source,"-filter_complex".into(),filter,"-map".into(),"0:v:0".into(),"-map".into(),"[a]".into()];
+        mix_args.extend(standard_video_encoding(mixed_text));run_ffmpeg(&app,mix_args).await?;let _=fs::remove_file(&active_base);active_base=mixed_path;
+    }
+    let active_text=active_base.to_string_lossy().into_owned();
+    if replacements.is_empty() { return Ok(active_text); }
 
     let mut replacement_paths = Vec::new();
     for (index, replacement) in replacements.iter().enumerate() {
@@ -324,7 +349,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
         let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone() };
         if let Err(error) = render_production_item(&app, &item, &path).await {
-            let _ = fs::remove_file(&base_path);
+            let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
             return Err(format!("Track replacement {} could not be rendered. {}", index + 1, error));
         }
@@ -334,7 +359,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     window.emit("production-render-progress", "Applying audio and video track replacements.").map_err(|error| error.to_string())?;
     let output_path = safe_working_path(&project_id, "mp4", "production")?;
     let output_text = output_path.to_string_lossy().into_owned();
-    let mut compose_args = vec!["-y".into(), "-i".into(), base_text.clone()];
+    let mut compose_args = vec!["-y".into(), "-i".into(), active_text.clone()];
     for path in &replacement_paths { compose_args.push("-i".into()); compose_args.push(path.to_string_lossy().into_owned()); }
     let mut filters = vec!["[0:v:0]setpts=PTS-STARTPTS[v0]".to_string(), "[0:a:0]asetpts=PTS-STARTPTS[a0]".to_string()];
     let mut video_label = "v0".to_string();
@@ -364,7 +389,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     compose_args.extend(["-filter_complex".into(), filters.join(";"), "-map".into(), format!("[{}]", video_label), "-map".into(), format!("[{}]", audio_label)]);
     compose_args.extend(standard_video_encoding(output_text.clone()));
     let compose_result = run_ffmpeg(&app, compose_args).await;
-    let _ = fs::remove_file(&base_path);
+    let _ = fs::remove_file(&active_base);
     for path in &replacement_paths { let _ = fs::remove_file(path); }
     compose_result?;
     Ok(output_text)
