@@ -419,12 +419,11 @@ function handleTimeUpdate(idValue){
   state.cursor=logicalNow;state.slider.value=String(state.cursor);state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
 }
 function renderEditors(){
-  const primary=project.items[0];const playable=[...(primary?[{item:primary,type:"program",stateId:PROGRAM_ID}]:[]),...(project.sources||[]).map(item=>({item,type:"source",stateId:item.id}))].filter(({item})=>["Video","Audio","Image"].includes(item.kind)&&item.source);
+  const primary=project.items[0];const playable=[...(primary?[{item:primary,type:"program",stateId:PROGRAM_ID}]:[]),...(project.sources||[]).filter(item=>item.kind!=="Image").map(item=>({item,type:"source",stateId:item.id}))].filter(({item})=>["Video","Audio"].includes(item.kind)&&item.source);
   const wanted=new Set(playable.map(value=>value.stateId));
   for(const [idValue,node]of editorNodes){if(!wanted.has(idValue)){node.remove();editorNodes.delete(idValue);editorStates.delete(idValue);}}
   playable.forEach(({item,type,stateId})=>{
-    let state=editorStates.get(stateId);if(!state)state=item.kind==="Image"&&type==="source"?createImageEditor(item):createEditor(item,type);
-    if(state.imageOnly){updateImageEditor(state,item);el["media-editor-sections"].append(state.section);return;}
+    let state=editorStates.get(stateId);if(!state)state=createEditor(item,type);
     const bounds=editorBounds(item,type);state.type=type;updateEditorLabels(state,item,type);state.slider.min=String(bounds.start);state.slider.max=String(bounds.end);setEditorPosition(state,state.cursor,true);
     el["media-editor-sections"].append(state.section);
   });
@@ -433,14 +432,8 @@ function renderEditors(){
   updateActiveAppearance();
   renderEditorNavigation(playable);
 }
-function createImageEditor(item){
-  const section=document.createElement("section");section.className="editor-section media-item-editor";section.tabIndex=-1;section.dataset.mediaId=item.id;
-  const heading=document.createElement("h2"),summary=document.createElement("p"),preview=document.createElement("img"),controls=document.createElement("div");heading.textContent=editorTitle(item,"source");preview.className="media-preview";preview.src=sourceForItem(item);preview.alt="";preview.setAttribute("aria-hidden","true");controls.className="button-row";
-  const place=document.createElement("button"),properties=document.createElement("button"),remove=document.createElement("button");place.type=properties.type=remove.type="button";place.textContent="Place Image in Primary Production";properties.textContent="Image Properties";remove.textContent="Remove Image from Project";controls.append(place,properties,remove);section.append(heading,preview,summary,controls);
-  const state={id:item.id,type:"source",section,heading,summary,preview,place,properties,remove,imageOnly:true};editorStates.set(item.id,state);editorNodes.set(item.id,section);el["media-editor-sections"].append(section);
-  section.addEventListener("focus",()=>{activateMedia(item.id,false);activeSectionIndex=sectionElements().indexOf(section);});place.addEventListener("click",()=>{activateMedia(item.id,false);placeImageSource(item);});properties.addEventListener("click",()=>{activateMedia(item.id,false);showProperties();});remove.addEventListener("click",()=>{selectedSourceId=item.id;removeSelectedSource();});updateImageEditor(state,item);return state;
-}
-function updateImageEditor(state,item){state.heading.textContent=editorTitle(item,"source");state.section.setAttribute("aria-label",editorTitle(item,"source"));state.summary.textContent=`Project Image Library item. ${item.label||item.name}. Reusable image. Importing it did not change Primary Production.`;}
+function selectedImage(){return(project.sources||[]).find(item=>item.id===selectedImageId&&item.kind==="Image")||null;}
+function reviewSelectedImage(){const image=selectedImage();if(!image)return announce("No project image selected.",true);announce(`${image.label||image.name}. Reusable project image. Place it in Primary Production when ready.`);}
 function renderEditorNavigation(playable){
   el["media-editor-navigation"].replaceChildren();
   playable.forEach(({item,type,stateId})=>{
@@ -474,6 +467,7 @@ function render({focus=false}={}){
   el["selected-item-summary"].textContent=selected?itemSummary(selected,index,false):"No primary media selected.";
   el["selected-source-summary"].textContent=source?itemSummary(source,sources.findIndex(item=>item.id===selectedSourceId),true):"No source media selected.";
   el["selected-image-summary"].textContent=imageSource?`Reusable project image. ${imageSource.label||imageSource.name}. Importing it did not change Primary Production.`:"No project image selected.";
+  el["image-library-summary"].textContent=imageSources.length?`${imageSources.length} reusable project ${imageSources.length===1?"image":"images"}. Images are excluded from Primary Production until deliberately placed.`:"No project images. Open Media to add images without changing Primary Production.";
   const selectedReplacement=replacements.find(edit=>edit.id===selectedReplacementId);el["selected-replacement-summary"].textContent=selectedReplacement?`${targetText(selectedReplacement.target)} replacement. ${selectedReplacement.label}. From ${readableTime(selectedReplacement.timelineStart)} through ${readableTime(selectedReplacement.timelineEnd)}.`:"No track replacement selected.";el["remove-replacement-button"].disabled=!selectedReplacement;
   el["edit-primary-button"].disabled=!selected;el["move-earlier-button"].disabled=!selected||index===0;el["move-later-button"].disabled=!selected||index===project.items.length-1;el["remove-item-button"].disabled=!selected;
   el["activate-source-button"].disabled=!source;el["make-source-primary-button"].disabled=!source||!project.items.length;el["insert-source-button"].disabled=!source||!selected||!source.duration;el["append-source-button"].disabled=!source||!source.duration;el["remove-source-button"].disabled=!source;
@@ -481,16 +475,16 @@ function render({focus=false}={}){
   renderEditors();
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];const workingName=project.path?project.name:primary?(primary.name||primary.label):"Accessible Media Editor";
   el["project-heading"].textContent=displayName({name:workingName});
-  el["project-summary"].textContent=primary?`${project.items.length} primary sequence ${project.items.length===1?"item":"items"}. ${sources.length} source media ${sources.length===1?"item":"items"}. ${project.path?(project.dirty?"Project has unsaved changes.":"Project saved."):"No project required."}`:"No media open. Press Ctrl+O to begin.";
+  el["project-summary"].textContent=primary?`${project.items.length} primary sequence ${project.items.length===1?"item":"items"}. ${mediaSources.length} source video or audio ${mediaSources.length===1?"item":"items"}. ${imageSources.length} project ${imageSources.length===1?"image":"images"}. ${project.path?(project.dirty?"Project has unsaved changes.":"Project saved."):"No project required."}`:imageSources.length?`No Primary Production. ${imageSources.length} project ${imageSources.length===1?"image":"images"} available in the Project Image Library.`:"No media open. Press Ctrl+O to begin.";
   const replacementCount=(project.trackReplacements||[]).length;
   el["output-summary"].textContent=primary?`Primary Production duration ${readableTime(duration(project))}. ${replacementCount} track ${replacementCount===1?"replacement":"replacements"}. Source media is excluded until inserted or used as a replacement.`:"Open media to begin editing. Project creation is optional.";
   el["export-button"].disabled=!primary;
   const title=`${project.dirty?"* ":""}${workingName}${workingName==="Accessible Media Editor"?"":" - Accessible Media Editor"}`;document.title=title;
   if(invoke&&title!==lastNativeTitle){lastNativeTitle=title;invoke("set_window_title",{title}).catch(()=>{});}
-  if(focus){const active=locateItem(activeMediaId);(active?.item?.kind==="Image"?el["image-items"]:active?.type==="source"?el["source-items"]:el["project-items"]).focus();}
+  if(focus){const active=locateItem(activeMediaId);(active?.type==="source"?el["source-items"]:project.items.length?el["project-items"]:selectedImageId?el["image-items"]:el["project-items"]).focus();}
 }
 
-function sectionElements(){return[[...el["media-editor-sections"].querySelectorAll(".media-item-editor")],el["media-section"],el["output-section"]].flat();}
+function sectionElements(){return[[...el["media-editor-sections"].querySelectorAll(".media-item-editor")],el["media-section"],el["image-library-section"],el["output-section"]].flat();}
 function focusSection(offset){
   if(activeWorkspace!=="media")return announce("AudioStudio Pro does not have editor sections yet.");
   const sections=sectionElements();activeSectionIndex=(activeSectionIndex+offset+sections.length)%sections.length;const section=sections[activeSectionIndex];
@@ -524,7 +518,7 @@ async function importMedia(){
         importedCount++;
       }catch(error){skipped.push({name,reason:String(error)});updateStatus(`${name} could not be imported. Continuing with file ${mediaIndex+2} of ${paths.length}.`);}
     }
-    project=next;render();if(primaryAdded)editorStates.get(PROGRAM_ID)?.section.focus();if(next!==previous)undoStack.push(previous);
+    project=next;render();if(primaryAdded)editorStates.get(PROGRAM_ID)?.section.focus();else if(imageCount)el["image-library-section"].focus();if(next!==previous)undoStack.push(previous);
     const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import${skipped.length===1?`: ${skipped[0].name}.`:"."}`:"";
     if(!importedCount)return announce(`No media was imported.${skippedText}`,true);
     if(imageCount&&sourceCount===imageCount&&!primaryAdded)announce(`${imageCount} ${imageCount===1?"image":"images"} added to the Project Image Library. Primary Production was not changed.${skippedText}`);
@@ -834,7 +828,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.16. Resilient batch import and reusable Project Image Library.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.17. Dedicated Project Image Library navigation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -843,14 +837,14 @@ el["project-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){e
 el["source-items"].addEventListener("change",()=>{selectedSourceId=el["source-items"].value||null;if(selectedSourceId)activateMedia(selectedSourceId,false);});
 el["source-items"].addEventListener("focus",()=>{if(selectedSourceId)activateMedia(selectedSourceId,false);});
 el["source-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();activateMedia(selectedSourceId,true);}});
-el["image-items"].addEventListener("change",()=>{selectedImageId=el["image-items"].value||null;if(selectedImageId)activateMedia(selectedImageId,false);});
-el["image-items"].addEventListener("focus",()=>{if(selectedImageId)activateMedia(selectedImageId,false);});
-el["image-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();activateMedia(selectedImageId,true);}});
+el["image-items"].addEventListener("change",()=>{selectedImageId=el["image-items"].value||null;const image=selectedImage();el["selected-image-summary"].textContent=image?`Reusable project image. ${image.label||image.name}. Importing it did not change Primary Production.`:"No project image selected.";});
+el["image-items"].addEventListener("focus",()=>{activeSectionIndex=sectionElements().indexOf(el["image-library-section"]);updateStatus(`${(project.sources||[]).filter(item=>item.kind==="Image").length} project images.`);});
+el["image-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();reviewSelectedImage();}});
 el["replacement-items"].addEventListener("change",()=>{selectedReplacementId=el["replacement-items"].value||null;render();});
 el["import-media-button"].addEventListener("click",importMedia);el["edit-primary-button"].addEventListener("click",()=>activateMedia(PROGRAM_ID,true));el["activate-source-button"].addEventListener("click",()=>activateMedia(selectedSourceId,true));el["make-source-primary-button"].addEventListener("click",promoteSelectedSource);
 el["add-text-button"].addEventListener("click",showTextDialog);el["move-earlier-button"].addEventListener("click",()=>move(-1));el["move-later-button"].addEventListener("click",()=>move(1));el["remove-item-button"].addEventListener("click",removeSelected);
 el["insert-source-button"].addEventListener("click",()=>insertSelectedSource(false));el["append-source-button"].addEventListener("click",()=>insertSelectedSource(true));el["remove-source-button"].addEventListener("click",removeSelectedSource);
-el["activate-image-button"].addEventListener("click",()=>activateMedia(selectedImageId,true));
+el["activate-image-button"].addEventListener("click",reviewSelectedImage);
 el["place-image-button"].addEventListener("click",()=>{const image=(project.sources||[]).find(item=>item.id===selectedImageId);if(image)placeImageSource(image);});
 el["remove-image-button"].addEventListener("click",()=>{selectedSourceId=selectedImageId;removeSelectedSource();});
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);

@@ -81,3 +81,11 @@ test("batch import skips one invalid file and continues processing the remaining
   assert.match(app,/catch\(error\)\{skipped\.push\(\{name,reason:String\(error\)\}\)/);
   assert.match(app,/files were\"\} skipped without canceling the import/);
 });
+test("Project Image Library is a dedicated section and images are excluded from playable Source editors",()=>{
+  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(html,/id="image-library-section"[^>]*aria-labelledby="image-library-heading"[^>]*tabindex="-1"/);
+  assert.match(html,/id="image-library-heading">Project Image Library</);
+  assert.match(app,/filter\(item=>item\.kind!=="Image"\)\.map/);
+  assert.match(app,/el\["media-section"\],el\["image-library-section"\],el\["output-section"\]/);
+});

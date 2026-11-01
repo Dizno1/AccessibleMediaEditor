@@ -56,14 +56,6 @@
           <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source</button>
         </div>
-        <label for="image-items">Project Image Library</label>
-        <select id="image-items" size="5"><option disabled>No project images</option></select>
-        <p id="selected-image-summary">No project image selected.</p>
-        <div class="button-row">
-          <button type="button" id="activate-image-button" disabled>Go to Selected Source Image</button>
-          <button type="button" id="place-image-button" disabled>Place Selected Image in Primary Production</button>
-          <button type="button" id="remove-image-button" disabled>Remove Image from Project</button>
-        </div>
         <label for="replacement-items">Track replacements</label>
         <select id="replacement-items" size="5">
           <option disabled>No track replacements</option>
@@ -73,6 +65,19 @@
       </section>
 
       <div id="media-editor-sections"></div>
+
+      <section class="editor-section image-library-panel" id="image-library-section" aria-labelledby="image-library-heading" tabindex="-1">
+        <h2 id="image-library-heading">Project Image Library</h2>
+        <p id="image-library-summary">No project images. Open Media to add images without changing Primary Production.</p>
+        <label for="image-items">Reusable project images</label>
+        <select id="image-items" size="8"><option disabled>No project images</option></select>
+        <p id="selected-image-summary">No project image selected.</p>
+        <div class="button-row">
+          <button type="button" id="activate-image-button" disabled>Review Selected Image</button>
+          <button type="button" id="place-image-button" disabled>Place Selected Image in Primary Production</button>
+          <button type="button" id="remove-image-button" disabled>Remove Image from Project</button>
+        </div>
+      </section>
 
       <section class="editor-section output-panel" id="output-section" aria-labelledby="output-section-heading" tabindex="-1">
         <h2 id="output-section-heading">Output</h2>

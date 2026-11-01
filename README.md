@@ -1,5 +1,13 @@
 # Accessible Media Editor
 
+## Build 0.10.17
+
+- Project Image Library is now a dedicated, explicitly named Ctrl+Page Up and Ctrl+Page Down section.
+- Images no longer appear as individual editor sections mixed among Source Video and Source Audio sections.
+- The library reports its image count and explains that images remain excluded until deliberately placed.
+- Enter or Review Selected Image confirms the selected reusable image without moving focus into a false playhead editor.
+- Place Selected Image and Remove Image remain available directly inside the dedicated library.
+
 ## Build 0.10.16
 
 - One invalid or unsupported file no longer cancels an entire multi-file import.
