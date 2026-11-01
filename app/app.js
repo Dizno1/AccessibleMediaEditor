@@ -1,6 +1,6 @@
 import {
   createProject, addItem, moveItem, removeItem, updateItem, splitItem,
-  addSource, removeSource, updateSource, makeSourcePrimary, appendSourceSelection,
+  addSource, removeSource, updateSource, moveSource, appendImageSlideshow, makeSourcePrimary, appendSourceSelection,
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
   bracketSelectionPlan, logicalSegmentsForRanges, removeLogicalRanges, productionRenderItems,
@@ -30,6 +30,7 @@ const PROGRAM_ID="primary-production";
 let mediaClipboard=null;
 let pendingImage=null;
 let imagePlacementResolve=null;
+let slideshowDraft=[];
 let pendingShortReplacement=null;
 let removedSourceUndoId=null;
 let lastExportPath=null;
@@ -434,6 +435,37 @@ function renderEditors(){
 }
 function selectedImage(){return(project.sources||[]).find(item=>item.id===selectedImageId&&item.kind==="Image")||null;}
 function reviewSelectedImage(){const image=selectedImage();if(!image)return announce("No project image selected.",true);announce(`${image.label||image.name}. Reusable project image. Place it in Primary Production when ready.`);}
+function moveSelectedImage(direction){
+  const images=(project.sources||[]).filter(item=>item.kind==="Image"),index=images.findIndex(item=>item.id===selectedImageId),target=index+direction;
+  if(index<0||target<0||target>=images.length)return announce(direction<0?"Image is already first.":"Image is already last.");
+  const previous=project;project=moveSource(project,images[index].id,direction<0?-1:1);undoStack.push(previous);redoStack=[];render();el["image-items"].focus();announce(`${images[index].label||images[index].name} moved ${direction<0?"earlier":"later"}.`);
+}
+function renderSlideshowDraft(){
+  el["slideshow-images"].replaceChildren();slideshowDraft.forEach((slide,index)=>el["slideshow-images"].add(new Option(`Slide ${index+1}. ${slide.image.label||slide.image.name}. ${readableTime(slide.duration)}.`,slide.image.id)));
+  if(slideshowDraft.length){const current=slideshowDraft.find(slide=>slide.image.id===el["slideshow-images"].value)||slideshowDraft[0];el["slideshow-images"].value=current.image.id;writeTime("slideshow-selected-duration",current.duration);}
+  const total=slideshowDraft.reduce((sum,slide)=>sum+slide.duration,0);el["slideshow-summary"].textContent=`${slideshowDraft.length} ${slideshowDraft.length===1?"image":"images"}. Total duration ${readableTime(total)}. No transitions or music will be added in this build.`;
+}
+function openSlideshowDialog(){
+  const images=(project.sources||[]).filter(item=>item.kind==="Image");if(!images.length)return announce("Add images to the Project Image Library first.",true);
+  const defaultDuration=Number(localStorage.getItem("ame-slideshow-duration"))||5;slideshowDraft=images.map(image=>({image:structuredClone(image),duration:defaultDuration}));writeTime("slideshow-default-duration",defaultDuration);renderSlideshowDraft();
+  el["slideshow-destination"].textContent=project.items.length?"The slideshow will be added to the end of Primary Production.":"The slideshow will become Primary Production.";el["slideshow-dialog"].showModal();el["slideshow-heading"].focus();
+}
+function applyDefaultSlideshowDuration(){
+  const seconds=readTime("slideshow-default-duration");if(!Number.isFinite(seconds)||seconds<0.001)return announce("Enter a valid default slide duration.",true);
+  localStorage.setItem("ame-slideshow-duration",String(seconds));slideshowDraft.forEach(slide=>slide.duration=seconds);renderSlideshowDraft();announce(`Default duration applied to all ${slideshowDraft.length} slides.`);
+}
+function updateSelectedSlideDuration(){
+  const selected=slideshowDraft.find(slide=>slide.image.id===el["slideshow-images"].value),seconds=readTime("slideshow-selected-duration");if(!selected)return;
+  if(!Number.isFinite(seconds)||seconds<0.001)return announce("Enter a valid duration for the selected slide.",true);selected.duration=seconds;renderSlideshowDraft();el["slideshow-images"].value=selected.image.id;announce(`Slide duration changed to ${readableTime(seconds)}.`);
+}
+function moveSlideshowImage(direction){
+  const index=slideshowDraft.findIndex(slide=>slide.image.id===el["slideshow-images"].value),target=index+direction;if(index<0||target<0||target>=slideshowDraft.length)return announce(direction<0?"Slide is already first.":"Slide is already last.");
+  const [slide]=slideshowDraft.splice(index,1);slideshowDraft.splice(target,0,slide);renderSlideshowDraft();el["slideshow-images"].value=slide.image.id;el["slideshow-images"].focus();announce(`${slide.image.label||slide.image.name} moved to slide ${target+1}.`);
+}
+function createSlideshow(){
+  if(!slideshowDraft.length)return announce("There are no images in the slideshow.",true);const previous=project,next=appendImageSlideshow(project,slideshowDraft,slideshowDraft.map(()=>id()));if(next===project)return announce("The slideshow could not be created.",true);
+  project=next;selectedId=next.items.at(-1).id;activeMediaId=PROGRAM_ID;undoStack.push(previous);redoStack=[];el["slideshow-dialog"].close();slideshowDraft=[];render();editorStates.get(PROGRAM_ID)?.section.focus();announce(`Slideshow created with ${next.items.length-previous.items.length} images. Duration added ${readableTime(duration(next)-duration(previous))}.`);cue("add");
+}
 function renderEditorNavigation(playable){
   el["media-editor-navigation"].replaceChildren();
   playable.forEach(({item,type,stateId})=>{
@@ -471,7 +503,7 @@ function render({focus=false}={}){
   const selectedReplacement=replacements.find(edit=>edit.id===selectedReplacementId);el["selected-replacement-summary"].textContent=selectedReplacement?`${targetText(selectedReplacement.target)} replacement. ${selectedReplacement.label}. From ${readableTime(selectedReplacement.timelineStart)} through ${readableTime(selectedReplacement.timelineEnd)}.`:"No track replacement selected.";el["remove-replacement-button"].disabled=!selectedReplacement;
   el["edit-primary-button"].disabled=!selected;el["move-earlier-button"].disabled=!selected||index===0;el["move-later-button"].disabled=!selected||index===project.items.length-1;el["remove-item-button"].disabled=!selected;
   el["activate-source-button"].disabled=!source;el["make-source-primary-button"].disabled=!source||!project.items.length;el["insert-source-button"].disabled=!source||!selected||!source.duration;el["append-source-button"].disabled=!source||!source.duration;el["remove-source-button"].disabled=!source;
-  el["activate-image-button"].disabled=!imageSource;el["place-image-button"].disabled=!imageSource;el["remove-image-button"].disabled=!imageSource;
+  el["activate-image-button"].disabled=!imageSource;el["place-image-button"].disabled=!imageSource;el["move-image-earlier-button"].disabled=!imageSource||imageSources.indexOf(imageSource)===0;el["move-image-later-button"].disabled=!imageSource||imageSources.indexOf(imageSource)===imageSources.length-1;el["remove-image-button"].disabled=!imageSource;el["create-slideshow-button"].disabled=!imageSources.length;
   renderEditors();
   const primary=project.items.find(item=>item.role==="primary")||project.items[0];const workingName=project.path?project.name:primary?(primary.name||primary.label):"Accessible Media Editor";
   el["project-heading"].textContent=displayName({name:workingName});
@@ -828,7 +860,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.17. Dedicated Project Image Library navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.18. Accessible slideshow creation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -846,7 +878,9 @@ el["add-text-button"].addEventListener("click",showTextDialog);el["move-earlier-
 el["insert-source-button"].addEventListener("click",()=>insertSelectedSource(false));el["append-source-button"].addEventListener("click",()=>insertSelectedSource(true));el["remove-source-button"].addEventListener("click",removeSelectedSource);
 el["activate-image-button"].addEventListener("click",reviewSelectedImage);
 el["place-image-button"].addEventListener("click",()=>{const image=(project.sources||[]).find(item=>item.id===selectedImageId);if(image)placeImageSource(image);});
+el["move-image-earlier-button"].addEventListener("click",()=>moveSelectedImage(-1));el["move-image-later-button"].addEventListener("click",()=>moveSelectedImage(1));
 el["remove-image-button"].addEventListener("click",()=>{selectedSourceId=selectedImageId;removeSelectedSource();});
+el["create-slideshow-button"].addEventListener("click",openSlideshowDialog);
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);
 el["save-project-button"].addEventListener("click",()=>saveProject(true));el["media-editor-tab"].addEventListener("click",()=>switchWorkspace(1,"media"));el["audio-studio-tab"].addEventListener("click",()=>switchWorkspace(1,"audio"));
 el["export-button"].addEventListener("click",exportMedia);
@@ -859,6 +893,7 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
 el["save-properties-button"].addEventListener("click",saveProperties);el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());el["save-text-button"].addEventListener("click",saveText);el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 el["insert-image-confirm"].addEventListener("click",confirmImagePlacement);el["insert-image-cancel"].addEventListener("click",()=>finishImagePlacement(null));
+el["slideshow-apply-default"].addEventListener("click",applyDefaultSlideshowDuration);el["slideshow-update-duration"].addEventListener("click",updateSelectedSlideDuration);el["slideshow-move-earlier"].addEventListener("click",()=>moveSlideshowImage(-1));el["slideshow-move-later"].addEventListener("click",()=>moveSlideshowImage(1));el["slideshow-create"].addEventListener("click",createSlideshow);el["slideshow-cancel"].addEventListener("click",()=>{el["slideshow-dialog"].close();slideshowDraft=[];announce("Slideshow creation canceled.");});el["slideshow-images"].addEventListener("change",()=>{const slide=slideshowDraft.find(item=>item.image.id===el["slideshow-images"].value);if(slide)writeTime("slideshow-selected-duration",slide.duration);});
 el["short-source-replace"].addEventListener("click",()=>applyPendingShortReplacement("replace"));el["short-source-loop"].addEventListener("click",()=>applyPendingShortReplacement("loop"));el["short-source-cancel"].addEventListener("click",()=>applyPendingShortReplacement("cancel"));
 if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
 render();

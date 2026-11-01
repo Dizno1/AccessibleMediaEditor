@@ -14,6 +14,22 @@ export function updateItem(project, id, patch) { const next = structuredClone(pr
 export function addSource(project, item) { const next = structuredClone(project); next.sources = next.sources || []; next.sources.push(item); next.dirty = true; return next; }
 export function removeSource(project, id) { const next = structuredClone(project); next.sources = (next.sources || []).filter(item => item.id !== id); next.dirty = true; return next; }
 export function updateSource(project, id, patch) { const next = structuredClone(project); const item = (next.sources || []).find(source => source.id === id); if (!item) return project; Object.assign(item, patch); next.dirty = true; return next; }
+export function moveSource(project, id, direction) {
+  const next=structuredClone(project);const sources=next.sources||[];const index=sources.findIndex(item=>item.id===id);const target=index+direction;
+  if(index<0||target<0||target>=sources.length)return project;
+  const [item]=sources.splice(index,1);sources.splice(target,0,item);next.dirty=true;return next;
+}
+export function appendImageSlideshow(project, slides, newIds) {
+  if(!Array.isArray(slides)||!slides.length||!Array.isArray(newIds)||newIds.length!==slides.length)return project;
+  const next=structuredClone(project);const hadPrimary=next.items.length>0;
+  slides.forEach((slide,index)=>{
+    const seconds=Math.max(0,Number(slide.duration)||0);if(!seconds)return;
+    const image={...structuredClone(slide.image),id:newIds[index],duration:seconds,inPoint:0,outPoint:null,editSegments:[{start:0,end:seconds}],trackTarget:"video",role:hadPrimary||index?"inserted":"primary"};
+    next.items.push(image);
+  });
+  if(next.items.length===project.items.length)return project;
+  next.dirty=true;return next;
+}
 export function makeSourcePrimary(project, sourceId) {
   if (!project.items.length) return project;
   const sourceIndex = (project.sources || []).findIndex(item => item.id === sourceId);

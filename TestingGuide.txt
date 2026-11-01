@@ -303,3 +303,19 @@ Every imported video or audio file is converted to an app-owned working format b
 Build 0.10.0 renders sequential video and audio items plus A, V, and B track replacements into one file. Text, image, and transition items are not rendered yet and must be removed before export.
 
 AudioStudio Pro recording and processing are not implemented in this build.
+Build 0.10.18 Quick Slideshow Test
+
+1. Open at least three image files. Confirm they are added to the Project Image Library and do not immediately alter Primary Production.
+2. Move one image earlier and later using the labeled buttons. Confirm the library order changes and JAWS announces the result.
+3. Activate Create Slideshow from All Images.
+4. Confirm focus enters the Create Slideshow dialog and JAWS reports the number of images, total duration, and destination.
+5. Apply a five-second default duration to all slides.
+6. Select one slide, give it a different exact duration, and apply the change.
+7. Move one slide earlier or later inside the dialog.
+8. Create the slideshow. Confirm JAWS announces the image count and added duration.
+9. Play Primary Production. Confirm every image appears in the chosen order for its assigned duration.
+10. Use Undo and Redo. Confirm the complete slideshow is removed and restored as one operation.
+11. Export the production and confirm the saved video contains the complete slideshow.
+
+Expected limitation: Build 0.10.18 uses direct cuts. Music and transitions are intentionally not part of this build.
+

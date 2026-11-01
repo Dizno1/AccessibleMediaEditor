@@ -66,6 +66,22 @@
 
       <div id="media-editor-sections"></div>
 
+      <section class="editor-section image-library-panel" id="image-library-section" aria-labelledby="image-library-heading" tabindex="-1">
+        <h2 id="image-library-heading">Project Image Library</h2>
+        <p id="image-library-summary">No project images. Open Media to add images without changing Primary Production.</p>
+        <label for="image-items">Reusable project images</label>
+        <select id="image-items" size="8"><option disabled>No project images</option></select>
+        <p id="selected-image-summary">No project image selected.</p>
+        <div class="button-row">
+          <button type="button" id="activate-image-button" disabled>Review Selected Image</button>
+          <button type="button" id="place-image-button" disabled>Place Selected Image in Primary Production</button>
+          <button type="button" id="move-image-earlier-button" disabled>Move Image Earlier</button>
+          <button type="button" id="move-image-later-button" disabled>Move Image Later</button>
+          <button type="button" id="remove-image-button" disabled>Remove Image from Project</button>
+          <button type="button" id="create-slideshow-button" disabled>Create Slideshow from All Images</button>
+        </div>
+      </section>
+
       <section class="editor-section output-panel" id="output-section" aria-labelledby="output-section-heading" tabindex="-1">
         <h2 id="output-section-heading">Output</h2>
         <p id="output-summary">Open media to begin editing. Project creation is optional from the File menu.</p>
@@ -121,6 +137,79 @@
       <div class="button-row">
         <button type="button" id="save-properties-button">Save Properties</button>
         <button type="button" id="cancel-properties-button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="short-source-dialog" aria-labelledby="short-source-heading">
+    <form method="dialog">
+      <h2 id="short-source-heading">Source Is Shorter Than Primary Selection</h2>
+      <p id="short-source-message"></p>
+      <div class="button-row">
+        <button type="button" id="short-source-replace">Replace Matching Duration</button>
+        <button type="button" id="short-source-loop">Loop Source to Fill Selection</button>
+        <button type="button" id="short-source-cancel">Cancel and Adjust Selection</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="image-placement-dialog" aria-labelledby="image-placement-heading" aria-describedby="image-placement-instructions">
+    <form method="dialog">
+      <h2 id="image-placement-heading" tabindex="-1">Place Still Image</h2>
+      <p id="image-placement-name"></p>
+      <p id="image-placement-instructions">Choose whether to cover the retained Primary range or display this image at the Primary playhead for an exact duration. Existing audio is preserved.</p>
+      <fieldset>
+        <legend>Image timing</legend>
+        <label><input type="radio" name="image-timing" id="image-use-range" value="range"> Match the retained Primary Production range</label>
+        <p id="image-range-summary"></p>
+        <label><input type="radio" name="image-timing" id="image-use-exact" value="exact"> Enter an exact duration</label>
+      </fieldset>
+      <fieldset class="time-fields" id="image-duration-fields">
+        <legend>Exact image duration</legend>
+        <label for="image-duration-hours">Hours</label><input type="number" id="image-duration-hours" min="0" step="1">
+        <label for="image-duration-minutes">Minutes</label><input type="number" id="image-duration-minutes" min="0" max="59" step="1">
+        <label for="image-duration-seconds">Seconds</label><input type="number" id="image-duration-seconds" min="0" max="59" step="1">
+        <label for="image-duration-milliseconds">Milliseconds</label><input type="number" id="image-duration-milliseconds" min="0" max="999" step="1">
+      </fieldset>
+      <p>The image will fill the video frame without stretching. Empty space will be black.</p>
+      <div class="button-row">
+        <button type="button" id="insert-image-confirm">Insert Image</button>
+        <button type="button" id="insert-image-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="slideshow-dialog" aria-labelledby="slideshow-heading" aria-describedby="slideshow-summary slideshow-destination">
+    <form method="dialog">
+      <h2 id="slideshow-heading" tabindex="-1">Create Slideshow</h2>
+      <p id="slideshow-summary"></p>
+      <p id="slideshow-destination"></p>
+      <label for="slideshow-images">Slides in presentation order</label>
+      <select id="slideshow-images" size="8"></select>
+      <div class="button-row">
+        <button type="button" id="slideshow-move-earlier">Move Slide Earlier</button>
+        <button type="button" id="slideshow-move-later">Move Slide Later</button>
+      </div>
+      <fieldset class="time-fields">
+        <legend>Default duration for every slide</legend>
+        <label for="slideshow-default-duration-hours">Hours</label><input type="number" id="slideshow-default-duration-hours" min="0" step="1">
+        <label for="slideshow-default-duration-minutes">Minutes</label><input type="number" id="slideshow-default-duration-minutes" min="0" max="59" step="1">
+        <label for="slideshow-default-duration-seconds">Seconds</label><input type="number" id="slideshow-default-duration-seconds" min="0" max="59" step="1">
+        <label for="slideshow-default-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-default-duration-milliseconds" min="0" max="999" step="1">
+      </fieldset>
+      <button type="button" id="slideshow-apply-default">Apply Default Duration to All Slides</button>
+      <fieldset class="time-fields">
+        <legend>Duration for selected slide</legend>
+        <label for="slideshow-selected-duration-hours">Hours</label><input type="number" id="slideshow-selected-duration-hours" min="0" step="1">
+        <label for="slideshow-selected-duration-minutes">Minutes</label><input type="number" id="slideshow-selected-duration-minutes" min="0" max="59" step="1">
+        <label for="slideshow-selected-duration-seconds">Seconds</label><input type="number" id="slideshow-selected-duration-seconds" min="0" max="59" step="1">
+        <label for="slideshow-selected-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-selected-duration-milliseconds" min="0" max="999" step="1">
+      </fieldset>
+      <button type="button" id="slideshow-update-duration">Apply Duration to Selected Slide</button>
+      <p>This first slideshow build uses direct cuts between images and does not add music. Both features remain next on the roadmap.</p>
+      <div class="button-row">
+        <button type="button" id="slideshow-create">Create Slideshow</button>
+        <button type="button" id="slideshow-cancel">Cancel</button>
       </div>
     </form>
   </dialog>

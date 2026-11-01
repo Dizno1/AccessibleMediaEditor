@@ -89,3 +89,12 @@ test("Project Image Library is a dedicated section and images are excluded from 
   assert.match(app,/filter\(item=>item\.kind!=="Image"\)\.map/);
   assert.match(app,/el\["media-section"\],el\["image-library-section"\],el\["output-section"\]/);
 });
+test("slideshow dialog exposes keyboard ordering and exact duration controls",()=>{
+  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(html,/id="create-slideshow-button"[^>]*>Create Slideshow from All Images/);
+  assert.match(html,/id="slideshow-dialog"[^>]*aria-labelledby="slideshow-heading"/);
+  assert.match(html,/id="slideshow-move-earlier"/);
+  assert.match(html,/id="slideshow-selected-duration-milliseconds"/);
+  assert.match(app,/function createSlideshow\(\)/);
+});

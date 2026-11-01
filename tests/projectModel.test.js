@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("items add, move, update, and remove without mutating earlier states", () => {
@@ -193,6 +193,22 @@ test("a still image can occupy an exact retained audio replacement range",()=>{
   assert.equal(replacement.timelineEnd,17.75);
   assert.equal(replacement.mediaKind,"Image");
   assert.equal(replacement.trackTarget,"video");
+});
+test("project images reorder without changing Primary Production",()=>{
+  let project=addItem(createProject(),item("primary",10));
+  project=addSource(project,{id:"one",name:"one.jpg",kind:"Image",source:"C:/one.jpg",duration:5});
+  project=addSource(project,{id:"two",name:"two.jpg",kind:"Image",source:"C:/two.jpg",duration:5});
+  const moved=moveSource(project,"two",-1);
+  assert.deepEqual(moved.sources.map(source=>source.id),["two","one"]);
+  assert.equal(duration(moved),10);
+});
+test("a slideshow uses ordered images and exact individual durations",()=>{
+  const images=[{id:"one",name:"one.jpg",kind:"Image",source:"C:/one.jpg"},{id:"two",name:"two.jpg",kind:"Image",source:"C:/two.jpg"}];
+  const result=appendImageSlideshow(createProject("Slideshow"),[{image:images[1],duration:4.25},{image:images[0],duration:6.5}],["slide-two","slide-one"]);
+  assert.deepEqual(result.items.map(value=>value.id),["slide-two","slide-one"]);
+  assert.deepEqual(result.items.map(value=>value.role),["primary","inserted"]);
+  assert.equal(duration(result),10.75);
+  assert.deepEqual(productionRenderItems(result).map(value=>value.segments),[[{start:0,end:4.25}],[{start:0,end:6.5}]]);
 });
 test("a saved track replacement can be removed nondestructively",()=>{
   let project=addItem(createProject(),{...item("primary",30),editSegments:[{start:0,end:30}]});

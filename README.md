@@ -1,5 +1,17 @@
 # Accessible Media Editor
 
+## Build 0.10.18
+
+Build 0.10.18 begins Quick Slideshow authoring.
+
+- Create Slideshow from All Images uses every reusable Project Image Library item.
+- Images can be reordered with labeled buttons; dragging is never required.
+- One default duration can be applied to every slide.
+- The selected slide can receive an exact duration down to one millisecond.
+- A slideshow becomes Primary Production when no production exists, or is added to the end of the existing production.
+- The complete operation supports Undo and Redo.
+- This build uses direct cuts and does not yet add music or transitions.
+
 ## Build 0.10.17
 
 - Project Image Library is now a dedicated, explicitly named Ctrl+Page Up and Ctrl+Page Down section.

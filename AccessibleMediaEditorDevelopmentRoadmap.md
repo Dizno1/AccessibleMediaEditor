@@ -1,6 +1,6 @@
 # Accessible Media Editor Development Roadmap
 
-## Implemented through Build 0.10.15
+## Implemented through Build 0.10.18
 
 - Exact-duration still-image placement.
 - Still-image placement matched to the retained range from the most recent Audio Only replacement.
@@ -10,14 +10,17 @@
 - Reusable Project Image Library. Importing an image does not immediately change Primary Production.
 - A filename-titled Source Image section for every imported image, reachable with Ctrl+Page Up and Ctrl+Page Down.
 - Deliberate Place Image in Primary Production controls in the library and Source Image editor.
+- Keyboard reordering for reusable Project Image Library items.
+- Create Slideshow from All Images with keyboard ordering, a default duration, and exact per-slide duration overrides.
+- Slideshow creation as a new Primary Production or addition to the end of an existing production.
 
 ## Accessible Slideshow and Presentation Authoring
 
 ### Quick Slideshow
 
 - Import multiple images into the Project Image Library without altering Primary Production.
-- Reorder images using accessible list commands rather than requiring thumbnail dragging.
-- Apply a default duration to all images or an exact duration to each image.
+- Reorder images using accessible list commands rather than requiring thumbnail dragging. Implemented in Build 0.10.18.
+- Apply a default duration to all images or an exact duration to each image. Implemented in Build 0.10.18.
 - Fit image timing to a selected music track, including an option to keep the final image visible until the music ends.
 - Insert transitions between images and preview the assembled slideshow immediately.
 - Allow video clips inside a slideshow while keeping the same Primary Production workflow.
