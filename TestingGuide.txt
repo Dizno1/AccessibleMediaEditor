@@ -319,3 +319,15 @@ Build 0.10.18 Quick Slideshow Test
 
 Expected limitation: Build 0.10.18 uses direct cuts. Music and transitions are intentionally not part of this build.
 
+Build 0.10.19 Library Removal Test
+
+1. Import at least three images and two video or audio Source items.
+2. In the Project Image Library, select the middle image and press Delete.
+3. Confirm JAWS names the removed image, says it was removed from the Project Image Library, reports the remaining count, and keeps focus in the image list on the next image.
+4. Press Ctrl+Z. Confirm the image returns at its original position, remains selected, and focus returns to the image list.
+5. In the Source media list, select the final item and press Delete.
+6. Confirm JAWS names the removed Source, reports the remaining Source count, and keeps focus in the Source list on the preceding item.
+7. Press Ctrl+Z. Confirm the Source returns at its original position, remains selected, and focus returns to the Source list.
+8. Repeat one removal using each labeled Remove button. Confirm button and Delete behavior match.
+9. Confirm the original files and any material already used in Primary Production remain unchanged.
+

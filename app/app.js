@@ -32,7 +32,7 @@ let pendingImage=null;
 let imagePlacementResolve=null;
 let slideshowDraft=[];
 let pendingShortReplacement=null;
-let removedSourceUndoId=null;
+let removedLibraryItemUndo=null;
 let lastExportPath=null;
 let exportConversionStartedAt=null;
 let exportHeartbeatTimer=null;
@@ -192,8 +192,8 @@ function updateLocated(idValue,patch){
   const location=locateItem(idValue);if(!location)return project;
   return location.type==="source"?updateSource(project,idValue,patch):updateItem(project,location.item.id,patch);
 }
-function rememberChange(next,message,focus=false,undoFocusId=null){
-  undoStack.push(project);if(undoStack.length>50)undoStack.shift();redoStack=[];removedSourceUndoId=undoFocusId;project=next;render({focus});announce(message);
+function rememberChange(next,message,focus=false,undoLibraryItem=null){
+  undoStack.push(project);if(undoStack.length>50)undoStack.shift();redoStack=[];removedLibraryItemUndo=undoLibraryItem;project=next;render({focus});announce(message);
 }
 
 function getState(item){
@@ -637,7 +637,21 @@ function clearAllEditorMarks(){for(const state of editorStates.values())clearEdi
 function clearProgramMarks(){clearEditorMarks(editorStates.get(PROGRAM_ID));}
 function move(direction){const item=sequenceItem();if(!item)return announce("No sequence item selected.",true);const next=moveItem(project,item.id,direction);if(next===project)return announce(direction<0?"Already first.":"Already last.");clearProgramMarks();rememberChange(next,`${item.label||item.name} moved ${direction<0?"earlier":"later"}.`,true);}
 function removeSelected(){const item=sequenceItem();if(!item)return;const index=project.items.findIndex(value=>value.id===item.id),next=removeItem(project,item.id);selectedId=next.items[Math.min(index,next.items.length-1)]?.id||null;activeMediaId=next.items.length?PROGRAM_ID:selectedSourceId;clearProgramMarks();rememberChange(next,`${item.label||item.name} removed from Primary Production.`);cue("remove");}
-function removeSelectedSource(){const item=activeLocation()?.type==="source"?activeLocation().item:sourceItem();if(!item)return;clearAllEditorMarks();const currentIndex=(project.sources||[]).findIndex(value=>value.id===item.id),next=removeSource(project,item.id);selectedSourceId=next.sources[Math.min(currentIndex,next.sources.length-1)]?.id||null;if(activeMediaId===item.id)activeMediaId=selectedSourceId||PROGRAM_ID;rememberChange(next,"Source removed. Press Ctrl+Z to restore it. Original file unchanged.",false,item.id);editorStates.get(activeMediaId)?.section.focus();cue("remove");}
+function removeLibraryItem(collection){
+  const images=(project.sources||[]).filter(item=>item.kind==="Image"),media=(project.sources||[]).filter(item=>item.kind!=="Image");
+  const items=collection==="image"?images:media,idValue=collection==="image"?selectedImageId:selectedSourceId,item=items.find(value=>value.id===idValue);
+  if(!item)return announce(collection==="image"?"No project image selected.":"No source video or audio selected.",true);
+  clearAllEditorMarks();
+  const currentIndex=items.findIndex(value=>value.id===item.id),next=removeSource(project,item.id),remaining=(next.sources||[]).filter(value=>collection==="image"?value.kind==="Image":value.kind!=="Image");
+  const nextId=remaining[Math.min(currentIndex,remaining.length-1)]?.id||null;
+  if(collection==="image")selectedImageId=nextId;else selectedSourceId=nextId;
+  if(activeMediaId===item.id)activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);
+  const noun=collection==="image"?"Project Image Library":"Source media",countLabel=collection==="image"?`${remaining.length} ${remaining.length===1?"image remains":"images remain"}`:`${remaining.length} source ${remaining.length===1?"item remains":"items remain"}`;
+  rememberChange(next,`${item.label||item.name} removed from ${noun}. ${countLabel}. Press Ctrl+Z to restore it. Original file unchanged.`,false,{id:item.id,collection,label:item.label||item.name});
+  el[collection==="image"?"image-items":"source-items"].focus();cue("remove");
+}
+function removeSelectedSource(){removeLibraryItem("source");}
+function removeSelectedImage(){removeLibraryItem("image");}
 function removeSelectedReplacement(){const edit=(project.trackReplacements||[]).find(value=>value.id===selectedReplacementId);if(!edit)return;const next=removeTrackReplacement(project,edit.id);selectedReplacementId=next.trackReplacements.at(-1)?.id||null;rememberChange(next,"Track replacement removed. Original media restored for that range.");cue("remove");}
 function promoteSelectedSource(){
   const source=activeLocation()?.type==="source"?activeLocation().item:sourceItem(),oldPrimary=project.items[0];
@@ -738,7 +752,7 @@ function addTransition(){const after=selectedId,item={id:id(),source:null,name:"
 function undo(){
   const state=activeState();
   if(state?.markHistory?.length){const change=state.markHistory.pop();if(change.which==="in")state.markIn=change.previous;else state.markOut=change.previous;const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);return announce(`${change.which==="in"?"Left":"Right"} bracket removed.`);}
-  if(!undoStack.length)return announce("Nothing to undo.");const restoreSourceId=removedSourceUndoId,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);if(restoreSourceId&&(project.sources||[]).some(item=>item.id===restoreSourceId)){selectedSourceId=restoreSourceId;activeMediaId=restoreSourceId;}else activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedSourceUndoId=null;render();editorStates.get(activeMediaId)?.section.focus();announce(restoreSourceId?"Source restored.":"Undo completed.");
+  if(!undoStack.length)return announce("Nothing to undo.");const restore=removedLibraryItemUndo,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:((project.sources||[]).find(item=>item.kind!=="Image")?.id||null);if(restore&&(project.sources||[]).some(item=>item.id===restore.id)){if(restore.collection==="image")selectedImageId=restore.id;else selectedSourceId=restore.id;}activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedLibraryItemUndo=null;render();if(restore){const list=el[restore.collection==="image"?"image-items":"source-items"],remaining=(project.sources||[]).filter(item=>restore.collection==="image"?item.kind==="Image":item.kind!=="Image").length;list.focus();announce(`${restore.label} restored to ${restore.collection==="image"?"Project Image Library":"Source media"}. ${remaining} ${restore.collection==="image"?(remaining===1?"image":"images"):(remaining===1?"source item":"source items")} available.`);}else{editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");}
 }
 function redo(){if(!redoStack.length)return announce("Nothing to redo.");const previousActiveId=activeMediaId,previousSelectedSourceId=selectedSourceId;undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);render();editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}
 
@@ -860,7 +874,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.18. Accessible slideshow creation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.10.19. Accessible library removal and focus restoration.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -868,10 +882,10 @@ el["project-items"].addEventListener("change",()=>{selectedId=el["project-items"
 el["project-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();activateMedia(PROGRAM_ID,true);}});
 el["source-items"].addEventListener("change",()=>{selectedSourceId=el["source-items"].value||null;if(selectedSourceId)activateMedia(selectedSourceId,false);});
 el["source-items"].addEventListener("focus",()=>{if(selectedSourceId)activateMedia(selectedSourceId,false);});
-el["source-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();activateMedia(selectedSourceId,true);}});
+el["source-items"].addEventListener("keydown",event=>{if(event.key==="Delete"){event.preventDefault();event.stopPropagation();removeSelectedSource();}else if(event.key==="Enter"){event.preventDefault();activateMedia(selectedSourceId,true);}});
 el["image-items"].addEventListener("change",()=>{selectedImageId=el["image-items"].value||null;const image=selectedImage();el["selected-image-summary"].textContent=image?`Reusable project image. ${image.label||image.name}. Importing it did not change Primary Production.`:"No project image selected.";});
 el["image-items"].addEventListener("focus",()=>{activeSectionIndex=sectionElements().indexOf(el["image-library-section"]);updateStatus(`${(project.sources||[]).filter(item=>item.kind==="Image").length} project images.`);});
-el["image-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();reviewSelectedImage();}});
+el["image-items"].addEventListener("keydown",event=>{if(event.key==="Delete"){event.preventDefault();event.stopPropagation();removeSelectedImage();}else if(event.key==="Enter"){event.preventDefault();reviewSelectedImage();}});
 el["replacement-items"].addEventListener("change",()=>{selectedReplacementId=el["replacement-items"].value||null;render();});
 el["import-media-button"].addEventListener("click",importMedia);el["edit-primary-button"].addEventListener("click",()=>activateMedia(PROGRAM_ID,true));el["activate-source-button"].addEventListener("click",()=>activateMedia(selectedSourceId,true));el["make-source-primary-button"].addEventListener("click",promoteSelectedSource);
 el["add-text-button"].addEventListener("click",showTextDialog);el["move-earlier-button"].addEventListener("click",()=>move(-1));el["move-later-button"].addEventListener("click",()=>move(1));el["remove-item-button"].addEventListener("click",removeSelected);
@@ -879,7 +893,7 @@ el["insert-source-button"].addEventListener("click",()=>insertSelectedSource(fal
 el["activate-image-button"].addEventListener("click",reviewSelectedImage);
 el["place-image-button"].addEventListener("click",()=>{const image=(project.sources||[]).find(item=>item.id===selectedImageId);if(image)placeImageSource(image);});
 el["move-image-earlier-button"].addEventListener("click",()=>moveSelectedImage(-1));el["move-image-later-button"].addEventListener("click",()=>moveSelectedImage(1));
-el["remove-image-button"].addEventListener("click",()=>{selectedSourceId=selectedImageId;removeSelectedSource();});
+el["remove-image-button"].addEventListener("click",removeSelectedImage);
 el["create-slideshow-button"].addEventListener("click",openSlideshowDialog);
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);
 el["save-project-button"].addEventListener("click",()=>saveProject(true));el["media-editor-tab"].addEventListener("click",()=>switchWorkspace(1,"media"));el["audio-studio-tab"].addEventListener("click",()=>switchWorkspace(1,"audio"));

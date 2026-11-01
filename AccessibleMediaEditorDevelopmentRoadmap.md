@@ -1,6 +1,6 @@
 # Accessible Media Editor Development Roadmap
 
-## Implemented through Build 0.10.18
+## Implemented through Build 0.10.19
 
 - Exact-duration still-image placement.
 - Still-image placement matched to the retained range from the most recent Audio Only replacement.
@@ -13,6 +13,7 @@
 - Keyboard reordering for reusable Project Image Library items.
 - Create Slideshow from All Images with keyboard ordering, a default duration, and exact per-slide duration overrides.
 - Slideshow creation as a new Primary Production or addition to the end of an existing production.
+- Direct Delete and labeled-button removal from the Project Image Library and Source media lists, with persistent list focus, exact announcements, and Undo restoration.
 
 ## Accessible Slideshow and Presentation Authoring
 

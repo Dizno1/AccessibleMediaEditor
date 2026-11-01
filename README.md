@@ -1,5 +1,16 @@
 # Accessible Media Editor
 
+## Build 0.10.19
+
+Build 0.10.19 corrects Project Image Library and Source media removal.
+
+- Delete removes the selected item directly from either list.
+- The corresponding labeled Remove button remains available.
+- Focus stays in the same list after removal, with the next item selected or the previous item when the last item was removed.
+- JAWS receives the exact removed filename, collection name, and remaining item count.
+- Ctrl+Z restores the item, its original position, its selection, and focus to the correct list.
+- Original files and media already used in Primary Production remain unchanged.
+
 ## Build 0.10.18
 
 Build 0.10.18 begins Quick Slideshow authoring.

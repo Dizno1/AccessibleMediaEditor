@@ -98,3 +98,15 @@ test("slideshow dialog exposes keyboard ordering and exact duration controls",()
   assert.match(html,/id="slideshow-selected-duration-milliseconds"/);
   assert.match(app,/function createSlideshow\(\)/);
 });
+test("image and Source lists support direct Delete with persistent collection focus and exact restoration",()=>{
+  const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  assert.match(html,/id="remove-source-button"[^>]*>Remove Source \(Delete\)/);
+  assert.match(html,/id="remove-image-button"[^>]*>Remove Image from Project \(Delete\)/);
+  assert.match(app,/function removeLibraryItem\(collection\)/);
+  assert.match(app,/event\.key==="Delete"[^}]*removeSelectedSource\(\)/);
+  assert.match(app,/event\.key==="Delete"[^}]*removeSelectedImage\(\)/);
+  assert.match(app,/removed from \$\{noun\}\. \$\{countLabel\}/);
+  assert.match(app,/el\[collection==="image"\?"image-items":"source-items"\]\.focus\(\)/);
+  assert.match(app,/restored to \$\{restore\.collection==="image"\?"Project Image Library":"Source media"\}/);
+});
