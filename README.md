@@ -359,3 +359,5 @@ Windows installers are produced as MSI and NSIS packages by the GitHub Actions w
 
 ## Version 0.11.5 recovery
 Restores the original native Windows Open Media picker from the user-confirmed working 0.10.21 build, including multi-file selection and File Name clipboard support. This replaces the 0.11.4 rfd picker. No presentation-specific workflow is moved into Media Editor. Windows JAWS validation remains required.
+
+Version 0.11.6 startup recovery: Restored four functions accidentally removed during presentation separation: saveSourceClip, renderEditorNavigation, updateActiveAppearance, activateMedia. Their absence caused a ReferenceError during action registration and initial render, preventing Open Media and keyboard commands from working. Tested frontend startup and Open Media dispatch in a real Chromium runtime with mocked native Tauri invoke.

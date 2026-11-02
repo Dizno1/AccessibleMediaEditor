@@ -450,6 +450,24 @@ function moveSelectedImage(direction){
   if(index<0||target<0||target>=images.length)return announce(direction<0?"Image is already first.":"Image is already last.");
   const previous=project;project=moveSource(project,images[index].id,direction<0?-1:1);undoStack.push(previous);redoStack=[];render();el["image-items"].focus();announce(`${images[index].label||images[index].name} moved ${direction<0?"earlier":"later"}.`);
 }
+function renderEditorNavigation(playable){
+  el["media-editor-navigation"].replaceChildren();
+  playable.forEach(({item,type,stateId})=>{
+    const button=document.createElement("button");button.type="button";button.className="section-tab";button.textContent=editorTitle(item,type);
+    button.addEventListener("click",()=>activateMedia(stateId,true));el["media-editor-navigation"].append(button);
+  });
+}
+function updateActiveAppearance(){
+  for(const [idValue,state]of editorStates)state.section.classList.toggle("active-editor",idValue===activeMediaId);
+}
+function activateMedia(idValue,focus=true){
+  const location=locateItem(idValue),state=editorStates.get(idValue);if(!location||!state)return;
+  if(activeMediaId&&activeMediaId!==idValue){const old=editorStates.get(activeMediaId);if(old?.video&&!old.video.paused)old.video.pause();}
+  activeMediaId=idValue;if(location.type==="source"){if(location.item.kind==="Image")selectedImageId=idValue;else selectedSourceId=idValue;}else if(location.type!=="program")selectedId=idValue;updateActiveAppearance();
+  if(focus)state.section.focus();
+  updateStatus(`${editorTitle(location.item,location.type)} active.`);
+}
+
 function render({focus=false}={}){
   el["project-items"].replaceChildren();
   if(!project.items.length){const option=new Option("No primary media","");option.disabled=true;el["project-items"].add(option);selectedId=null;}
@@ -481,6 +499,26 @@ function render({focus=false}={}){
   if(invoke&&title!==lastNativeTitle){lastNativeTitle=title;invoke("set_window_title",{title}).catch(()=>{});}
   if(activeWorkspace==="presentation")renderPresentation();
   if(focus){const active=locateItem(activeMediaId);(active?.type==="source"?el["source-items"]:project.items.length?el["project-items"]:selectedImageId?el["image-items"]:el["project-items"]).focus();}
+}
+
+function saveSourceClip(){
+  const location=activeLocation(),state=activeState();
+  if(!location||!["source","program"].includes(location.type)||location.item.kind!=="Video"||!state)return announce("Activate a Source Video or single-video Primary Production before saving a clip.",true);
+  if(location.type==="program"&&(project.items.length!==1||project.trackReplacements?.length))return announce("For multi-item productions, select the original video in Source Media before saving a clip.",true);
+  const plan=bracketSelectionPlan(location.type==="program"?duration(project):itemDuration(location.item),state.markIn,state.markOut);
+  if(!plan||plan.selectedRanges.length!==1)return announce("Set outward Left and Right Brackets around one continuous video clip before saving.",true);
+  const range=plan.selectedRanges[0],length=range.to-range.from;
+  if(length<0.001)return announce("Select a nonempty video clip.",true);
+  const source=location.item,number=(project.sources||[]).filter(item=>item.savedClip).length+1;
+  const clip={...structuredClone(source),id:id(),role:"source",savedClip:true,label:`Clip ${number} - ${source.label||source.name} - ${readableTime(range.from)} to ${readableTime(range.to)}`,inPoint:0,outPoint:null,editSegments:logicalSegmentsForRanges(source,[range]),workingSource:source.workingSource||source.source};
+  const next=addSource(project,clip);
+  const end=range.to;
+  clearEditorMarks(state);
+  setEditorPosition(state,end,true);
+  if(location.type==="source")selectedSourceId=source.id;activeMediaId=state.id;
+  rememberChange(next,`Clip ${number} saved. Start ${readableTime(range.from)}. End ${readableTime(end)}. Duration ${readableTime(length)}. Playhead at ${readableTime(end)}. Ready for next selection.`);
+  const updated=editorStates.get(state.id);
+  if(updated){setEditorPosition(updated,end,true);updated.section.focus();}
 }
 
 function sectionElements(){return[[...el["media-editor-sections"].querySelectorAll(".media-item-editor")],el["media-section"],el["image-library-section"],el["output-section"]].flat();}
@@ -930,7 +968,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.5. Independent Presentation sequence with shared source media and quiet workspace navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.6. Independent Presentation sequence with shared source media and quiet workspace navigation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

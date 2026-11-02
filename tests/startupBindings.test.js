@@ -12,3 +12,9 @@ test("new presentation command exists and is wired",()=>{
   assert.match(html,/id="presentation-new"/);
   assert.match(app,/el\["presentation-new"\]\.addEventListener\("click",newPresentation\)/);
 });
+
+test("critical editor functions required by startup and media import are defined",()=>{
+  for(const name of ["saveSourceClip","renderEditorNavigation","updateActiveAppearance","activateMedia"]){
+    assert.match(app,new RegExp(`function ${name}\\(`),`${name} must exist`);
+  }
+});
