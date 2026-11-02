@@ -98,21 +98,20 @@
     <div id="presentation-workspace" role="tabpanel" aria-labelledby="presentation-tab" hidden tabindex="-1">
       <section class="editor-section" id="presentation-sequence-section" tabindex="-1" aria-labelledby="presentation-sequence-heading">
         <h2 id="presentation-sequence-heading">Production Sequence</h2>
-        <p>Arrange video, saved clips, images and audio in any order. This presentation is independent of Media Editor Primary Production. Import and edit source media in Media Editor, then use it here without importing again.</p>
-        <button type="button" id="presentation-new">New Presentation - Clear Sequence</button>
-        <label for="presentation-items">Presentation items in playback order</label>
+        <p>Create and arrange a presentation independent of Media Editor Primary Production. Shared source media remains available in both workspaces.</p>
+        <button type="button" id="presentation-new">New Presentation</button>
+        <label for="presentation-items">Production items in playback order</label>
         <select id="presentation-items" size="10"></select>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
           <button type="button" id="presentation-remove">Remove from Sequence</button>
         </div>
-        <p id="presentation-sequence-summary">No presentation items.</p>
-        <p>Presentation playback and export are not yet implemented. Saving the project preserves this sequence; Media Editor export does not export the presentation.</p>
+        <p id="presentation-sequence-summary">No production items.</p>
       </section>
       <section class="editor-section" id="presentation-library-section" tabindex="-1" aria-labelledby="presentation-library-heading">
         <h2 id="presentation-library-heading">Shared Source Library</h2>
-        <p>All imported media, the original Primary Production media, and saved bracket clips are available here. Adding an item never removes its source.</p>
+        <p>All imported source media and saved bracket selections remain available from Media Editor. Adding an item does not remove the source.</p>
         <label for="presentation-sources">Available source media</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
@@ -215,8 +214,6 @@
       </div>
     </form>
   </dialog>
-
-
 
   <dialog id="go-to-time-dialog" aria-labelledby="go-to-time-heading">
     <form method="dialog">

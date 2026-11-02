@@ -1,0 +1,7 @@
+Version 0.11.3 startup hotfix.
+
+Corrected missing New Presentation button, which previously stopped JavaScript initialization and disabled Open Media and Ctrl+O.
+Corrected obsolete text suggesting the Presentation sequence was shared with Primary Production.
+Added automated check that every static UI element reference exists in the HTML.
+
+JAWS test: launch, press Ctrl+O, verify Windows file picker opens; cancel, switch to Presentation with Ctrl+Tab, confirm New Presentation button exists and activates.
