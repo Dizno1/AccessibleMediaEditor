@@ -1083,10 +1083,19 @@ async function restoreRecovery(){
     announce(`Previous session restored. ${project.sources.length} sources and ${presentationItems().length} presentation items. Media files remain at their original locations.`);
   }
 }
-await restoreRecovery();
+// Restore the proven 0.10.10 startup handoff: show the fully constructed UI
+// before attempting session I/O. A slow or corrupt recovery file must never
+// leave the Windows WebView at about:blank.
+render();
 if(invoke){
   invoke("frontend_ready").then(()=>{
     el["import-media-button"].focus();
-    return invoke("log_frontend_startup",{message:"Frontend initialized, window shown, and Open Media received focus."});
-  }).catch(error=>invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{}));
-}else el["import-media-button"].focus();
+    return invoke("log_frontend_startup",{message:"Frontend ready; session recovery starting after window became accessible."});
+  }).catch(error=>{
+    console.error("Frontend ready handoff failed",error);
+    return invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{});
+  }).finally(()=>{ void restoreRecovery(); });
+}else{
+  el["import-media-button"].focus();
+  void restoreRecovery();
+}
