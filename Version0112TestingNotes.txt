@@ -1,0 +1,28 @@
+AccessibleMediaEditor 0.11.2 - Navigation and Presentation separation test build
+
+This is an experimental development build, not a general release.
+
+What changed:
+- The old slideshow dialog and its Media Editor button were removed.
+- Presentation now has its own sequence, separate from Primary Production.
+- Presentation's Shared Source Library includes source clips, images, audio, and Primary Production source media.
+- New Presentation clears only the presentation sequence after confirmation.
+- Insert Before, Insert After, Add to End, Move Earlier, Move Later, Remove, and item descriptions operate only on the presentation.
+- Saving the project preserves the independent presentation sequence.
+- Existing Ctrl+Tab workspace navigation and Ctrl+Page Up/Down section navigation are retained.
+
+Testing steps with JAWS VC off:
+1. Open a source video and images in Media Editor.
+2. Press Ctrl+Tab to reach Presentation.
+3. In Shared Source Library choose a source, then Add to End.
+4. Add another source before or after it; move and remove entries.
+5. Return to Media Editor and confirm Primary Production was not changed.
+6. Save and reopen the project, then verify the Presentation sequence remains.
+7. Switch workspaces repeatedly and check for noisy window title announcements.
+
+Known limitations:
+- Presentation does not yet provide playback, bracket editing, mixing, or export.
+- Media Editor's Ctrl+E exports only Media Editor Primary Production, NOT the independent Presentation sequence.
+- Captions, narration, and audio-description tracks are not implemented; text fields save drafts only.
+- Windows installer and JAWS runtime behavior have not been verified here.
+- Do not send this build to external testers as a finished presentation creator.

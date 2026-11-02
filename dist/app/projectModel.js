@@ -1,4 +1,4 @@
-export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 4, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, editTarget: "both" }; }
+export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 5, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: []}, editTarget: "both" }; }
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);

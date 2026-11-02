@@ -89,14 +89,14 @@ test("Project Image Library is a dedicated section and images are excluded from 
   assert.match(app,/filter\(item=>item\.kind!=="Image"\)\.map/);
   assert.match(app,/el\["media-section"\],el\["image-library-section"\],el\["output-section"\]/);
 });
-test("slideshow dialog exposes keyboard ordering and exact duration controls",()=>{
+test("presentation authoring belongs only in its independent workspace",()=>{
   const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
   const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
-  assert.match(html,/id="create-slideshow-button"[^>]*>Create Slideshow from All Images/);
-  assert.match(html,/id="slideshow-dialog"[^>]*aria-labelledby="slideshow-heading"/);
-  assert.match(html,/id="slideshow-move-earlier"/);
-  assert.match(html,/id="slideshow-selected-duration-milliseconds"/);
-  assert.match(app,/function createSlideshow\(\)/);
+  assert.doesNotMatch(html,/id="create-slideshow-button"|id="slideshow-dialog"/);
+  assert.match(html,/id="presentation-new"/);
+  assert.match(html,/independent of Media Editor Primary Production/);
+  assert.match(app,/next\.presentation\.items\.splice/);
+  assert.match(app,/function sharedPresentationSources\(\)/);
 });
 test("image and Source lists support direct Delete with persistent collection focus and exact restoration",()=>{
   const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
@@ -109,4 +109,11 @@ test("image and Source lists support direct Delete with persistent collection fo
   assert.match(app,/removed from \$\{noun\}\. \$\{countLabel\}/);
   assert.match(app,/el\[collection==="image"\?"image-items":"source-items"\]\.focus\(\)/);
   assert.match(app,/restored to \$\{restore\.collection==="image"\?"Project Image Library":"Source media"\}/);
+});
+test("presentation edits use an independent collection and never mutate Primary Production",()=>{
+  const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
+  const section=app.slice(app.indexOf("function addPresentationSource("),app.indexOf("function switchWorkspace("));
+  assert.match(section,/next\.presentation\.items\.splice/);
+  assert.doesNotMatch(section,/next\.items\.splice|moveItem\(project|removeItem\(project|updateItem\(project/);
+  assert.match(app,/presentation:\{items:Array\.isArray\(value\.presentation\?\.items\)/);
 });

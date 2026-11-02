@@ -79,7 +79,6 @@
           <button type="button" id="move-image-earlier-button" disabled>Move Image Earlier</button>
           <button type="button" id="move-image-later-button" disabled>Move Image Later</button>
           <button type="button" id="remove-image-button" disabled>Remove Image from Project (Delete)</button>
-          <button type="button" id="create-slideshow-button" disabled>Create Slideshow from All Images</button>
         </div>
       </section>
 
@@ -99,19 +98,21 @@
     <div id="presentation-workspace" role="tabpanel" aria-labelledby="presentation-tab" hidden tabindex="-1">
       <section class="editor-section" id="presentation-sequence-section" tabindex="-1" aria-labelledby="presentation-sequence-heading">
         <h2 id="presentation-sequence-heading">Production Sequence</h2>
-        <p>Arrange any mixture of videos, saved clips, images, audio and text. This sequence is shared with Primary Production in Media Editor. Changes are immediately available in both workspaces.</p>
-        <label for="presentation-items">Production items in playback order</label>
+        <p>Arrange video, saved clips, images and audio in any order. This presentation is independent of Media Editor Primary Production. Import and edit source media in Media Editor, then use it here without importing again.</p>
+        <button type="button" id="presentation-new">New Presentation - Clear Sequence</button>
+        <label for="presentation-items">Presentation items in playback order</label>
         <select id="presentation-items" size="10"></select>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
           <button type="button" id="presentation-remove">Remove from Sequence</button>
         </div>
-        <p id="presentation-sequence-summary">No production items.</p>
+        <p id="presentation-sequence-summary">No presentation items.</p>
+        <p>Presentation playback and export are not yet implemented. Saving the project preserves this sequence; Media Editor export does not export the presentation.</p>
       </section>
       <section class="editor-section" id="presentation-library-section" tabindex="-1" aria-labelledby="presentation-library-heading">
         <h2 id="presentation-library-heading">Shared Source Library</h2>
-        <p>All imported source media and saved bracket selections remain available from Media Editor. Adding an item does not remove the source.</p>
+        <p>All imported media, the original Primary Production media, and saved bracket clips are available here. Adding an item never removes its source.</p>
         <label for="presentation-sources">Available source media</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
@@ -215,45 +216,7 @@
     </form>
   </dialog>
 
-  <dialog id="slideshow-dialog" aria-labelledby="slideshow-heading" aria-describedby="slideshow-summary slideshow-destination">
-    <form method="dialog">
-      <h2 id="slideshow-heading" tabindex="-1">Create Slideshow</h2>
-      <p id="slideshow-summary"></p>
-      <p id="slideshow-destination"></p>
-      <label for="slideshow-images">Slides in presentation order</label>
-      <select id="slideshow-images" size="8"></select>
-      <div class="button-row">
-        <button type="button" id="slideshow-move-earlier">Move Slide Earlier</button>
-        <button type="button" id="slideshow-move-later">Move Slide Later</button>
-      </div>
-      <fieldset class="time-fields">
-        <legend>Default duration for every slide</legend>
-        <label for="slideshow-default-duration-hours">Hours</label><input type="number" id="slideshow-default-duration-hours" min="0" step="1">
-        <label for="slideshow-default-duration-minutes">Minutes</label><input type="number" id="slideshow-default-duration-minutes" min="0" max="59" step="1">
-        <label for="slideshow-default-duration-seconds">Seconds</label><input type="number" id="slideshow-default-duration-seconds" min="0" max="59" step="1">
-        <label for="slideshow-default-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-default-duration-milliseconds" min="0" max="999" step="1">
-      </fieldset>
-      <button type="button" id="slideshow-apply-default">Apply Default Duration to All Slides</button>
-      <fieldset class="time-fields">
-        <legend>Duration for selected slide</legend>
-        <label for="slideshow-selected-duration-hours">Hours</label><input type="number" id="slideshow-selected-duration-hours" min="0" step="1">
-        <label for="slideshow-selected-duration-minutes">Minutes</label><input type="number" id="slideshow-selected-duration-minutes" min="0" max="59" step="1">
-        <label for="slideshow-selected-duration-seconds">Seconds</label><input type="number" id="slideshow-selected-duration-seconds" min="0" max="59" step="1">
-        <label for="slideshow-selected-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-selected-duration-milliseconds" min="0" max="999" step="1">
-      </fieldset>
-      <button type="button" id="slideshow-update-duration">Apply Duration to Selected Slide</button>
-      <label><input type="checkbox" id="slideshow-use-video"> Insert video between images</label>
-      <label for="slideshow-video">Video clip</label><select id="slideshow-video"></select>
-      <p>Save bracketed source video selections as reusable clips first. Choose a different saved clip for each gap, or select No video. The single video selector is the fallback for gaps left unassigned.</p><div id="slideshow-gap-clips" role="group" aria-label="Video clips between slides"></div>
-      <label for="slideshow-music">Continuous background music</label><select id="slideshow-music"><option value="">No music</option></select>
-      <label><input type="checkbox" id="slideshow-duck-music" checked> Automatically lower the music while video audio plays</label>
-      <p>Music repeats or is trimmed to match the complete presentation.</p>
-      <div class="button-row">
-        <button type="button" id="slideshow-create">Create Presentation</button>
-        <button type="button" id="slideshow-cancel">Cancel</button>
-      </div>
-    </form>
-  </dialog>
+
 
   <dialog id="go-to-time-dialog" aria-labelledby="go-to-time-heading">
     <form method="dialog">

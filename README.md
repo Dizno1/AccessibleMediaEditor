@@ -1,3 +1,7 @@
+Version 0.11.2 - independent Presentation sequence (development build)
+
+See Version0112TestingNotes.txt for current functionality, testing steps, and limitations.
+
 Version 0.11.1 navigation stabilization
 
 Workspace switching: Ctrl+Tab and Ctrl+Shift+Tab move among Media Editor, Presentation, and AudioStudio Pro. Focus lands on the selected tab and the screen reader should announce it once. Arrow keys also navigate when focus is on the tab list. Ctrl+Page Up and Ctrl+Page Down continue navigating sections within the selected workspace.
