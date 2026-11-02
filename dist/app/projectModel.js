@@ -37,7 +37,7 @@ export function createInterleavedPresentation(project, slides, imageIds, videoCl
   slides.forEach((slide,index)=>{
     const seconds=Math.max(.001,Number(slide.duration)||5);
     output.push({...structuredClone(slide.image),id:imageIds[index],duration:seconds,inPoint:0,outPoint:null,editSegments:[{start:0,end:seconds}],trackTarget:"video",role:index?"inserted":"primary"});cursor+=seconds;
-    if(index<slides.length-1&&videoClip){const clip={...structuredClone(videoClip),id:videoIds[index],role:"inserted",trackTarget:"both"},length=itemDuration(clip);output.push(clip);duckRanges.push({start:cursor,end:cursor+length});cursor+=length;}
+    if(index<slides.length-1){const chosen=Array.isArray(videoClip)?videoClip[index]:videoClip;if(chosen){const clip={...structuredClone(chosen),id:videoIds[index],role:"inserted",trackTarget:"both"},length=itemDuration(clip);output.push(clip);duckRanges.push({start:cursor,end:cursor+length});cursor+=length;}}
   });
   next.items=output;next.sources=[...(next.sources||[]),...former.filter(old=>!next.sources?.some(source=>source.id===old.id))];next.trackReplacements=[];
   next.backgroundMusic=music?{source:music.workingSource||music.source,segments:normalizedSegments(music),volume:.35,duckFactor:.25,duckRanges:duckMusic?duckRanges:[]}:null;

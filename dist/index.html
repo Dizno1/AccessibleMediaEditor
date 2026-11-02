@@ -18,6 +18,7 @@
   <main>
     <div class="workspace-tabs" role="tablist" aria-label="Accessible Media Editor workspaces">
       <button type="button" role="tab" id="media-editor-tab" aria-controls="media-editor-workspace" aria-selected="true">Media Editor</button>
+      <button type="button" role="tab" id="presentation-tab" aria-controls="presentation-workspace" aria-selected="false" tabindex="-1">Presentation</button>
       <button type="button" role="tab" id="audio-studio-tab" aria-controls="audio-studio-workspace" aria-selected="false" tabindex="-1">AudioStudio Pro</button>
     </div>
 
@@ -92,7 +93,42 @@
       </section>
     </div>
 
-    <p id="action-status" class="action-status">Ready. Press Ctrl+O to open primary media. Use Ctrl+Tab to change workspaces.</p>
+    <p id="action-status" class="action-status">Ready. Press Ctrl+O to open primary media. Use the workspace tab list to change workspaces.</p>
+    </div>
+
+    <div id="presentation-workspace" role="tabpanel" aria-labelledby="presentation-tab" hidden tabindex="-1">
+      <section class="editor-section" id="presentation-sequence-section" tabindex="-1" aria-labelledby="presentation-sequence-heading">
+        <h2 id="presentation-sequence-heading">Production Sequence</h2>
+        <p>Arrange any mixture of videos, saved clips, images, audio and text. This sequence is shared with Primary Production in Media Editor. Changes are immediately available in both workspaces.</p>
+        <label for="presentation-items">Production items in playback order</label>
+        <select id="presentation-items" size="10"></select>
+        <div class="button-row">
+          <button type="button" id="presentation-earlier">Move Earlier</button>
+          <button type="button" id="presentation-later">Move Later</button>
+          <button type="button" id="presentation-remove">Remove from Sequence</button>
+        </div>
+        <p id="presentation-sequence-summary">No production items.</p>
+      </section>
+      <section class="editor-section" id="presentation-library-section" tabindex="-1" aria-labelledby="presentation-library-heading">
+        <h2 id="presentation-library-heading">Shared Source Library</h2>
+        <p>All imported source media and saved bracket selections remain available from Media Editor. Adding an item does not remove the source.</p>
+        <label for="presentation-sources">Available source media</label>
+        <select id="presentation-sources" size="10"></select>
+        <div class="button-row">
+          <button type="button" id="presentation-insert-before">Insert Before Selected Item</button>
+          <button type="button" id="presentation-insert-after">Insert After Selected Item</button>
+          <button type="button" id="presentation-append">Add to End</button>
+        </div>
+      </section>
+      <section class="editor-section" id="presentation-accessibility-section" tabindex="-1" aria-labelledby="presentation-accessibility-heading">
+        <h2 id="presentation-accessibility-heading">Item Accessibility</h2>
+        <p>Descriptions are saved in the project. They are not automatically embedded as accessible tracks in exported MP4 files.</p>
+        <label for="presentation-alt">Image alternative text or visual description</label>
+        <textarea id="presentation-alt" rows="3"></textarea>
+        <label for="presentation-dialogue">Transcript, dialogue, or audio-description draft</label>
+        <textarea id="presentation-dialogue" rows="4"></textarea>
+        <button type="button" id="presentation-save-accessibility">Save Item Descriptions</button>
+      </section>
     </div>
 
     <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
@@ -206,9 +242,9 @@
         <label for="slideshow-selected-duration-milliseconds">Milliseconds</label><input type="number" id="slideshow-selected-duration-milliseconds" min="0" max="999" step="1">
       </fieldset>
       <button type="button" id="slideshow-update-duration">Apply Duration to Selected Slide</button>
-      <label><input type="checkbox" id="slideshow-use-video"> Place the selected video clip between every image</label>
+      <label><input type="checkbox" id="slideshow-use-video"> Insert video between images</label>
       <label for="slideshow-video">Video clip</label><select id="slideshow-video"></select>
-      <p>The bracketed selection is used when available; otherwise the complete video is used.</p>
+      <p>Save bracketed source video selections as reusable clips first. Choose a different saved clip for each gap, or select No video. The single video selector is the fallback for gaps left unassigned.</p><div id="slideshow-gap-clips" role="group" aria-label="Video clips between slides"></div>
       <label for="slideshow-music">Continuous background music</label><select id="slideshow-music"><option value="">No music</option></select>
       <label><input type="checkbox" id="slideshow-duck-music" checked> Automatically lower the music while video audio plays</label>
       <p>Music repeats or is trimmed to match the complete presentation.</p>
@@ -299,7 +335,7 @@
         <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
-        <li>Ctrl+Tab or Ctrl+Shift+Tab: Switch between Media Editor and AudioStudio Pro.</li>
+        <li>Ctrl+Tab or Ctrl+Shift+Tab: Switch between Media Editor, Presentation, and AudioStudio Pro.</li>
         <li>X: Play or pause from the current playhead.</li>
         <li>Space: Audition the complete bracket selection, or play continuously from the current playhead when no brackets are set. Press Space again to stop and return.</li>
         <li>Escape: Close a dialog or cancel a temporary operation.</li>
@@ -327,7 +363,7 @@
   <dialog id="testing-guide-dialog" aria-labelledby="testing-guide-heading">
     <form method="dialog">
       <h2 id="testing-guide-heading">Testing Guide</h2>
-      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
+      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor, Presentation, and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
       <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
       <p><strong>Primary and Source Media:</strong> The first file returned by the Windows dialog becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted. Select a Source and use Make Selected Source Primary when Windows returns the files in an unexpected order. The former Primary moves to Source Media.</p>
       <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>
