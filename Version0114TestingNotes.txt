@@ -1,0 +1,9 @@
+Version 0.11.4 Open Media recovery build.
+
+Open Media now uses the same parented rfd Windows dialog as Open Project, with multi-file selection. The custom Win32 picker and its clipboard-to-file-name hook are bypassed for this build.
+
+Open Media reports Opening Windows file picker before invoking native code, and records entry and completion in Documents\Accessible Media Editor\Logs\StartupLog.txt.
+
+Acceptance: Ctrl+O and Open Media button must both open the file picker. If neither works, check whether the action-status text changes and provide StartupLog.txt.
+
+This has not been tested on Windows with JAWS.

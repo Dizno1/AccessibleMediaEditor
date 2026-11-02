@@ -91,8 +91,19 @@ fn frontend_ready(window: tauri::WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn pick_media_files(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    native_media_picker::pick_media_files(&app)
+fn pick_media_files(window: tauri::WebviewWindow) -> Result<Vec<String>, String> {
+    // Use the same standard, parented Windows dialog approach as Open Project.
+    // The custom hooked Win32 picker is temporarily bypassed while its silent
+    // failure is investigated. Multi-select is retained.
+    write_startup_log("Open Media: native picker command entered.");
+    let files = rfd::FileDialog::new()
+        .set_parent(&window)
+        .set_title("Open Media - Select video, audio, or images")
+        .pick_files();
+    let paths: Vec<String> = files.unwrap_or_default().into_iter()
+        .map(|path| path.to_string_lossy().into_owned()).collect();
+    write_startup_log(&format!("Open Media: dialog returned {} file(s).", paths.len()));
+    Ok(paths)
 }
 
 #[tauri::command]

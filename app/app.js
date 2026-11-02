@@ -584,7 +584,10 @@ async function importMedia(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
   const previous=project,previousSelectedId=selectedId,previousSourceId=selectedSourceId,previousImageId=selectedImageId,previousActiveId=activeMediaId;
   try{
-    const paths=await invoke("pick_media_files");if(!paths.length)return;announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
+    updateStatus("Opening Windows file picker...");
+    const paths=await invoke("pick_media_files");
+    if(!paths.length){updateStatus("Open Media canceled. No files selected.");return;}
+    announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
     for(let mediaIndex=0;mediaIndex<paths.length;mediaIndex++){
       const path=paths[mediaIndex],name=baseName(path);
       if(!supportedMediaPath(path)){skipped.push({name,reason:"unsupported file type"});updateStatus(`Skipped ${name}. Processing file ${mediaIndex+1} of ${paths.length}.`);continue;}
@@ -926,7 +929,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.3. Independent Presentation sequence with shared source media and quiet workspace navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.4. Independent Presentation sequence with shared source media and quiet workspace navigation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
