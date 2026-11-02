@@ -646,11 +646,20 @@ function savePresentationDescriptions(){
 }
 function switchWorkspace(direction=1,target=null){
   const next=target||workspaceOrder[(workspaceOrder.indexOf(activeWorkspace)+direction+workspaceOrder.length)%workspaceOrder.length];
+  if(!workspaceTabs[next]||!workspacePanels[next])return;
+  // The selected tab is the single accessible announcement source. Focusing the
+  // entire tab panel made JAWS repeatedly announce the document/window title.
+  // Do not also announce the workspace through a live region.
+  if(next===activeWorkspace){el[workspaceTabs[next]].focus();return;}
   activeWorkspace=next;
-  for(const name of workspaceOrder){const selected=name===next;el[workspaceTabs[name]].setAttribute("aria-selected",String(selected));el[workspaceTabs[name]].tabIndex=selected?0:-1;el[workspacePanels[name]].hidden=!selected;}
+  for(const name of workspaceOrder){
+    const selected=name===next;
+    el[workspaceTabs[name]].setAttribute("aria-selected",String(selected));
+    el[workspaceTabs[name]].tabIndex=selected?0:-1;
+    el[workspacePanels[name]].hidden=!selected;
+  }
   if(next==="presentation")renderPresentation();
-  el[workspacePanels[next]].focus();
-  announce(next==="media"?"Media Editor workspace.":next==="presentation"?"Presentation workspace. Shared media and production sequence ready.":"AudioStudio Pro workspace. Professional tools are not implemented in this build.");
+  el[workspaceTabs[next]].focus();
 }
 
 async function importMedia(){
@@ -999,7 +1008,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.0. Presentation workspace foundation with shared media library and sequence editing.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.1. Quiet workspace navigation and Presentation foundation with shared media library and sequence editing.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

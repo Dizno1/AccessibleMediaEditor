@@ -1,3 +1,9 @@
+Version 0.11.1 navigation stabilization
+
+Workspace switching: Ctrl+Tab and Ctrl+Shift+Tab move among Media Editor, Presentation, and AudioStudio Pro. Focus lands on the selected tab and the screen reader should announce it once. Arrow keys also navigate when focus is on the tab list. Ctrl+Page Up and Ctrl+Page Down continue navigating sections within the selected workspace.
+
+JAWS regression check: with Virtual Cursor off, press Ctrl+Tab repeatedly, then Ctrl+Shift+Tab. Expect one tab announcement per keypress, without repeated document/window titles. Repeat with Virtual Cursor on and NVDA Focus Mode. This Windows runtime check has not been performed by the automated tests.
+
 Build 0.10.21: Save bracketed video selections as reusable source clips. Saving moves the playhead to the selection end, clears brackets, and retains focus in the editing context. The presentation dialog supports different saved clips for each gap between images, with continuous music and ducking.
 
 # Accessible Media Editor
