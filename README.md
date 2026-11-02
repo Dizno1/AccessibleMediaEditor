@@ -355,3 +355,7 @@ Build 0.9.0 adds FFmpeg rendering and format-selectable export for the complete 
 - `npm run desktop:build`
 
 Windows installers are produced as MSI and NSIS packages by the GitHub Actions workflow.
+
+
+## Version 0.11.5 recovery
+Restores the original native Windows Open Media picker from the user-confirmed working 0.10.21 build, including multi-file selection and File Name clipboard support. This replaces the 0.11.4 rfd picker. No presentation-specific workflow is moved into Media Editor. Windows JAWS validation remains required.

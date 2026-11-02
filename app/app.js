@@ -586,6 +586,7 @@ async function importMedia(){
   try{
     updateStatus("Opening Windows file picker...");
     const paths=await invoke("pick_media_files");
+    updateStatus(paths.length ? `Selected ${paths.length} media file(s). Preparing import.` : "Open Media canceled. No files selected.");
     if(!paths.length){updateStatus("Open Media canceled. No files selected.");return;}
     announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
     for(let mediaIndex=0;mediaIndex<paths.length;mediaIndex++){
@@ -929,7 +930,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.4. Independent Presentation sequence with shared source media and quiet workspace navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.5. Independent Presentation sequence with shared source media and quiet workspace navigation.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
