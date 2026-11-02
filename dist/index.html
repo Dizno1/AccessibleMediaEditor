@@ -100,6 +100,10 @@
         <h2 id="presentation-sequence-heading">Production Sequence</h2>
         <p>Create and arrange a presentation independent of Media Editor Primary Production. Shared source media remains available in both workspaces.</p>
         <button type="button" id="presentation-new">New Presentation</button>
+        <button type="button" id="presentation-create-slideshow">Create Slideshow from All Images</button>
+        <label for="presentation-slide-duration">Default image duration in seconds</label>
+        <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
+        <p>Creates a sequence from the shared image library. Existing presentation items are kept, and new images are added at the end.</p>
         <label for="presentation-items">Production items in playback order</label>
         <select id="presentation-items" size="10"></select>
         <div class="button-row">

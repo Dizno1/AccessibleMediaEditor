@@ -125,6 +125,37 @@ fn save_project_dialog(window: tauri::WebviewWindow, suggested_name: String, con
 }
 
 #[tauri::command]
+fn read_recovery_session() -> Result<Option<String>, String> {
+    let folder = app_folder("Sessions").ok_or("Session folder unavailable")?;
+    let path = folder.join("LastSession.json");
+    if !path.exists() { return Ok(None); }
+    fs::read_to_string(path).map(Some).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn write_recovery_session(content: String) -> Result<(), String> {
+    let folder = app_folder("Sessions").ok_or("Session folder unavailable")?;
+    let target = folder.join("LastSession.json");
+    let temporary = folder.join("LastSession.tmp");
+    // Never replace the previous recoverable session with malformed JSON.
+    let _: serde_json::Value = serde_json::from_str(&content).map_err(|error| error.to_string())?;
+    fs::write(&temporary, content).map_err(|error| error.to_string())?;
+    // Windows rename cannot replace an existing file. Keep a backup during replacement.
+    let backup = folder.join("LastSession.backup.json");
+    if target.exists() {
+        let _ = fs::remove_file(&backup);
+        fs::rename(&target, &backup).map_err(|error| error.to_string())?;
+    }
+    match fs::rename(&temporary, &target) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if backup.exists() { let _ = fs::rename(&backup, &target); }
+            Err(error.to_string())
+        }
+    }
+}
+
+#[tauri::command]
 fn write_project(path: String, content: String) -> Result<String, String> {
     fs::write(&path, content).map_err(|error| error.to_string())?; Ok(path)
 }
@@ -472,7 +503,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,read_recovery_session,write_recovery_session,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }
