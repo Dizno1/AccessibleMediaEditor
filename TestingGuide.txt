@@ -1,3 +1,5 @@
+Build 0.10.21 clip workflow: In a Source Video editor (or a single-video Primary Production), mark Left and Right Brackets around a clip, then activate Save Selection as Source Clip. JAWS should announce the start, end, duration and playhead at the end. Press X to continue from the end. Repeat for more clips. In Create Slideshow from All Images, choose a saved clip for each gap between slides, choose background music and ducking, then Create Presentation. Do not confuse Copy Selection with Save Selection as Source Clip.
+
 ACCESSIBLE MEDIA EDITOR BUILD 0.10.8 TESTING GUIDE
 
 SCREEN-READER EXPORT CONVERSATION TEST

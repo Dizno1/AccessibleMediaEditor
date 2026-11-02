@@ -1,3 +1,5 @@
+Build 0.10.21: Save bracketed video selections as reusable source clips. Saving moves the playhead to the selection end, clears brackets, and retains focus in the editing context. The presentation dialog supports different saved clips for each gap between images, with continuous music and ducking.
+
 # Accessible Media Editor
 
 Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.
