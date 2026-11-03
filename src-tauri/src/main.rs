@@ -151,6 +151,39 @@ fn write_recovery_session(content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn read_media_library() -> Result<Option<String>, String> {
+    let folder = app_folder("Library").ok_or("Library folder unavailable")?;
+    let path = folder.join("MediaLibrary.json");
+    if !path.exists() { return Ok(None); }
+    fs::read_to_string(path).map(Some).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn write_media_library(content: String) -> Result<(), String> {
+    let folder = app_folder("Library").ok_or("Library folder unavailable")?;
+    let target = folder.join("MediaLibrary.json");
+    let temporary = folder.join("MediaLibrary.tmp");
+    let value: serde_json::Value = serde_json::from_str(&content).map_err(|error| error.to_string())?;
+    if value.get("schema").and_then(|v| v.as_u64()) != Some(1)
+        || !value.get("items").map(|v| v.is_array()).unwrap_or(false) {
+        return Err("Invalid media library schema".into());
+    }
+    fs::write(&temporary, content).map_err(|error| error.to_string())?;
+    let backup = folder.join("MediaLibrary.backup.json");
+    if target.exists() {
+        let _ = fs::remove_file(&backup);
+        fs::rename(&target, &backup).map_err(|error| error.to_string())?;
+    }
+    match fs::rename(&temporary, &target) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            if backup.exists() { let _ = fs::rename(&backup, &target); }
+            Err(error.to_string())
+        }
+    }
+}
+
+#[tauri::command]
 fn write_project(path: String, content: String) -> Result<String, String> {
     fs::write(&path, content).map_err(|error| error.to_string())?; Ok(path)
 }
@@ -500,7 +533,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,read_recovery_session,write_recovery_session,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

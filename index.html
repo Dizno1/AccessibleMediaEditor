@@ -42,6 +42,17 @@
     </nav>
 
     <div class="workspace">
+      <section class="editor-section" id="persistent-library-section" aria-labelledby="persistent-library-heading">
+        <h2 id="persistent-library-heading">Persistent Media Library</h2>
+        <p id="persistent-library-status">Loading saved media library.</p>
+        <label for="persistent-library-items">Saved videos, audio, images, and clips</label>
+        <select id="persistent-library-items" size="7"><option disabled>Library is empty</option></select>
+        <div class="button-row">
+          <button type="button" id="persistent-library-add" disabled>Add Selected Library Item to Current Workspace</button>
+          <button type="button" id="persistent-library-remove" disabled>Remove Selected Item from Library</button>
+        </div>
+        <p>Library entries remain available after closing or updating the application. Open Project separately to resume a saved project.</p>
+      </section>
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
         <label for="project-items">Primary Production contents</label>

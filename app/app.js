@@ -15,19 +15,85 @@ const convertFileSrc=window.__TAURI__?.core?.convertFileSrc;
 const el=Object.fromEntries([...document.querySelectorAll("[id]")].map(node=>[node.id,node]));
 
 let project=createProject();
-// Recovery state is independent of the installed application version.
-let recoveryReady=false;
-let recoveryBlocked=false;
-let recoveryTimer=null;
-let recoveryWrite=Promise.resolve();
-function scheduleRecovery(){
-  if(!invoke||!recoveryReady||recoveryBlocked)return;
-  clearTimeout(recoveryTimer);
-  recoveryTimer=setTimeout(()=>{
-    const snapshot=JSON.stringify({schema:1,project:serializable(project),path:project.path||null,workspace:activeWorkspace,
-      selectedId,selectedSourceId,selectedImageId,selectedReplacementId,activeMediaId});
-    recoveryWrite=recoveryWrite.catch(()=>{}).then(()=>invoke("write_recovery_session",{content:snapshot})).catch(error=>console.error("Session recovery save failed",error));
-  },350);
+// The reusable media library is independent of the current project and survives upgrades.
+let libraryItems=[];
+let libraryReady=false;
+let libraryWrite=Promise.resolve();
+let libraryBlocked=false;
+function saveLibrary(){
+  if(!invoke||!libraryReady||libraryBlocked)return;
+  const content=JSON.stringify({schema:1,items:libraryItems});
+  libraryWrite=libraryWrite.catch(()=>{}).then(()=>invoke("write_media_library",{content})).catch(error=>{
+    libraryBlocked=true;
+    console.error("Library write failed",error);
+    announce("Media library could not be saved. Existing library data was not deliberately deleted.",true);
+  });
+}
+function collectLibraryItems(){
+  if(!libraryReady)return;
+  let changed=false;
+  for(const item of [...(project.sources||[]),...(project.items||[])]){
+    if(!["Video","Audio","Image"].includes(item.kind)||!item.source)continue;
+    if(libraryItems.some(entry=>entry.id===item.id))continue;
+    libraryItems.push(structuredClone({...item,role:"source"}));changed=true;
+  }
+  if(changed){renderLibrary();saveLibrary();}
+}
+function renderLibrary(){
+  const list=el["persistent-library-items"];
+  if(!list)return;
+  const previous=list.value;
+  list.replaceChildren();
+  for(const item of libraryItems)list.add(new Option(`${item.kind}. ${item.label||item.name}${item.savedClip?". Saved clip":""}`,item.id));
+  if(!libraryItems.length){const option=new Option("Library is empty","");option.disabled=true;list.add(option);}
+  if(libraryItems.some(item=>item.id===previous))list.value=previous;
+  el["persistent-library-status"].textContent=`${libraryItems.length} reusable library ${libraryItems.length===1?"item":"items"}. Current project opens separately.`;
+  el["persistent-library-add"].disabled=!libraryItems.length;
+  el["persistent-library-remove"].disabled=!libraryItems.length;
+}
+function addLibrarySelection(){
+  const item=libraryItems.find(entry=>entry.id===el["persistent-library-items"].value);
+  if(!item)return;
+  const copy=structuredClone(item);
+  copy.id=id();copy.role="source";
+  const next=addSource(project,copy);
+  rememberChange(next,`${copy.label||copy.name} added to the current workspace from the persistent library.`);
+}
+function removeLibrarySelection(){
+  const item=libraryItems.find(entry=>entry.id===el["persistent-library-items"].value);
+  if(!item||!window.confirm(`Remove ${item.label||item.name} from the reusable library? Existing projects and original files will not be deleted.`))return;
+  libraryItems=libraryItems.filter(entry=>entry.id!==item.id);
+  renderLibrary();saveLibrary();announce("Item removed from the reusable library. Original media was not deleted.");
+}
+async function loadLibrary(){
+  try{
+    const content=invoke?await invoke("read_media_library"):null;
+    if(content){
+      const parsed=JSON.parse(content);
+      if(parsed.schema!==1||!Array.isArray(parsed.items))throw new Error("Unsupported library format");
+      libraryItems=parsed.items;
+    }else if(invoke){
+      // One-time migration from the previous session format. Do not restore its workspace.
+      const legacy=await invoke("read_recovery_session");
+      if(legacy){
+        const parsed=JSON.parse(legacy);
+        if(parsed.schema===1&&parsed.project){
+          const old=parsed.project;
+          libraryItems=[...(Array.isArray(old.sources)?old.sources:[]),...(Array.isArray(old.items)?old.items:[])]
+            .filter(item=>["Video","Audio","Image"].includes(item.kind)&&item.source)
+            .filter((item,index,array)=>array.findIndex(other=>other.id===item.id)===index)
+            .map(item=>({...item,role:"source"}));
+        }
+      }
+    }
+    libraryReady=true;renderLibrary();
+    if(!content&&libraryItems.length)saveLibrary();
+    announce(`Clean workspace ready. ${libraryItems.length} saved library items available. Open Project to resume a saved project.`);
+  }catch(error){
+    console.error("Library load failed",error);
+    libraryBlocked=true;renderLibrary();
+    announce("Saved library could not be loaded. Its existing data was left unchanged. The empty workspace remains usable.",true);
+  }
 }
 
 let selectedId=null;
@@ -513,7 +579,7 @@ function render({focus=false}={}){
   const title=`${project.dirty?"* ":""}${workingName}${workingName==="Accessible Media Editor"?"":" - Accessible Media Editor"}`;document.title=title;
   if(invoke&&title!==lastNativeTitle){lastNativeTitle=title;invoke("set_window_title",{title}).catch(()=>{});}
   if(activeWorkspace==="presentation")renderPresentation();
-  scheduleRecovery();
+  collectLibraryItems();
   if(focus){const active=locateItem(activeMediaId);(active?.type==="source"?el["source-items"]:project.items.length?el["project-items"]:selectedImageId?el["image-items"]:el["project-items"]).focus();}
 }
 
@@ -647,7 +713,6 @@ function switchWorkspace(direction=1,target=null){
     el[workspacePanels[name]].hidden=!selected;
   }
   if(next==="presentation")renderPresentation();
-  scheduleRecovery();
   el[workspaceTabs[next]].focus();
 }
 
@@ -1052,69 +1117,20 @@ el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-tim
 el["insert-image-confirm"].addEventListener("click",confirmImagePlacement);el["insert-image-cancel"].addEventListener("click",()=>finishImagePlacement(null));
 el["short-source-replace"].addEventListener("click",()=>applyPendingShortReplacement("replace"));el["short-source-loop"].addEventListener("click",()=>applyPendingShortReplacement("loop"));el["short-source-cancel"].addEventListener("click",()=>applyPendingShortReplacement("cancel"));
 if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
-async function restoreRecovery(){
-  let restored=false;
-  try{
-    const content=invoke?await invoke("read_recovery_session"):null;
-    if(content){
-      const saved=JSON.parse(content);
-      if(saved.schema!==1||!saved.project||!Array.isArray(saved.project.items)||!Array.isArray(saved.project.sources)){
-        throw new Error("Saved session has an unsupported or incomplete structure.");
-      }
-      project=migrateProject(saved.project);
-      project.path=saved.path||null;
-      project.dirty=true;
-      selectedId=saved.selectedId||project.items[0]?.id||null;
-      selectedSourceId=saved.selectedSourceId||null;
-      selectedImageId=saved.selectedImageId||null;
-      selectedReplacementId=saved.selectedReplacementId||null;
-      activeMediaId=saved.activeMediaId||null;
-      activeWorkspace=["media","presentation","audio"].includes(saved.workspace)?saved.workspace:"media";
-      const index=workspaceOrder.indexOf(activeWorkspace);
-      workspaceOrder.forEach((name,i)=>{
-        el[workspaceTabs[name]].setAttribute("aria-selected",String(i===index));
-        el[workspaceTabs[name]].tabIndex=i===index?0:-1;
-        el[workspacePanels[name]].hidden=i!==index;
-      });
-      render();
-      restored=true;
-    }else{
-      render();
-    }
-  }catch(error){
-    console.error("Session recovery failed",error);
-    recoveryBlocked=true;
-    project=createProject();
-    selectedId=selectedSourceId=selectedImageId=selectedReplacementId=activeMediaId=null;
-    activeWorkspace="media";
-    const index=workspaceOrder.indexOf(activeWorkspace);
-    workspaceOrder.forEach((name,i)=>{
-      el[workspaceTabs[name]].setAttribute("aria-selected",String(i===index));
-      el[workspaceTabs[name]].tabIndex=i===index?0:-1;
-      el[workspacePanels[name]].hidden=i!==index;
-    });
-    render();
-    el["import-media-button"].focus();
-    announce("Saved session recovery failed. The editor opened an empty workspace. Your saved session was left unchanged.","assertive");
-  }finally{
-    recoveryReady=true;
-  }
-  if(restored){
-    announce(`Previous session restored. ${project.sources.length} sources and ${presentationItems().length} presentation items. Media files remain at their original locations.`);
-  }
-}
-// The native window is shown during Tauri setup. Build and focus the accessible
-// workspace before session I/O; recovery can never control window visibility.
+el["persistent-library-add"].addEventListener("click",addLibrarySelection);
+el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
+el["persistent-library-items"].addEventListener("change",renderLibrary);
+// Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){
   invoke("frontend_ready").then(()=>{
     el["import-media-button"].focus();
-    return invoke("log_frontend_startup",{message:"Frontend ready; session recovery starting after window became accessible."});
+    return invoke("log_frontend_startup",{message:"Frontend ready; clean workspace shown; loading reusable library."});
   }).catch(error=>{
     console.error("Frontend ready handoff failed",error);
     return invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{});
-  }).finally(()=>{ void restoreRecovery(); });
+  }).finally(()=>{void loadLibrary();});
 }else{
   el["import-media-button"].focus();
-  void restoreRecovery();
+  void loadLibrary();
 }
