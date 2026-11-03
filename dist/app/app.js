@@ -17,10 +17,11 @@ const el=Object.fromEntries([...document.querySelectorAll("[id]")].map(node=>[no
 let project=createProject();
 // Recovery state is independent of the installed application version.
 let recoveryReady=false;
+let recoveryBlocked=false;
 let recoveryTimer=null;
 let recoveryWrite=Promise.resolve();
 function scheduleRecovery(){
-  if(!invoke||!recoveryReady)return;
+  if(!invoke||!recoveryReady||recoveryBlocked)return;
   clearTimeout(recoveryTimer);
   recoveryTimer=setTimeout(()=>{
     const snapshot=JSON.stringify({schema:1,project:serializable(project),path:project.path||null,workspace:activeWorkspace,
@@ -1000,7 +1001,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.10. Independent Presentation sequence with shared source media and quiet workspace navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.12. Startup recovery isolation, saved sessions, shared source media, and accessible presentation authoring.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1052,40 +1053,58 @@ el["insert-image-confirm"].addEventListener("click",confirmImagePlacement);el["i
 el["short-source-replace"].addEventListener("click",()=>applyPendingShortReplacement("replace"));el["short-source-loop"].addEventListener("click",()=>applyPendingShortReplacement("loop"));el["short-source-cancel"].addEventListener("click",()=>applyPendingShortReplacement("cancel"));
 if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("production-render-progress",event=>handleExportProgress(event.payload));}
 async function restoreRecovery(){
-  if(invoke){
-    try{
-      const content=await invoke("read_recovery_session");
-      if(content){
-        const saved=JSON.parse(content);
-        if(saved.schema===1&&saved.project&&Array.isArray(saved.project.items)&&Array.isArray(saved.project.sources)){
-          project=migrateProject(saved.project);
-          project.path=saved.path||null;
-          project.dirty=true;
-          selectedId=saved.selectedId||project.items[0]?.id||null;
-          selectedSourceId=saved.selectedSourceId||null;
-          selectedImageId=saved.selectedImageId||null;
-          selectedReplacementId=saved.selectedReplacementId||null;
-          activeMediaId=saved.activeMediaId||null;
-          activeWorkspace=["media","presentation","audio"].includes(saved.workspace)?saved.workspace:"media";
-          const index=workspaceOrder.indexOf(activeWorkspace);
-          workspaceOrder.forEach((name,i)=>{
-            el[workspaceTabs[name]].setAttribute("aria-selected",String(i===index));
-            el[workspaceTabs[name]].tabIndex=i===index?0:-1;
-            el[workspacePanels[name]].hidden=i!==index;
-          });
-        }
+  let restored=false;
+  try{
+    const content=invoke?await invoke("read_recovery_session"):null;
+    if(content){
+      const saved=JSON.parse(content);
+      if(saved.schema!==1||!saved.project||!Array.isArray(saved.project.items)||!Array.isArray(saved.project.sources)){
+        throw new Error("Saved session has an unsupported or incomplete structure.");
       }
-    }catch(error){console.error("Session recovery read failed",error);}
+      project=migrateProject(saved.project);
+      project.path=saved.path||null;
+      project.dirty=true;
+      selectedId=saved.selectedId||project.items[0]?.id||null;
+      selectedSourceId=saved.selectedSourceId||null;
+      selectedImageId=saved.selectedImageId||null;
+      selectedReplacementId=saved.selectedReplacementId||null;
+      activeMediaId=saved.activeMediaId||null;
+      activeWorkspace=["media","presentation","audio"].includes(saved.workspace)?saved.workspace:"media";
+      const index=workspaceOrder.indexOf(activeWorkspace);
+      workspaceOrder.forEach((name,i)=>{
+        el[workspaceTabs[name]].setAttribute("aria-selected",String(i===index));
+        el[workspaceTabs[name]].tabIndex=i===index?0:-1;
+        el[workspacePanels[name]].hidden=i!==index;
+      });
+      render();
+      restored=true;
+    }else{
+      render();
+    }
+  }catch(error){
+    console.error("Session recovery failed",error);
+    recoveryBlocked=true;
+    project=createProject();
+    selectedId=selectedSourceId=selectedImageId=selectedReplacementId=activeMediaId=null;
+    activeWorkspace="media";
+    const index=workspaceOrder.indexOf(activeWorkspace);
+    workspaceOrder.forEach((name,i)=>{
+      el[workspaceTabs[name]].setAttribute("aria-selected",String(i===index));
+      el[workspaceTabs[name]].tabIndex=i===index?0:-1;
+      el[workspacePanels[name]].hidden=i!==index;
+    });
+    render();
+    el["import-media-button"].focus();
+    announce("Saved session recovery failed. The editor opened an empty workspace. Your saved session was left unchanged.","assertive");
+  }finally{
+    recoveryReady=true;
   }
-  recoveryReady=true;
-  render();
-  if(project.sources.length||project.items.length||presentationItems().length){
+  if(restored){
     announce(`Previous session restored. ${project.sources.length} sources and ${presentationItems().length} presentation items. Media files remain at their original locations.`);
   }
 }
-// Restore the proven 0.10.10 startup handoff: show the fully constructed UI
-// before attempting session I/O. A slow or corrupt recovery file must never
-// leave the Windows WebView at about:blank.
+// The native window is shown during Tauri setup. Build and focus the accessible
+// workspace before session I/O; recovery can never control window visibility.
 render();
 if(invoke){
   invoke("frontend_ready").then(()=>{

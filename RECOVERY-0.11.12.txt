@@ -1,0 +1,33 @@
+Accessible Media Editor 0.11.12 startup recovery
+
+Diagnosis
+
+The failing startup architecture combined three hazards:
+
+1. The Tauri window was configured as hidden.
+2. Persisted window state could restore a hidden or unusable state across reinstallations.
+3. The window became visible only after frontend initialization, while session recovery could still throw during migration or rendering.
+
+Together, a frontend or recovery failure could leave JAWS with an unavailable application or an about:blank WebView even though installation succeeded.
+
+Corrections
+
+- The native window is visible and focused during Tauri setup.
+- Startup no longer depends on the frontend-ready callback.
+- Persisted Tauri window-state restoration was removed.
+- Recovery parsing, validation, migration, and rendering share one failure boundary.
+- Missing or empty recovery data opens a normal empty workspace.
+- Valid recovery data restores the previous session.
+- Corrupt or incompatible recovery data opens an accessible empty workspace.
+- Failed recovery data is neither deleted nor overwritten.
+- JAWS receives an assertive recovery-failure announcement.
+
+Verification
+
+- All 60 JavaScript and frontend-runtime tests pass.
+- Runtime startup tests cover missing, empty, valid, corrupt, and incompatible sessions.
+- Tests verify that the Main region is present and Open Media receives focus.
+- Tests verify that failed recovery does not write over the saved session.
+- Tests verify that native startup is visible and does not use persisted window-state restoration.
+
+The GitHub Actions Windows job performs the Rust/Tauri compilation and installer build.

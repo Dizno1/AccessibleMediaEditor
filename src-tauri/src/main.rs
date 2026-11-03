@@ -75,18 +75,13 @@ fn log_frontend_startup(message: String) {
 
 #[tauri::command]
 fn frontend_ready(window: tauri::WebviewWindow) -> Result<(), String> {
-    write_startup_log("Frontend reported ready. Showing the completed application window.");
-    window.show().map_err(|error| {
-        let message = format!("Application window could not be shown: {}", error);
-        write_startup_log(&message);
-        message
-    })?;
+    write_startup_log("Frontend reported ready. The native application window is already visible.");
     window.set_focus().map_err(|error| {
         let message = format!("Application window could not receive focus: {}", error);
         write_startup_log(&message);
         message
     })?;
-    write_startup_log("Application window shown and focused after frontend initialization.");
+    write_startup_log("Frontend workspace focused.");
     Ok(())
 }
 
@@ -480,9 +475,8 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.10.17 executable started.");
+    write_startup_log("Build 0.11.12 executable started.");
     tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             write_startup_log("Tauri setup entered.");
@@ -492,6 +486,9 @@ fn main() {
                 write_startup_log("Main WebView window found.");
                 window.set_menu(build_menu(app.handle())?)?;
                 write_startup_log("Native menu installed.");
+                window.show()?;
+                window.set_focus()?;
+                write_startup_log("Main window shown and focused independently of frontend session recovery.");
             } else {
                 write_startup_log("Main WebView window was not found.");
             }
