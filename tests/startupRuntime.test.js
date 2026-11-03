@@ -2,9 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {spawnSync} from "node:child_process";
 import {readFileSync} from "node:fs";
+import {fileURLToPath} from "node:url";
+
+const harnessPath=fileURLToPath(new URL("startupRuntimeHarness.mjs",import.meta.url));
 
 function run(scenario){
-  const result=spawnSync(process.execPath,[new URL("startupRuntimeHarness.mjs",import.meta.url).pathname],{encoding:"utf8",env:{...process.env,AME_SESSION:scenario}});
+  const result=spawnSync(process.execPath,[harnessPath],{encoding:"utf8",env:{...process.env,AME_SESSION:scenario}});
   assert.equal(result.status,0,result.stderr);
   return JSON.parse(result.stdout.trim().split(/\r?\n/).at(-1));
 }
