@@ -15,6 +15,7 @@ Corrections
 - The native window is visible and focused during Tauri setup.
 - Startup no longer depends on the frontend-ready callback.
 - Persisted Tauri window-state restoration was removed.
+- The matching window-state capability permission was also removed so the Tauri capability manifest remains valid after the plugin removal.
 - Recovery parsing, validation, migration, and rendering share one failure boundary.
 - Missing or empty recovery data opens a normal empty workspace.
 - Valid recovery data restores the previous session.

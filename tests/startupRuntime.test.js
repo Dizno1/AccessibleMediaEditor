@@ -22,8 +22,8 @@ for(const scenario of ["corrupt","incompatible"]){
   });
 }
 test("native startup cannot depend on a hidden WebView or persisted window state",()=>{
-  const config=readFileSync(new URL("../src-tauri/tauri.conf.json",import.meta.url),"utf8"),rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8"),cargo=readFileSync(new URL("../src-tauri/Cargo.toml",import.meta.url),"utf8");
-  assert.match(config,/"visible"\s*:\s*true/);assert.doesNotMatch(cargo,/tauri-plugin-window-state/);assert.match(rust,/window\.show\(\)\?/);assert.match(rust,/window\.set_focus\(\)\?/);
+  const config=readFileSync(new URL("../src-tauri/tauri.conf.json",import.meta.url),"utf8"),rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8"),cargo=readFileSync(new URL("../src-tauri/Cargo.toml",import.meta.url),"utf8"),capabilities=readFileSync(new URL("../src-tauri/capabilities/default.json",import.meta.url),"utf8");
+  assert.match(config,/"visible"\s*:\s*true/);assert.doesNotMatch(cargo,/tauri-plugin-window-state/);assert.doesNotMatch(capabilities,/window-state:/);assert.match(rust,/window\.show\(\)\?/);assert.match(rust,/window\.set_focus\(\)\?/);
 });
 test("startup runtime files use Windows-safe file URL conversion",()=>{
   const testSource=readFileSync(new URL("startupRuntime.test.js",import.meta.url),"utf8");
