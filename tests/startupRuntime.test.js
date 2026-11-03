@@ -25,3 +25,12 @@ test("native startup cannot depend on a hidden WebView or persisted window state
   const config=readFileSync(new URL("../src-tauri/tauri.conf.json",import.meta.url),"utf8"),rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8"),cargo=readFileSync(new URL("../src-tauri/Cargo.toml",import.meta.url),"utf8");
   assert.match(config,/"visible"\s*:\s*true/);assert.doesNotMatch(cargo,/tauri-plugin-window-state/);assert.match(rust,/window\.show\(\)\?/);assert.match(rust,/window\.set_focus\(\)\?/);
 });
+test("startup runtime files use Windows-safe file URL conversion",()=>{
+  const testSource=readFileSync(new URL("startupRuntime.test.js",import.meta.url),"utf8");
+  const harnessSource=readFileSync(new URL("startupRuntimeHarness.mjs",import.meta.url),"utf8");
+  assert.doesNotMatch(testSource,/new URL\([^\n]+\)\.pathname/);
+  assert.doesNotMatch(harnessSource,/\.pathname/);
+  assert.doesNotMatch(harnessSource,/pathToFileURL/);
+  assert.match(testSource,/fileURLToPath/);
+  assert.match(harnessSource,/await import\(applicationModuleUrl\.href\)/);
+});

@@ -29,6 +29,6 @@ Verification
 - Tests verify that the Main region is present and Open Media receives focus.
 - Tests verify that failed recovery does not write over the saved session.
 - Tests verify that native startup is visible and does not use persisted window-state restoration.
-- The runtime harness path uses Node fileURLToPath so the same startup tests run correctly on Windows without duplicating the drive prefix.
+- The runtime harness launcher uses Node fileURLToPath, while the application module is imported directly from its file URL. Neither startup test converts a Windows file URL through URL.pathname, preventing duplicated drive prefixes.
 
 The GitHub Actions Windows job performs the Rust/Tauri compilation and installer build.
