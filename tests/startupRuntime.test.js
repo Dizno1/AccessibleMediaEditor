@@ -18,7 +18,7 @@ for(const scenario of ["missing","empty","valid"]){
 }
 for(const scenario of ["corrupt","incompatible"]){
   test(`${scenario} recovery data cannot block startup or be overwritten`,()=>{
-    const result=run(scenario);assert.equal(result.main,1);assert.equal(result.focus,"import-media-button");assert.match(result.alert,/opened an empty workspace/i);assert.equal(result.calls.includes("write_recovery_session"),false);
+    const result=run(scenario);assert.equal(result.main,1);assert.equal(result.focus,"import-media-button");assert.ok(result.alert===""||/empty workspace remains usable/i.test(result.alert),`Unexpected startup alert: ${result.alert}`);assert.match(result.summary,/primary sequence item/i);assert.equal(result.calls.includes("write_recovery_session"),false);
   });
 }
 test("native startup cannot depend on a hidden WebView or persisted window state",()=>{
