@@ -42,6 +42,17 @@
     </nav>
 
     <div class="workspace">
+      <section class="editor-section" id="persistent-library-section" aria-labelledby="persistent-library-heading">
+        <h2 id="persistent-library-heading">Persistent Media Library</h2>
+        <p id="persistent-library-status">Loading saved media library.</p>
+        <label for="persistent-library-items">Saved videos, audio, images, and clips</label>
+        <select id="persistent-library-items" size="7"><option disabled>Library is empty</option></select>
+        <div class="button-row">
+          <button type="button" id="persistent-library-add" disabled>Add Selected Library Item to Current Workspace</button>
+          <button type="button" id="persistent-library-remove" disabled>Remove Selected Item from Library</button>
+        </div>
+        <p>Library entries remain available after closing or updating the application. Open Project separately to resume a saved project.</p>
+      </section>
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
         <label for="project-items">Primary Production contents</label>
@@ -117,13 +128,26 @@
         <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
         <p>Creates a sequence from the shared image library. Existing presentation items are kept, and new images are added at the end.</p>
         <label for="presentation-items">Production items in playback order</label>
-        <select id="presentation-items" size="10"></select>
+        <select id="presentation-items" size="10" multiple aria-describedby="presentation-selection-help"></select>
+        <p id="presentation-selection-help">Use Control plus Space to select individual items, Shift plus Arrow keys for a range, and Control plus A to select all. Delete removes selected sequence items, not library media.</p>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
-          <button type="button" id="presentation-remove">Remove from Sequence</button>
+          <button type="button" id="presentation-remove">Remove Selected Items from Sequence</button>
         </div>
         <p id="presentation-sequence-summary">No production items.</p>
+      </section>
+      <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
+        <h2 id="presentation-music-heading">Presentation Background Music Track</h2>
+        <p>Music plays beneath the complete presentation, independently of the production sequence. Select an audio source from the shared library or persistent library.</p>
+        <label for="presentation-music-source">Background music audio source</label>
+        <select id="presentation-music-source"><option value="">No background music</option></select>
+        <label for="presentation-music-volume">Music volume, percent</label>
+        <input id="presentation-music-volume" type="number" min="0" max="100" step="1" value="35">
+        <button type="button" id="presentation-music-apply">Set Background Music</button>
+        <button type="button" id="presentation-music-remove">Remove Background Music</button>
+        <p id="presentation-music-status" role="status" aria-live="polite">No background music selected.</p>
+        <button type="button" id="presentation-export">Export Presentation with Music as MP4</button>
       </section>
       <section class="editor-section" id="presentation-library-section" tabindex="-1" aria-labelledby="presentation-library-heading">
         <h2 id="presentation-library-heading">Shared Source Library</h2>
