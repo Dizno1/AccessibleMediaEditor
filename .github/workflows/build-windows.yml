@@ -35,12 +35,22 @@ jobs:
             "User-Agent" = "AccessibleMediaEditor-Build"
           }
           $release = Invoke-RestMethod -Uri "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest" -Headers $headers
-          $asset = $release.assets | Where-Object { $_.name -eq "ffmpeg-master-latest-win64-lgpl.zip" } | Select-Object -First 1
+          # The upstream release uses changing build identifiers in archive names.
+          # Select exactly one Windows x64 LGPL ZIP, excluding shared variants.
+          $matches = @($release.assets | Where-Object {
+            $_.name -match '^ffmpeg-(?:master-latest|N-[A-Za-z0-9-]+)-win64-lgpl\.zip$'
+          })
+          if ($matches.Count -ne 1) { throw "Expected exactly one Windows x64 LGPL FFmpeg ZIP, found $($matches.Count)." }
+          $asset = $matches[0]
           $checksums = $release.assets | Where-Object { $_.name -eq "checksums.sha256" } | Select-Object -First 1
           if (-not $asset -or -not $checksums) { throw "The verified FFmpeg release assets were not found." }
           Invoke-WebRequest -Uri $asset.browser_download_url -OutFile ffmpeg.zip
           Invoke-WebRequest -Uri $checksums.browser_download_url -OutFile checksums.sha256
-          $expectedLine = Get-Content checksums.sha256 | Where-Object { $_ -match "\sffmpeg-master-latest-win64-lgpl\.zip$" } | Select-Object -First 1
+          # Match the exact selected archive name, not a historical hardcoded name.
+          $expectedLine = Get-Content checksums.sha256 | Where-Object {
+            $parts = $_.Trim() -split '\s+', 2
+            $parts.Count -eq 2 -and $parts[1].TrimStart('*') -eq $asset.name
+          } | Select-Object -First 1
           if (-not $expectedLine) { throw "The FFmpeg checksum was not found." }
           $expected = ($expectedLine -split "\s+")[0].ToLowerInvariant()
           $actual = (Get-FileHash ffmpeg.zip -Algorithm SHA256).Hash.ToLowerInvariant()
