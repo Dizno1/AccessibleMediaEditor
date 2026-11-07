@@ -30,6 +30,9 @@ function spaceActivatesControl(target) { return ["button","select","option"].inc
 export function initShortcuts() {
   window.addEventListener("keydown", event => {
     if (editable(event.target) && event.key !== "Escape") return;
+    // Escape first belongs to an open native select control. Let Windows close
+    // the list without also running the application's Cancel command.
+    if (event.key === "Escape" && event.target?.tagName?.toLowerCase() === "select") return;
     // Holding a workspace shortcut must not cycle rapidly through every tab.
     if (event.repeat && event.ctrlKey && event.key.toLowerCase() === "tab") { event.preventDefault(); return; }
     const key = event.key.toLowerCase();

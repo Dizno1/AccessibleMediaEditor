@@ -17,3 +17,6 @@ test('held control tab does not cause repeated workspace switching',()=>{
 test('F1 opens app-wide instructions and keyboard shortcuts',()=>{
   assert.match(shortcuts,/\["showShortcuts", \{key:"f1"\}\]/);
 });
+test('Escape closes a native select without also running the app Cancel command',()=>{
+  assert.match(shortcuts,/event\.key === "Escape" && event\.target\?\.tagName\?\.toLowerCase\(\) === "select"/);
+});

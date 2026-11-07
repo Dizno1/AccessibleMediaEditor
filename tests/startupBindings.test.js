@@ -35,6 +35,23 @@ test("presentation builder puts the editable timeline before the source library"
   assert.match(html,/id="presentation-choose-source"/);
   assert.match(app,/el\["presentation-choose-source"\]\.addEventListener/);
 });
+test("presentation lists use concise accessible names without embedded instructions",()=>{
+  assert.match(html,/<label for="presentation-items">Presentation Timeline<\/label>/);
+  assert.match(html,/<label for="presentation-sources">Source Media Library<\/label>/);
+  assert.doesNotMatch(html,/Editable items in playback order/);
+  assert.doesNotMatch(html,/Reusable images, video clips, and audio/);
+});
+test("presentation commands have one keyboard route and native list focus is not echoed",()=>{
+  assert.doesNotMatch(app,/function announcePresentationTimeline\(/);
+  assert.doesNotMatch(app,/event\.key==="Delete"[^\n]*removePresentation/);
+  assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
+});
+test("presentation preview waits for the native player before opening the dialog",()=>{
+  assert.match(app,/await waitForPreviewMedia\(media\)/);
+  assert.match(app,/function waitForPreviewMedia\(/);
+  assert.ok(app.indexOf("await waitForPreviewMedia(media)")<app.indexOf('el["presentation-preview-dialog"].showModal()'));
+  assert.doesNotMatch(app,/Presentation preview ready\. Press X/);
+});
 test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
   assert.match(html,/id="presentation-cut"[^>]*>Cut Selected Items \(Ctrl\+X\)/);
   assert.match(html,/id="presentation-copy"[^>]*>Copy Selected Items \(Ctrl\+C\)/);
