@@ -18,6 +18,15 @@ test("presentation workspace exposes project save and save as controls",()=>{
   assert.match(app,/el\["presentation-save"\]\.addEventListener\("click",\(\)=>saveProject\(false\)\)/);
   assert.match(app,/el\["presentation-save-as"\]\.addEventListener\("click",\(\)=>saveProject\(true\)\)/);
 });
+test("presentation builder places sources and sequence in one task-oriented section",()=>{
+  assert.match(html,/id="presentation-builder-section"/);
+  assert.doesNotMatch(html,/id="presentation-library-section"/);
+  const sourcePosition=html.indexOf('id="presentation-sources"');
+  const sequencePosition=html.indexOf('id="presentation-items"');
+  assert.ok(sourcePosition>0&&sequencePosition>sourcePosition);
+  assert.match(html,/id="presentation-choose-source"/);
+  assert.match(app,/el\["presentation-choose-source"\]\.addEventListener/);
+});
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
   assert.match(html,/id="instructions-shortcuts-button"/);

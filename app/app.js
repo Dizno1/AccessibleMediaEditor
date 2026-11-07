@@ -612,7 +612,7 @@ function sectionElements(){return[[...el["media-editor-sections"].querySelectorA
 const workspaceOrder=["media","presentation","audio"];
 const workspaceTabs={media:"media-editor-tab",presentation:"presentation-tab",audio:"audio-studio-tab"};
 const workspacePanels={media:"media-editor-workspace",presentation:"presentation-workspace",audio:"audio-studio-workspace"};
-const presentationSections=["presentation-sequence-section","presentation-music-section","presentation-library-section","presentation-accessibility-section"];
+const presentationSections=["presentation-builder-section","presentation-music-section","presentation-accessibility-section"];
 let presentationSectionIndex=0;
 function focusSection(offset){
   if(activeWorkspace==="audio")return announce("AudioStudio Pro does not have editor sections yet.");
@@ -673,7 +673,7 @@ function createSlideshow(){
   const newSlides=images.map(source=>({...structuredClone(source),id:id(),role:"presentation",duration:seconds,inPoint:0,outPoint:seconds,editSegments:[{start:0,end:seconds}]}));
   next.presentation.items.push(...newSlides);next.dirty=true;
   modifyPresentation(next,newSlides[0].id,`${newSlides.length} images added to the presentation at ${readableTime(seconds)} each. ${next.presentation.items.length} total items. Existing items preserved.`);
-  el["presentation-create-slideshow"].focus();
+  el["presentation-items"].focus();
 }
 function addPresentationSource(position){
   const source=sharedPresentationSources().find(item=>item.id===el["presentation-sources"].value);
@@ -684,6 +684,7 @@ function addPresentationSource(position){
   const index=position==="end"?next.presentation.items.length:targetIndex<0?next.presentation.items.length:targetIndex+(position==="after"?1:0);
   next.presentation.items.splice(index,0,copy);next.dirty=true;
   modifyPresentation(next,copy.id,`${copy.label||copy.name} inserted at presentation position ${index+1} of ${next.presentation.items.length}.`);
+  el["presentation-items"].focus();
 }
 function movePresentation(direction){
   const selected=el["presentation-items"].value,items=presentationItems(),index=items.findIndex(item=>item.id===selected);
@@ -1126,7 +1127,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.15. Presentation project saving, preview, automatic music ducking, and quieter presentation controls.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.16. Task-oriented Presentation Builder, project saving, preview, and automatic music ducking.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1171,6 +1172,7 @@ el["presentation-create-slideshow"].addEventListener("click",createSlideshow);
 el["presentation-earlier"].addEventListener("click",()=>movePresentation(-1));
 el["presentation-later"].addEventListener("click",()=>movePresentation(1));
 el["presentation-remove"].addEventListener("click",removePresentation);
+el["presentation-choose-source"].addEventListener("click",()=>el["presentation-sources"].focus());
 el["presentation-items"].addEventListener("keydown",event=>{if(event.key==="Delete"){event.preventDefault();removePresentation();}else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
 el["presentation-music-apply"].addEventListener("click",()=>setPresentationMusic(false));
 el["presentation-music-remove"].addEventListener("click",()=>setPresentationMusic(true));

@@ -94,7 +94,7 @@ test("presentation authoring belongs only in its independent workspace",()=>{
   const app=fs.readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
   assert.doesNotMatch(html,/id="create-slideshow-button"|id="slideshow-dialog"/);
   assert.match(html,/id="presentation-new"/);
-  assert.match(html,/independent of Media Editor Primary Production/);
+  assert.match(html,/id="presentation-workspace"[^>]*role="tabpanel"/);
   assert.match(app,/next\.presentation\.items\.splice/);
   assert.match(app,/function sharedPresentationSources\(\)/);
 });

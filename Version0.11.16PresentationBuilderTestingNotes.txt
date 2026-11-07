@@ -1,0 +1,22 @@
+Accessible Media Editor Build 0.11.16
+
+The Presentation workspace is now organized around the editing task instead of separating related lists into distant regions.
+
+Presentation Builder order
+
+1. Start, Save, and Save As controls.
+2. Available Sources list.
+3. Add Before, Add After, and Add to End controls.
+4. Create Slides from Images controls.
+5. Production Sequence list.
+6. Move, Remove, and Choose Another Source controls.
+
+The Available Sources list and Production Sequence are now in one Presentation Builder section. Background music no longer separates them.
+
+After a source is inserted, focus moves to the newly inserted item in Production Sequence. Choose Another Source returns directly to Available Sources. This creates a short repeatable loop for presentations that alternate images and video clips.
+
+After Add All Images as Slides, focus moves to Production Sequence so the result can be reviewed immediately.
+
+Ctrl+Page Up and Ctrl+Page Down now move among three Presentation sections: Presentation Builder, Background Music, and Item Accessibility.
+
+Build 0.11.16 retains editable AMEPROJECT saving, complete presentation preview, automatic music ducking, and the reduced screen-reader verbosity from the preceding builds.
