@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.14
+
+This build corrects the Presentation workflow reported on November 7, 2026.
+
+Changes
+
+1. Preview Complete Presentation renders the assembled presentation and opens it in an accessible preview dialog before export.
+2. X plays or pauses the preview. Left and Right Arrow move five seconds while the preview dialog is open.
+3. Background music now lowers automatically during every video or audio item and returns to its normal level during still images.
+4. Music volume and the reduced music level are independently adjustable.
+5. Repeated selection instructions were removed from the Production items list and moved to the app-wide F1 instructions.
+6. Presentation list entries no longer repeat their numeric list positions because the screen reader supplies that information.
+7. The background-music status is no longer a live region that speaks again after unrelated sequence changes.
+
+Suggested test
+
+Create a sequence alternating still images and video clips that contain sound. Set background music, normal volume, and the reduced level. Use Preview Complete Presentation before exporting. Confirm that music remains at normal volume over images, lowers during video clips, and returns after each clip.

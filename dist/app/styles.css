@@ -26,6 +26,7 @@ select, input, textarea { width: 100%; min-height: 2.75rem; padding: .5rem; colo
 #source-items { min-height: 9rem; margin-top: .25rem; }
 input[type="range"] { accent-color: var(--green); }
 .media-preview { display: block; width: 100%; min-height: 11rem; margin-bottom: .75rem; background: #000; }
+#presentation-preview-media { display: block; width: 100%; max-height: 65vh; margin-bottom: .75rem; background: #000; }
 #media-editor-sections { display: grid; grid-template-columns: repeat(2, minmax(18rem, 1fr)); gap: 1rem; grid-column: 1 / -1; }
 .media-item-editor.active-editor { border: 3px solid var(--green); }
 .button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }

@@ -12,6 +12,12 @@ test("new presentation command exists and is wired",()=>{
   assert.match(html,/id="presentation-new"/);
   assert.match(app,/el\["presentation-new"\]\.addEventListener\("click",newPresentation\)/);
 });
+test("presentation workspace exposes project save and save as controls",()=>{
+  assert.match(html,/id="presentation-save"[^>]*>Save Presentation Project \(Ctrl\+S\)/);
+  assert.match(html,/id="presentation-save-as"[^>]*>Save Presentation Project As \(Ctrl\+Shift\+S\)/);
+  assert.match(app,/el\["presentation-save"\]\.addEventListener\("click",\(\)=>saveProject\(false\)\)/);
+  assert.match(app,/el\["presentation-save-as"\]\.addEventListener\("click",\(\)=>saveProject\(true\)\)/);
+});
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
   assert.match(html,/id="instructions-shortcuts-button"/);

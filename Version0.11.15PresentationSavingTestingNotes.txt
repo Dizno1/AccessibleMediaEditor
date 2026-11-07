@@ -1,0 +1,15 @@
+Accessible Media Editor Build 0.11.15
+
+This build makes project saving visible inside the Presentation workspace.
+
+Start New Presentation Sequence begins or clears the independent presentation sequence. It does not create a saved file.
+
+Save Presentation Project, or Ctrl+S, saves the complete editable work as an AMEPROJECT file. The saved project includes the presentation sequence, media references, slide durations, item descriptions, and background-music settings.
+
+Save Presentation Project As, or Ctrl+Shift+S, chooses a new AMEPROJECT filename and location.
+
+Export Presentation with Music as MP4 creates the finished flattened video. The MP4 can be imported into Media Editor and edited as one video, but it does not retain separately editable slides, clips, and music.
+
+The Presentation workspace now states whether the project has never been saved, has unsaved changes, or is saved.
+
+Build 0.11.15 also includes the presentation preview, automatic music ducking, and speech reductions introduced in the preceding development package.

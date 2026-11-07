@@ -1,4 +1,13 @@
 export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 5, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: []}, editTarget: "both" }; }
+export function presentationDuckRanges(items = []) {
+  let cursor=0;const ranges=[];
+  for(const item of items){
+    const length=itemDuration(item);
+    if(length>0&&["Video","Audio"].includes(item.kind))ranges.push({start:cursor,end:cursor+length});
+    cursor+=length;
+  }
+  return ranges;
+}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);
