@@ -71,6 +71,9 @@ Opening an audio file in Media Editor must not automatically open AudioStudio Pr
 13. Destructive or irreversible actions require clear confirmation. Routine reversible actions should not create unnecessary interruptions.
 14. Spoken feedback must be short, accurate, and action-specific.
 15. Visual controls must remain fully usable for mouse and sighted users without becoming the only interface.
+16. Instructions and Keyboard Shortcuts must be available from every workspace through one persistent control, the Help menu, and F1.
+17. NVDA Focus Mode, JAWS Virtual PC Cursor off, and Narrator Scan Mode off instructions must be stated inside the application, not only in external documentation.
+18. Transport commands use one app-wide model. When a workspace contains playable media or a playable production, X and the established movement commands retain the same meaning.
 
 ## Locked Keyboard Model
 
@@ -607,6 +610,69 @@ AudioStudio Pro will handle:
 - Stem export.
 - Send completed audio mix to Media Editor.
 - Import a completed custom mix into a video while preserving synchronization.
+
+### Accessible Spatial Audio Authoring
+
+AudioStudio Pro will support immersive headphone audio without requiring a visual sound field or mouse dragging.
+
+- Stereo panning with exact values and named positions.
+- Automated left-to-right and right-to-left movement.
+- Binaural positioning in front, behind, above, below, near, far, and around the listener.
+- Named presets such as Front Center, Rear Left, Rear Right, Above, Close, Conversational Distance, and Distant.
+- Exact horizontal angle, elevation, distance, stereo width, start time, and end time.
+- Spatial automation points exposed as a chronological list.
+- Previous Spatial Point and Next Spatial Point commands.
+- Stationary positioning and movement between two or more positions.
+- A Play Spatial Preview command that does not require screen-reader speech to cover the media.
+- Standard stereo binaural export for ordinary headphones before proprietary immersive formats are considered.
+- Later multichannel surround and Dolby Atmos workflow research, subject to licensing, authoring tools, and accessible export requirements.
+
+Every spatial operation must have labeled controls, exact values, keyboard commands, concise spoken confirmation, immediate preview, Undo, and Redo.
+
+### Multitrack Editing and Mixing
+
+AudioStudio Pro will provide separate logical tracks for dialogue, narration, audio description, music, ambience, Foley, and sound effects.
+
+- Add, remove, name, duplicate, reorder, and group tracks.
+- Previous Track and Next Track commands.
+- Exact item start, end, duration, and track placement.
+- Track gain, stereo pan, spatial position, mute, solo, lock, and enable.
+- Buses, submixes, sends, returns, and master output.
+- Volume, pan, spatial, and effect automation.
+- Chronological lists of clips, automation points, and overlapping sounds.
+- Stem export and complete-mix export.
+
+The accessible track model must never require interpreting a visual waveform or mixer. Waveforms may supplement the interface for sighted users, but every operation must remain available through structured lists, named controls, exact fields, menus, and keyboard commands.
+
+### Echo, Delay, Reverb, and Audio Effects
+
+- Echo and delay with exact delay time, feedback, wet level, dry level, and stereo placement.
+- Reverb with accessible room presets and exact room size, decay, pre-delay, damping, wet level, and dry level.
+- Equalization, compression, limiting, de-essing, noise reduction, restoration, pitch, tempo, and loudness processing.
+- Reorderable effect chains for clips, tracks, buses, and the master output.
+- Preview, bypass, compare, reset, remove, Undo, and Redo for every effect.
+- Effect presets whose names describe the intended audible result rather than relying on visual metaphors.
+- Nondestructive processing that never changes the original recording.
+
+### Voice Recording and Voice Effects
+
+- Record narration, dialogue, audio description, ADR, and other voice material into a selected track.
+- Apply echo, delay, reverb, EQ, compression, limiting, de-essing, noise reduction, pitch, tempo, and spatial positioning after recording.
+- Preview the untreated and processed voice without replacing the original take.
+- Save reusable voice-effect chains and accessible presets.
+- Add punch-in recording, take management, and comping after basic recording is stable.
+- Research optional real-time monitoring effects only after latency, feedback, device selection, and accessibility are reliable.
+
+### Reuse Across Media Editor and Presentation
+
+AudioStudio Pro work must remain part of Accessible Media Editor rather than becoming an isolated audio application.
+
+- Send a complete mix, selected range, stem, track, or processed voice recording to Media Editor.
+- Add the result beneath or in place of video while preserving exact synchronization.
+- Send narration, dialogue, music, ambience, and sound effects to Presentation.
+- Preserve spatial positions, movement, automation, reverb, echo, gain, and timing during preview and export.
+- Allow an AudioStudio Pro production to be reused as a linked nondestructive source or as a newly rendered application-owned audio asset.
+- Report when a destination format cannot preserve a requested spatial or multichannel property and offer an understandable binaural or stereo alternative.
 
 The AudioStudio Pro interface should follow the same principles as Media Editor: named sections, exact values, quiet transport, logical selections, menu equivalents, immediate nondestructive review, and full keyboard control.
 

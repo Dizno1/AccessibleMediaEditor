@@ -13,6 +13,14 @@ test("new presentation command exists and is wired",()=>{
   assert.match(app,/el\["presentation-new"\]\.addEventListener\("click",newPresentation\)/);
 });
 
+test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
+  assert.match(html,/id="instructions-shortcuts-button"/);
+  assert.match(app,/el\["instructions-shortcuts-button"\]\.addEventListener\("click",actions\.showShortcuts\)/);
+  assert.match(html,/NVDA\+Space to enter Focus Mode/);
+  assert.match(html,/Insert\+Z to turn the Virtual PC Cursor off/);
+  assert.match(html,/Narrator\+Space to turn Scan Mode off/);
+});
+
 test("critical editor functions required by startup and media import are defined",()=>{
   for(const name of ["saveSourceClip","renderEditorNavigation","updateActiveAppearance","activateMedia"]){
     assert.match(app,new RegExp(`function ${name}\\(`),`${name} must exist`);

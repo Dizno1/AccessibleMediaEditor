@@ -1,0 +1,50 @@
+Accessible Media Editor Build 0.11.13
+Testing Notes
+
+This build is based on the current source containing persistent shared-library support, recovery documentation, templates, static assets, and the persistent-library regression tests. Those features have been preserved.
+
+What changed:
+
+1. A persistent Instructions and Keyboard Shortcuts button appears above the workspace tabs and remains available from Media Editor, Presentation, and AudioStudio Pro.
+
+2. F1 opens the same Instructions and Keyboard Shortcuts dialog from any workspace.
+
+3. The native Help menu now calls the feature Instructions and Keyboard Shortcuts and identifies F1.
+
+4. The dialog explains the required screen-reader interaction modes:
+
+NVDA users press NVDA+Space to enter Focus Mode.
+
+JAWS users press Insert+Z to turn the Virtual PC Cursor off.
+
+Narrator users press Narrator+Space to turn Scan Mode off.
+
+5. The instructions explain that X, the Arrow keys, and other editing commands must reach the application rather than the screen reader's document-navigation mode.
+
+6. The Presentation workspace was added to the native Navigate menu alongside Media Editor and AudioStudio Pro.
+
+7. The development roadmap now includes accessible spatial audio, binaural positioning, multitrack editing, echo, delay, reverb, voice effects, and reuse of AudioStudio Pro work in Media Editor and Presentation.
+
+Required testing:
+
+1. Launch the application and confirm that the Instructions and Keyboard Shortcuts button is available before selecting a workspace.
+
+2. Open the instructions with the button from each workspace.
+
+3. Open the instructions with F1 from each workspace.
+
+4. Open the instructions from the native Help menu.
+
+5. Confirm that focus enters the dialog and that closing it returns focus predictably.
+
+6. Confirm the NVDA, JAWS, and Narrator setup instructions are understandable.
+
+7. With the screen reader in application interaction mode, verify X, Left Arrow, Right Arrow, Alt+Left Arrow, and Alt+Right Arrow in an active Media Editor player.
+
+8. Confirm that the persistent shared library still loads without restoring the previous project and that its items can be reused.
+
+Automated result:
+
+The complete JavaScript suite, including persistent-library tests, must pass before packaging.
+
+Rust was not installed in the packaging environment. GitHub Actions must complete the Windows Rust and Tauri compilation before this build is considered installable.

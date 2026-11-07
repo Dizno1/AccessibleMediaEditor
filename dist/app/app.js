@@ -1088,7 +1088,7 @@ function cancel(){const state=activeState();if(el["properties-dialog"].open)el["
 
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
-  previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
+  previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showPresentationWorkspace:()=>switchWorkspace(1,"presentation"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition,moveEarlier:()=>move(-1),moveLater:()=>move(1),properties:showProperties,makeSourcePrimary:promoteSelectedSource,removeItem:removeActive,split:splitSelected,undo,redo,
   preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
@@ -1099,7 +1099,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.12. Startup recovery isolation, saved sessions, shared source media, and accessible presentation authoring.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.13. App-wide instructions, persistent shared media, and accessible presentation authoring.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1121,6 +1121,7 @@ el["move-image-earlier-button"].addEventListener("click",()=>moveSelectedImage(-
 el["remove-image-button"].addEventListener("click",removeSelectedImage);
 
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);
+el["instructions-shortcuts-button"].addEventListener("click",actions.showShortcuts);
 el["save-project-button"].addEventListener("click",()=>saveProject(true));el["media-editor-tab"].addEventListener("click",()=>switchWorkspace(1,"media"));el["audio-studio-tab"].addEventListener("click",()=>switchWorkspace(1,"audio"));el["presentation-tab"].addEventListener("click",()=>switchWorkspace(1,"presentation"));
 el["export-button"].addEventListener("click",exportMedia);
 el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>{el["export-dialog"].close();exportPhase="idle";clearAnnouncements();});

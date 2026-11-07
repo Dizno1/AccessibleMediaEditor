@@ -25,6 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
+    <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
   <main>
@@ -327,7 +328,14 @@
 
   <dialog id="shortcuts-dialog" aria-labelledby="shortcuts-heading">
     <form method="dialog">
-      <h2 id="shortcuts-heading">Keyboard Shortcuts</h2>
+      <h2 id="shortcuts-heading">Instructions and Keyboard Shortcuts</h2>
+      <h3>Screen reader setup</h3>
+      <p>Accessible Media Editor uses application keyboard commands. The screen reader must pass X, the Arrow keys, and the other editing commands to the application.</p>
+      <p><strong>NVDA:</strong> Press NVDA+Space to enter Focus Mode. Press NVDA+Space again when you want to return to Browse Mode.</p>
+      <p><strong>JAWS:</strong> Press Insert+Z to turn the Virtual PC Cursor off. Press Insert+Z again when you want to turn it back on.</p>
+      <p><strong>Narrator:</strong> Press Narrator+Space to turn Scan Mode off. Press Narrator+Space again when you want to turn it back on.</p>
+      <p>Use the application interaction mode while working in Media Editor, Presentation, AudioStudio Pro, media lists, and production sequences. These instructions are available from every workspace with F1.</p>
+      <h3>App-wide commands</h3>
       <ul>
         <li>Ctrl+O: Open one or more media files.</li><li>Ctrl+Shift+O: Open Project.</li>
         <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
@@ -336,7 +344,8 @@
         <li>Ctrl+Up: Move Item Earlier.</li><li>Ctrl+Down: Move Item Later.</li>
         <li>Alt+Enter: Item Properties.</li><li>Delete: Remove Item.</li>
         <li>Ctrl+Tab or Ctrl+Shift+Tab: Switch between Media Editor, Presentation, and AudioStudio Pro.</li>
-        <li>X: Play or pause from the current playhead.</li>
+        <li>F1: Open these instructions and keyboard shortcuts from any workspace.</li>
+        <li>X: Play or pause the active media or production from the current playhead.</li>
         <li>Space: Audition the complete bracket selection, or play continuously from the current playhead when no brackets are set. Press Space again to stop and return.</li>
         <li>Escape: Close a dialog or cancel a temporary operation.</li>
         <li>In Primary Production, B, V, or A targets both tracks, video only, or audio only for replacement of a selected range.</li>
@@ -344,7 +353,7 @@
         <li>Shift+U or Shift+I: Scrub backward or forward 100 milliseconds.</li>
         <li>Ctrl+Alt+U or Ctrl+Alt+I: Scrub backward or forward 10 milliseconds.</li>
         <li>Left bracket or Right bracket: Set the matching selection boundary.</li>
-        <li>Left or Right Arrow: Move backward or forward 5 seconds.</li>
+        <li>Left or Right Arrow: Move backward or forward 5 seconds. During playback, continue playing from the new position.</li>
         <li>Shift+Left or Shift+Right: Move backward or forward 30 seconds.</li>
         <li>J or L: Move backward or forward 5 minutes.</li>
         <li>Alt+Left or Alt+Right: Move by 1 millisecond.</li>
@@ -356,7 +365,7 @@
         <li>Ctrl+K: Split the selected item at the playhead without changing the source file.</li>
         <li>Ctrl+Delete: Apply the bracketed edit in Primary Production or the active Source editor.</li>
       </ul>
-      <button type="submit">Close</button>
+      <button type="submit">Close Instructions and Keyboard Shortcuts</button>
     </form>
   </dialog>
 

@@ -1,5 +1,6 @@
 const handlers = new Map();
 export const shortcuts = [
+  ["showShortcuts", {key:"f1"}],
   ["newProject", {ctrl:true,key:"n"}], ["openProject", {ctrl:true,shift:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
   ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["importMedia", {ctrl:true,key:"o"}],
   ["exportMedia", {ctrl:true,key:"e"}],

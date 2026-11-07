@@ -14,3 +14,6 @@ test('workspace switches do not duplicate native tab announcements through live 
 test('held control tab does not cause repeated workspace switching',()=>{
   assert.match(shortcuts,/event\.repeat && event\.ctrlKey && event\.key\.toLowerCase\(\) === "tab"/);
 });
+test('F1 opens app-wide instructions and keyboard shortcuts',()=>{
+  assert.match(shortcuts,/\["showShortcuts", \{key:"f1"\}\]/);
+});
