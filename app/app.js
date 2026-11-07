@@ -706,10 +706,11 @@ function removePresentation(){
 }
 function selectedPresentationItems(){
   const selected=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value));
+  if(!selected.size&&el["presentation-items"].value)selected.add(el["presentation-items"].value);
   return presentationItems().filter(item=>selected.has(item.id));
 }
 function copyPresentation(cut=false){
-  const selected=selectedPresentationItems();if(!selected.length)return announce("Select one or more Production Sequence items first.",true);
+  const selected=selectedPresentationItems();if(!selected.length)return announce("Select a Presentation Timeline item first.",true);
   presentationClipboard=structuredClone(selected);
   if(!cut){announce(`${selected.length} presentation ${selected.length===1?"item":"items"} copied.`);return;}
   const selectedIds=new Set(selected.map(item=>item.id)),items=presentationItems(),firstIndex=items.findIndex(item=>selectedIds.has(item.id));
@@ -718,7 +719,7 @@ function copyPresentation(cut=false){
   modifyPresentation(next,nextSelected,`${selected.length} presentation ${selected.length===1?"item":"items"} cut to the presentation clipboard.`);el["presentation-items"].focus();
 }
 function pastePresentation(){
-  if(!presentationClipboard.length)return announce("Cut or copy one or more Production Sequence items first.",true);
+  if(!presentationClipboard.length)return announce("Cut or copy one or more Presentation Timeline items first.",true);
   const next=structuredClone(project);next.presentation||={items:[]};
   const target=el["presentation-items"].value,targetIndex=next.presentation.items.findIndex(item=>item.id===target),index=targetIndex<0?next.presentation.items.length:targetIndex;
   const copies=presentationClipboard.map(item=>({...structuredClone(item),id:id()}));next.presentation.items.splice(index,0,...copies);next.dirty=true;
@@ -781,6 +782,10 @@ function savePresentationDescriptions(){
   const next=structuredClone(project),item=next.presentation.items.find(item=>item.id===selected);
   item.alternativeText=el["presentation-alt"].value;item.dialogueDraft=el["presentation-dialogue"].value;next.dirty=true;
   modifyPresentation(next,selected,"Presentation item descriptions saved in project metadata.");
+}
+function announcePresentationTimeline(){
+  const list=el["presentation-items"],count=list.options.length,index=list.selectedIndex;
+  announce(`Presentation Timeline. ${count?`Item ${index>=0?index+1:1} of ${count}.`:"No items."}`);
 }
 function switchWorkspace(direction=1,target=null){
   const next=target||workspaceOrder[(workspaceOrder.indexOf(activeWorkspace)+direction+workspaceOrder.length)%workspaceOrder.length];
@@ -876,7 +881,7 @@ async function placeImageSource(sourceImage){
 }
 function newProject(){if(project.dirty&&!window.confirm("Discard unsaved changes and start a new editing session?"))return;project=createProject();selectedId=selectedSourceId=selectedImageId=selectedReplacementId=activeMediaId=null;mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render();el["import-media-button"].focus();announce("New editing session. Press Ctrl+O to open primary media.");}
 function applyOpenedProject(result){
-  project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});if(activeWorkspace==="presentation"&&presentationItems().length)el["presentation-items"].focus();
+  project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});if(activeWorkspace==="presentation"){el["presentation-items"].focus();announcePresentationTimeline();}
 }
 async function openProject(){
   if(project.dirty&&!window.confirm("Discard unsaved changes and open another project?"))return;
@@ -1035,9 +1040,9 @@ function addTransition(){const after=selectedId,item={id:id(),source:null,name:"
 function undo(){
   const state=activeState();
   if(state?.markHistory?.length){const change=state.markHistory.pop();if(change.which==="in")state.markIn=change.previous;else state.markOut=change.previous;const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);return announce(`${change.which==="in"?"Left":"Right"} bracket removed.`);}
-  if(!undoStack.length)return announce("Nothing to undo.");const restore=removedLibraryItemUndo,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:((project.sources||[]).find(item=>item.kind!=="Image")?.id||null);if(restore&&(project.sources||[]).some(item=>item.id===restore.id)){if(restore.collection==="image")selectedImageId=restore.id;else selectedSourceId=restore.id;}activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedLibraryItemUndo=null;render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Undo completed in Production Sequence.");}else if(restore){const list=el[restore.collection==="image"?"image-items":"source-items"],remaining=(project.sources||[]).filter(item=>restore.collection==="image"?item.kind==="Image":item.kind!=="Image").length;list.focus();announce(`${restore.label} restored to ${restore.collection==="image"?"Project Image Library":"Source media"}. ${remaining} ${restore.collection==="image"?(remaining===1?"image":"images"):(remaining===1?"source item":"source items")} available.`);}else{editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");}
+  if(!undoStack.length)return announce("Nothing to undo.");const restore=removedLibraryItemUndo,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:((project.sources||[]).find(item=>item.kind!=="Image")?.id||null);if(restore&&(project.sources||[]).some(item=>item.id===restore.id)){if(restore.collection==="image")selectedImageId=restore.id;else selectedSourceId=restore.id;}activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedLibraryItemUndo=null;render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Undo completed in Presentation Timeline.");}else if(restore){const list=el[restore.collection==="image"?"image-items":"source-items"],remaining=(project.sources||[]).filter(item=>restore.collection==="image"?item.kind==="Image":item.kind!=="Image").length;list.focus();announce(`${restore.label} restored to ${restore.collection==="image"?"Project Image Library":"Source media"}. ${remaining} ${restore.collection==="image"?(remaining===1?"image":"images"):(remaining===1?"source item":"source items")} available.`);}else{editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");}
 }
-function redo(){if(!redoStack.length)return announce("Nothing to redo.");const previousActiveId=activeMediaId,previousSelectedSourceId=selectedSourceId;undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Redo completed in Production Sequence.");}else{editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}}
+function redo(){if(!redoStack.length)return announce("Nothing to redo.");const previousActiveId=activeMediaId,previousSelectedSourceId=selectedSourceId;undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Redo completed in Presentation Timeline.");}else{editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}}
 
 function currentLogicalPosition(location,state){
   if(location.type==="program"){
@@ -1161,7 +1166,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.18. Presentation Cut, Copy, Paste, direct project opening, preview, and automatic music ducking.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.19. Presentation Cut, Copy, Paste, direct project opening, preview, and automatic music ducking.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1199,6 +1204,14 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
   switchWorkspace(1,target);el[workspaceTabs[target]].focus();
 }));
 el["presentation-items"].addEventListener("change",loadPresentationDescriptions);
+// Production-first navigation: source media never becomes the implicit edit target.
+document.addEventListener("keydown",event=>{
+  if(activeWorkspace!=="presentation"||!event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;
+  const target=event.key.toLowerCase()==="p"?"presentation-items":event.key.toLowerCase()==="s"?"presentation-sources":null;
+  if(!target)return;
+  event.preventDefault();event.stopPropagation();el[target].focus();
+  if(target==="presentation-items")announcePresentationTimeline();else announce(`Source Media Library. ${el[target].options.length} available sources.`);
+},true);
 el["presentation-new"].addEventListener("click",newPresentation);
 el["presentation-open"].addEventListener("click",openProject);
 el["presentation-save"].addEventListener("click",()=>saveProject(false));
@@ -1211,7 +1224,7 @@ el["presentation-copy"].addEventListener("click",()=>copyPresentation(false));
 el["presentation-paste"].addEventListener("click",pastePresentation);
 el["presentation-remove"].addEventListener("click",removePresentation);
 el["presentation-choose-source"].addEventListener("click",()=>el["presentation-sources"].focus());
-el["presentation-items"].addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
+el["presentation-items"].addEventListener("keydown",event=>{if(event.key==="Delete"&&!event.ctrlKey&&!event.altKey){event.preventDefault();event.stopPropagation();removePresentation();return;}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
 el["presentation-music-apply"].addEventListener("click",()=>setPresentationMusic(false));
 el["presentation-music-remove"].addEventListener("click",()=>setPresentationMusic(true));
 el["presentation-preview"].addEventListener("click",previewPresentation);

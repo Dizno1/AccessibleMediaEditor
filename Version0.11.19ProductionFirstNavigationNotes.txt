@@ -1,0 +1,21 @@
+Accessible Media Editor 0.11.19 - Production-First Navigation
+
+Development build. Not a beta or production release.
+
+Presentation Timeline now precedes Source Media Library in reading and Tab order.
+
+Alt+P moves focus to Presentation Timeline. Alt+S moves focus to Source Media Library when Presentation is active.
+
+Opening a presentation project focuses the Presentation Timeline and announces its item count and current position.
+
+Delete removes selected timeline entries without deleting source media.
+
+Ctrl+X cuts, Ctrl+C copies, and Ctrl+V pastes before the selected timeline item.
+
+Ctrl+Space extends individual selection; Ctrl+A selects all.
+
+Undo and Redo remain available.
+
+Media Editor remains the primary workspace, and existing background music functionality is retained.
+
+Please verify the installed Windows application and keyboard behavior. This source package does not contain a verified Windows installer.

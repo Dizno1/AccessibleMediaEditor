@@ -129,8 +129,21 @@
         <button type="button" id="presentation-save-as">Save Presentation Project As (Ctrl+Shift+S)</button>
         <p id="presentation-project-status">Presentation project has not been saved.</p>
 
-        <h3>Available Sources</h3>
-        <label for="presentation-sources">Images, video clips, and audio in the shared library</label>
+        <h3>Presentation Timeline</h3>
+        <label for="presentation-items">Presentation Timeline. Editable items in playback order. Use Ctrl+X, Ctrl+C, Ctrl+V, Delete; Ctrl+Space for multiple selection</label>
+        <select id="presentation-items" size="10" multiple></select>
+        <div class="button-row">
+          <button type="button" id="presentation-earlier">Move Earlier</button>
+          <button type="button" id="presentation-later">Move Later</button>
+          <button type="button" id="presentation-cut">Cut Selected Items (Ctrl+X)</button>
+          <button type="button" id="presentation-copy">Copy Selected Items (Ctrl+C)</button>
+          <button type="button" id="presentation-paste">Paste Before Current Item (Ctrl+V)</button>
+          <button type="button" id="presentation-remove">Remove Selected Items from Sequence</button>
+          <button type="button" id="presentation-choose-source">Choose Another Source</button>
+        </div>
+        <p id="presentation-sequence-summary">No production items.</p>
+        <h3>Source Media Library</h3>
+        <label for="presentation-sources">Reusable images, video clips, and audio. Insert a source into the Presentation Timeline</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
           <button type="button" id="presentation-insert-before">Add Before Current Production Item</button>
@@ -143,19 +156,7 @@
         <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
         <button type="button" id="presentation-create-slideshow">Add All Images as Slides</button>
 
-        <h3>Production Sequence</h3>
-        <label for="presentation-items">Production items in playback order</label>
-        <select id="presentation-items" size="10" multiple></select>
-        <div class="button-row">
-          <button type="button" id="presentation-earlier">Move Earlier</button>
-          <button type="button" id="presentation-later">Move Later</button>
-          <button type="button" id="presentation-cut">Cut Selected Items (Ctrl+X)</button>
-          <button type="button" id="presentation-copy">Copy Selected Items (Ctrl+C)</button>
-          <button type="button" id="presentation-paste">Paste Before Current Item (Ctrl+V)</button>
-          <button type="button" id="presentation-remove">Remove Selected Items from Sequence</button>
-          <button type="button" id="presentation-choose-source">Choose Another Source</button>
-        </div>
-        <p id="presentation-sequence-summary">No production items.</p>
+
       </section>
       <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
         <h2 id="presentation-music-heading">Presentation Background Music Track</h2>

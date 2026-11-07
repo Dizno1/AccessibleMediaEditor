@@ -25,12 +25,12 @@ test("an AMEPROJECT selected through Open Media is redirected to project opening
   assert.match(app,/invoke\("open_project_path",\{path:projectPaths\[0\]\}\)/);
   assert.match(app,/applyOpenedProject\(result\)/);
 });
-test("presentation builder places sources and sequence in one task-oriented section",()=>{
+test("presentation builder puts the editable timeline before the source library",()=>{
   assert.match(html,/id="presentation-builder-section"/);
   assert.doesNotMatch(html,/id="presentation-library-section"/);
   const sourcePosition=html.indexOf('id="presentation-sources"');
   const sequencePosition=html.indexOf('id="presentation-items"');
-  assert.ok(sourcePosition>0&&sequencePosition>sourcePosition);
+  assert.ok(sequencePosition>0&&sourcePosition>sequencePosition);
   assert.match(html,/id="presentation-choose-source"/);
   assert.match(app,/el\["presentation-choose-source"\]\.addEventListener/);
 });
