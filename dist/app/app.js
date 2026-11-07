@@ -634,7 +634,12 @@ function sharedPresentationSources(){
 function renderPresentation(){
   const items=presentationItems(),sources=sharedPresentationSources();
   const oldSelection=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value)),oldSource=el["presentation-sources"].value;
-  el["presentation-items"].replaceChildren(...items.map(item=>new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.`,item.id)));
+  el["presentation-items"].replaceChildren(...items.map(item=>{
+    const description=item.alternativeText?.trim()?` Visual description: ${item.alternativeText.trim()}.`:"";
+    const transcript=item.dialogueDraft?.trim()?" Transcript or dialogue available.":"";
+    const ad=item.audioDescriptionScript?.trim()?" Audio-description script available.":"";
+    return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${description}${transcript}${ad}`,item.id);
+  }));
   el["presentation-sources"].replaceChildren(...sources.map(item=>new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.`,item.id)));
   for(const option of el["presentation-items"].options)option.selected=oldSelection.has(option.value);
   const musicSources=[...libraryItems,...sources].filter((item,index,array)=>item.kind==="Audio"&&array.findIndex(other=>other.source===item.source)===index);
@@ -652,6 +657,11 @@ function loadPresentationDescriptions(){
   const item=presentationItems().find(item=>item.id===el["presentation-items"].value);
   el["presentation-alt"].value=item?.alternativeText||"";
   el["presentation-dialogue"].value=item?.dialogueDraft||"";
+  el["presentation-ad-script"].value=item?.audioDescriptionScript||"";
+  el["presentation-ad-use-visual"].checked=!!item?.audioDescriptionSources?.visualDescription;
+  el["presentation-ad-use-dialogue"].checked=!!item?.audioDescriptionSources?.transcriptDialogue;
+  el["presentation-ad-include"].checked=!!item?.includeAudioDescription;
+  el["presentation-ad-status"].textContent=item?.includeAudioDescription?"Audio description is marked for this item, but narration is not generated or exported in this build.":"No audio-description narration is generated in this build.";
   el["presentation-save-accessibility"].disabled=!item;
 }
 function modifyPresentation(next,selected,description){
@@ -780,8 +790,12 @@ async function exportPresentation(){
 function savePresentationDescriptions(){
   const selected=el["presentation-items"].value;if(!selected)return announce("Select a presentation item first.",true);
   const next=structuredClone(project),item=next.presentation.items.find(item=>item.id===selected);
-  item.alternativeText=el["presentation-alt"].value;item.dialogueDraft=el["presentation-dialogue"].value;next.dirty=true;
-  modifyPresentation(next,selected,"Presentation item descriptions saved in project metadata.");
+  item.alternativeText=el["presentation-alt"].value.trim();
+  item.dialogueDraft=el["presentation-dialogue"].value.trim();
+  item.audioDescriptionScript=el["presentation-ad-script"].value.trim();
+  item.audioDescriptionSources={visualDescription:el["presentation-ad-use-visual"].checked,transcriptDialogue:el["presentation-ad-use-dialogue"].checked};
+  item.includeAudioDescription=el["presentation-ad-include"].checked;next.dirty=true;
+  modifyPresentation(next,selected,"Item accessibility information saved. Audio-description narration is not generated or exported in this build.");
 }
 function announcePresentationTimeline(){
   const list=el["presentation-items"],count=list.options.length,index=list.selectedIndex;
@@ -1166,7 +1180,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.19. Presentation Cut, Copy, Paste, direct project opening, preview, and automatic music ducking.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.20. Corrected presentation music ducking, exported-file selection, and accessible item authoring fields.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

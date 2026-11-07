@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.20
+
+This build corrects three confirmed Presentation defects.
+
+1. Background music ducking now recalculates the FFmpeg volume expression for every audio frame. Music should remain at the normal selected level during still images and lower to the selected ducked level during video and audio items.
+
+2. Show Saved File now gives Windows Explorer a canonical completed file path and a separate file-selection switch. Explorer should open the containing folder with the completed export selected.
+
+3. Item Accessibility now separates visual descriptions, transcripts or dialogue, and audio-description scripts. Authors may mark the visual description, transcript or dialogue, or both as sources for future audio-description authoring. They may also mark an item for future audio-description inclusion.
+
+Audio-description narration, captions, and accessibility tracks are not generated, previewed, or exported in this build. The interface states this limitation directly.
+
+When a Presentation Timeline item has a visual description, the description is included in that item's accessible list text. Transcript and audio-description-script availability are also identified without reading the complete text automatically.
+
+All 76 automated JavaScript and startup regression tests passed before packaging.
+
+The repository replacement ZIP excludes the entire .git directory and excludes node_modules.

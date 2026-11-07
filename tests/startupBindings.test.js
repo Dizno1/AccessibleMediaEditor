@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
@@ -43,6 +44,24 @@ test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()
   assert.match(app,/cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction/);
   assert.match(app,/moveEarlier:\(\)=>activeWorkspace==="presentation"\?movePresentation\(-1\)/);
   assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
+});
+
+test("presentation item accessibility separates visual transcript and audio description authoring",()=>{
+  for(const id of ["presentation-alt","presentation-ad-use-visual","presentation-dialogue","presentation-ad-use-dialogue","presentation-ad-script","presentation-ad-include"]){
+    assert.ok(ids.has(id),`${id} must exist`);
+  }
+  assert.match(app,/item\.audioDescriptionScript=el\["presentation-ad-script"\]\.value\.trim\(\)/);
+  assert.match(app,/audioDescriptionSources=/);
+  assert.match(app,/Audio-description narration is not generated or exported in this build/);
+});
+
+test("native presentation ducking evaluates volume for every audio frame",()=>{
+  assert.match(rust,/volume='\{:\.4\}\*\(\{\}\)':eval=frame\[music\]/);
+});
+
+test("Show Saved File gives Explorer a separate select switch and canonical file path",()=>{
+  assert.match(rust,/\.canonicalize\(\)/);
+  assert.match(rust,/Command::new\("explorer\.exe"\)\.arg\("\/select,"\)\.arg\(&file\)/);
 });
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{

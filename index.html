@@ -174,12 +174,18 @@
       </section>
       <section class="editor-section" id="presentation-accessibility-section" tabindex="-1" aria-labelledby="presentation-accessibility-heading">
         <h2 id="presentation-accessibility-heading">Item Accessibility</h2>
-        <p>Descriptions are saved in the project. They are not automatically embedded as accessible tracks in exported MP4 files.</p>
-        <label for="presentation-alt">Image alternative text or visual description</label>
+        <p>These fields have separate purposes. They are saved with the project. Audio-description narration, captions, and accessibility tracks are not included in preview or export in this build.</p>
+        <label for="presentation-alt">Visual description for identifying this item</label>
         <textarea id="presentation-alt" rows="3"></textarea>
-        <label for="presentation-dialogue">Transcript, dialogue, or audio-description draft</label>
+        <label><input id="presentation-ad-use-visual" type="checkbox"> Use the visual description as a source for future audio-description narration</label>
+        <label for="presentation-dialogue">Transcript or dialogue already heard in this item</label>
         <textarea id="presentation-dialogue" rows="4"></textarea>
-        <button type="button" id="presentation-save-accessibility">Save Item Descriptions</button>
+        <label><input id="presentation-ad-use-dialogue" type="checkbox"> Use the transcript or dialogue as context for future audio-description narration</label>
+        <label for="presentation-ad-script">Audio-description narration script</label>
+        <textarea id="presentation-ad-script" rows="4"></textarea>
+        <label><input id="presentation-ad-include" type="checkbox"> Include audio description for this item when audio-description export becomes available</label>
+        <p id="presentation-ad-status">No audio-description narration is generated in this build.</p>
+        <button type="button" id="presentation-save-accessibility">Save Item Accessibility Information</button>
       </section>
     </div>
 

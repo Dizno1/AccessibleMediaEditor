@@ -254,9 +254,12 @@ fn open_exports_folder() -> Result<(), String> {
 
 #[tauri::command]
 fn reveal_exported_file(path: String) -> Result<(), String> {
-    let file = std::path::PathBuf::from(&path);
+    let file = std::path::PathBuf::from(&path).canonicalize().map_err(|_| "The saved export could not be found at that location.".to_string())?;
     if !file.is_file() { return Err("The saved export could not be found at that location.".into()); }
-    std::process::Command::new("explorer").arg(format!("/select,{}", file.to_string_lossy())).spawn().map_err(|error| error.to_string())?;
+    // Explorer parses /select more reliably as its own argument. Passing the
+    // switch and a path containing spaces as one formatted string can open an
+    // unrelated folder instead of selecting the completed export.
+    std::process::Command::new("explorer.exe").arg("/select,").arg(&file).spawn().map_err(|error| error.to_string())?;
     Ok(())
 }
 
@@ -414,7 +417,9 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
         let mixed_path=safe_working_path(&project_id,"mp4","production-music")?;let mixed_text=mixed_path.to_string_lossy().into_owned();
         let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start,range.end)).collect::<Vec<_>>().join("+");
         let duck=if ranges.is_empty(){"1".to_string()}else{format!("if(gt({},0),{:.4},1)",ranges,music.duck_factor.clamp(0.0,1.0))};
-        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume={:.4},volume='{}'[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
+        // The duck expression uses the current timestamp. FFmpeg's volume
+        // filter otherwise evaluates it only once, leaving music at one level.
+        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume='{:.4}*({})':eval=frame[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
         let mut mix_args=vec!["-y".into(),"-i".into(),base_text.clone(),"-stream_loop".into(),"-1".into(),"-i".into(),music.source,"-filter_complex".into(),filter,"-map".into(),"0:v:0".into(),"-map".into(),"[a]".into()];
         mix_args.extend(standard_video_encoding(mixed_text));run_ffmpeg(&app,mix_args).await?;let _=fs::remove_file(&active_base);active_base=mixed_path;
     }
@@ -519,7 +524,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.19 executable started.");
+    write_startup_log("Build 0.11.20 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
