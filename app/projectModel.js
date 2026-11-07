@@ -197,7 +197,8 @@ export function productionRenderItems(project) {
     source: item.source,
     segments: normalizedSegments(item),
     mediaKind: item.kind,
-    trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both")
+    trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both"),
+    audioVolume: item.muted ? 0 : Math.max(0, Math.min(1, Number(item.audioVolume ?? 1)))
   }));
 }
 export function productionRenderReplacements(project) {

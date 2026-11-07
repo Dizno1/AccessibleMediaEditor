@@ -140,8 +140,8 @@ test("production rendering receives every timeline item in order",()=>{
   let project=addItem(createProject(),{...item("primary",10),workingSource:"C:/working-primary.mp4",editSegments:[{start:1,end:4}],trackTarget:"both"});
   project=addItem(project,{...item("inserted",8),kind:"Audio",workingSource:"C:/inserted.m4a",editSegments:[{start:2,end:6}],trackTarget:"audio"});
   assert.deepEqual(productionRenderItems(project),[
-    {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both"},
-    {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio"}
+    {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both",audioVolume:1},
+    {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio",audioVolume:1}
   ]);
 });
 test("audio replacement preserves production duration and stores an exact timeline range",()=>{
@@ -182,8 +182,14 @@ test("track replacements are passed to FFmpeg in project order",()=>{
 test("a still image renders as a silent video item for its exact duration",()=>{
   let project=createProject("Images");
   project=addItem(project,{id:"photo",name:"photo.jpg",label:"Photo",kind:"Image",source:"C:/photo.jpg",duration:5.25,editSegments:[{start:0,end:5.25}],trackTarget:"video"});
-  assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video"}]);
+  assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video",audioVolume:1}]);
   assert.equal(duration(project),5.25);
+});
+test("production items preserve presentation foreground audio settings",()=>{
+  let project=createProject("Audio settings");
+  project=addItem(project,{...item("clip",10),editSegments:[{start:2,end:7}],audioVolume:.4});
+  project=addItem(project,{...item("muted",8),editSegments:[{start:1,end:5}],muted:true});
+  assert.deepEqual(productionRenderItems(project).map(value=>value.audioVolume),[.4,0]);
 });
 
 test("a still image can occupy an exact retained audio replacement range",()=>{

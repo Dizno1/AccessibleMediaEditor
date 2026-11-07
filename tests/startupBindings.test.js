@@ -62,6 +62,19 @@ test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()
   assert.match(app,/moveEarlier:\(\)=>activeWorkspace==="presentation"\?movePresentation\(-1\)/);
   assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
 });
+test("Presentation Item Properties supports exact timing and foreground audio",()=>{
+  for(const id of ["presentation-properties-dialog","presentation-item-label","presentation-image-duration","presentation-in-milliseconds","presentation-out-milliseconds","presentation-item-volume","presentation-item-muted"]){
+    assert.ok(ids.has(id),`${id} must exist`);
+  }
+  assert.match(app,/properties:\(\)=>activeWorkspace==="presentation"\?showPresentationProperties\(\):showProperties\(\)/);
+  assert.match(app,/function savePresentationProperties\(/);
+  assert.match(app,/patch\.audioVolume=volume\/100/);
+  assert.match(rust,/audio_volume: f64/);
+  assert.match(rust,/volume=\{:\.4\}\[ao\]/);
+});
+test("opening a populated presentation project enters its timeline",()=>{
+  assert.match(app,/if\(presentationItems\(\)\.length\)switchWorkspace\(1,"presentation",true\)/);
+});
 
 test("presentation item accessibility separates visual transcript and audio description authoring",()=>{
   for(const id of ["presentation-alt","presentation-ad-use-visual","presentation-dialogue","presentation-ad-use-dialogue","presentation-ad-script","presentation-ad-include"]){

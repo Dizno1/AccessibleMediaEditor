@@ -20,3 +20,13 @@ test('F1 opens app-wide instructions and keyboard shortcuts',()=>{
 test('Escape closes a native select without also running the app Cancel command',()=>{
   assert.match(shortcuts,/event\.key === "Escape" && event\.target\?\.tagName\?\.toLowerCase\(\) === "select"/);
 });
+test('Ctrl Tab enters the destination workspace instead of focusing its tab',()=>{
+  assert.match(app,/previousWorkspace:\(\)=>switchWorkspace\(-1,null,true\)/);
+  assert.match(app,/nextWorkspace:\(\)=>switchWorkspace\(1,null,true\)/);
+  assert.match(workspace,/if\(focusContent\)focusWorkspaceContent\(next\)/);
+});
+test('workspace focus moves before the old panel is hidden',()=>{
+  const focusPosition=workspace.indexOf('if(focusContent)focusWorkspaceContent(next)');
+  const hidePosition=workspace.indexOf('if(name!==next)el[workspacePanels[name]].hidden=true');
+  assert.ok(focusPosition>0&&hidePosition>focusPosition);
+});

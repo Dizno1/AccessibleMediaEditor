@@ -191,7 +191,7 @@
 
     <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
       <section class="editor-section" aria-labelledby="audio-studio-heading">
-        <h2 id="audio-studio-heading">AudioStudio Pro</h2>
+        <h2 id="audio-studio-heading" tabindex="-1">AudioStudio Pro</h2>
         <p>Professional audio recording and editing is an optional workspace. Opening an audio file does not enter this workspace automatically.</p>
         <p>Recording, advanced processing, and Send to Media Editor will be added after the shared media engine is complete.</p>
         <div class="button-row">
@@ -210,6 +210,45 @@
       <p>Use X to play or pause. Use Left and Right Arrow to move five seconds.</p>
       <button type="button" id="presentation-preview-close">Close Preview</button>
     </div>
+  </dialog>
+
+  <dialog id="presentation-properties-dialog" aria-labelledby="presentation-properties-heading">
+    <form method="dialog">
+      <h2 id="presentation-properties-heading">Presentation Item Properties</h2>
+      <p id="presentation-properties-summary"></p>
+      <label for="presentation-item-label">Item label</label>
+      <input type="text" id="presentation-item-label">
+      <div id="presentation-image-properties">
+        <label for="presentation-image-duration">Image duration in seconds</label>
+        <input type="number" id="presentation-image-duration" min="0.001" step="0.001">
+      </div>
+      <div id="presentation-trim-properties">
+        <p id="presentation-trim-status"></p>
+        <fieldset>
+          <legend>Start time</legend>
+          <label for="presentation-in-hours">Hours</label><input type="number" id="presentation-in-hours" min="0" step="1">
+          <label for="presentation-in-minutes">Minutes</label><input type="number" id="presentation-in-minutes" min="0" max="59" step="1">
+          <label for="presentation-in-seconds">Seconds</label><input type="number" id="presentation-in-seconds" min="0" max="59" step="1">
+          <label for="presentation-in-milliseconds">Milliseconds</label><input type="number" id="presentation-in-milliseconds" min="0" max="999" step="1">
+        </fieldset>
+        <fieldset>
+          <legend>End time</legend>
+          <label for="presentation-out-hours">Hours</label><input type="number" id="presentation-out-hours" min="0" step="1">
+          <label for="presentation-out-minutes">Minutes</label><input type="number" id="presentation-out-minutes" min="0" max="59" step="1">
+          <label for="presentation-out-seconds">Seconds</label><input type="number" id="presentation-out-seconds" min="0" max="59" step="1">
+          <label for="presentation-out-milliseconds">Milliseconds</label><input type="number" id="presentation-out-milliseconds" min="0" max="999" step="1">
+        </fieldset>
+      </div>
+      <div id="presentation-audio-properties">
+        <label for="presentation-item-volume">Foreground audio volume, percent</label>
+        <input type="number" id="presentation-item-volume" min="0" max="100" step="1">
+        <label><input type="checkbox" id="presentation-item-muted"> Mute this item's foreground audio</label>
+      </div>
+      <div class="button-row">
+        <button type="button" id="presentation-properties-save">Save Presentation Item Properties</button>
+        <button type="button" id="presentation-properties-cancel">Cancel</button>
+      </div>
+    </form>
   </dialog>
 
   <dialog id="properties-dialog" aria-labelledby="properties-heading">

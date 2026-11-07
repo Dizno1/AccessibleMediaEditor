@@ -1,0 +1,19 @@
+Accessible Media Editor Build 0.11.23
+
+This build includes the verified Build 0.11.21 presentation preview and announcement corrections.
+
+Changes to test:
+
+1. Open a saved project containing Presentation Timeline items. It should open directly in the Presentation workspace with focus in the Presentation Timeline.
+
+2. Press Alt+Enter on a Presentation Timeline item to open Presentation Item Properties.
+
+3. For an image, change its duration to a millisecond-precise decimal value. Save and confirm that focus returns to the same timeline item and its new duration is announced.
+
+4. For a continuous video or audio item, change its exact start and end times using hours, minutes, seconds, and milliseconds. Items containing multiple retained segments direct the user back to the Media Editor for boundary changes.
+
+5. For video or audio, change foreground audio volume or select Mute this item's foreground audio. Preview and export should use the saved setting. Background music remains controlled separately and still ducks during video or audio items.
+
+6. Press Escape or Cancel from Presentation Item Properties. The dialog should close without changing the item.
+
+7. Press Ctrl+Tab and Ctrl+Shift+Tab between workspaces. Focus should enter a useful destination control without announcing the WebView page title.

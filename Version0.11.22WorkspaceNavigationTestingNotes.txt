@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.22
+
+This build includes all Build 0.11.21 screen reader announcement corrections and improves workspace navigation.
+
+Changes to test:
+
+1. Press Ctrl+Tab and Ctrl+Shift+Tab to change workspaces. The application should move directly to a useful control in the destination workspace. JAWS should not announce the WebView page title during the change.
+
+2. Media Editor receives focus on the active playhead when one exists, the Primary Production list when media exists without an active editor, or Open Media when the workspace is empty.
+
+3. Presentation receives focus in the Presentation Timeline.
+
+4. AudioStudio Pro receives focus on its workspace heading until its editing controls are implemented.
+
+5. Arrow-key navigation while focus is in the workspace tab list still follows normal tab behavior.
+
+6. Presentation list names remain concise, Delete runs once, Escape closes native combo boxes without an extra cancellation message, and Preview waits until its media player is ready.

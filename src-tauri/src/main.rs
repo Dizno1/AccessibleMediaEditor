@@ -25,7 +25,11 @@ struct ProductionItem {
     segments: Vec<EditSegment>,
     media_kind: String,
     track_target: String,
+    #[serde(default = "default_audio_volume")]
+    audio_volume: f64,
 }
+
+fn default_audio_volume() -> f64 { 1.0 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -335,17 +339,17 @@ fn segment_duration(segments: &[EditSegment]) -> f64 {
     segments.iter().map(|segment| (segment.end - segment.start).max(0.0)).sum()
 }
 
-fn standard_video_filter(segments: &[EditSegment], with_audio: bool) -> String {
+fn standard_video_filter(segments: &[EditSegment], with_audio: bool, audio_volume: f64) -> String {
     let base = segment_filter(segments, true, with_audio);
     if with_audio {
-        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo];[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[ao]", base)
+        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo];[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.4}[ao]", base, audio_volume.clamp(0.0, 1.0))
     } else {
         format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo]", base)
     }
 }
 
-fn standard_audio_filter(segments: &[EditSegment]) -> String {
-    format!("{};[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[ao]", segment_filter(segments, false, true))
+fn standard_audio_filter(segments: &[EditSegment], audio_volume: f64) -> String {
+    format!("{};[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.4}[ao]", segment_filter(segments, false, true), audio_volume.clamp(0.0, 1.0))
 }
 
 fn standard_video_encoding(output: String) -> Vec<String> {
@@ -364,22 +368,22 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
         return run_ffmpeg(app, args).await;
     }
     if item.media_kind.eq_ignore_ascii_case("audio") || item.track_target.eq_ignore_ascii_case("audio") {
-        let filter = standard_audio_filter(&item.segments);
+        let filter = standard_audio_filter(&item.segments, item.audio_volume);
         let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "color=c=black:s=1280x720:r=30".into(), "-filter_complex".into(), filter, "-map".into(), "1:v:0".into(), "-map".into(), "[ao]".into(), "-t".into(), format!("{:.6}", duration)];
         args.extend(standard_video_encoding(output_text));
         return run_ffmpeg(app, args).await;
     }
     if item.track_target.eq_ignore_ascii_case("video") {
-        let filter = standard_video_filter(&item.segments, false);
+        let filter = standard_video_filter(&item.segments, false, item.audio_volume);
         let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
         args.extend(standard_video_encoding(output_text));
         return run_ffmpeg(app, args).await;
     }
-    let filter = standard_video_filter(&item.segments, true);
+    let filter = standard_video_filter(&item.segments, true, item.audio_volume);
     let mut args = vec!["-y".into(), "-i".into(), item.source.clone(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "[ao]".into()];
     args.extend(standard_video_encoding(output_text.clone()));
     if run_ffmpeg(app, args).await.is_ok() { return Ok(()); }
-    let filter = standard_video_filter(&item.segments, false);
+    let filter = standard_video_filter(&item.segments, false, item.audio_volume);
     let mut silent_args = vec!["-y".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter, "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
     silent_args.extend(standard_video_encoding(output_text));
     run_ffmpeg(app, silent_args).await
@@ -430,7 +434,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for (index, replacement) in replacements.iter().enumerate() {
         window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
-        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone() };
+        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(), audio_volume: 1.0 };
         if let Err(error) = render_production_item(&app, &item, &path).await {
             let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
@@ -524,7 +528,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.21 executable started.");
+    write_startup_log("Build 0.11.23 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
