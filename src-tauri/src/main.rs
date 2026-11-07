@@ -519,7 +519,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.17 executable started.");
+    write_startup_log("Build 0.11.18 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

@@ -1,0 +1,21 @@
+Accessible Media Editor Build 0.11.18
+
+This build restores the missing fundamental Presentation sequence editing workflow.
+
+When an AMEPROJECT is opened from the Presentation workspace and contains presentation items, focus moves directly to Production Sequence instead of Available Sources.
+
+Production Sequence commands
+
+Ctrl+X cuts all selected items to the presentation clipboard and closes the sequence gap.
+
+Ctrl+C copies all selected items without changing the sequence.
+
+Ctrl+V pastes the clipboard before the current Production Sequence item. If there is no current item, the group is added at the end. Multiple items retain their original order.
+
+Visible Cut Selected Items, Copy Selected Items, and Paste Before Current Item buttons provide the same operations.
+
+Every cut and paste is immediately reflected in the sequence and supports Undo and Redo.
+
+The presentation clipboard is separate from the Media Editor source-selection clipboard.
+
+Build 0.11.18 retains direct project opening, task-oriented source insertion, editable project saving, complete preview, automatic music ducking, and reduced screen-reader verbosity.

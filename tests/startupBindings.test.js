@@ -34,6 +34,16 @@ test("presentation builder places sources and sequence in one task-oriented sect
   assert.match(html,/id="presentation-choose-source"/);
   assert.match(app,/el\["presentation-choose-source"\]\.addEventListener/);
 });
+test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
+  assert.match(html,/id="presentation-cut"[^>]*>Cut Selected Items \(Ctrl\+X\)/);
+  assert.match(html,/id="presentation-copy"[^>]*>Copy Selected Items \(Ctrl\+C\)/);
+  assert.match(html,/id="presentation-paste"[^>]*>Paste Before Current Item \(Ctrl\+V\)/);
+  assert.match(app,/function copyPresentation\(cut=false\)/);
+  assert.match(app,/function pastePresentation\(\)/);
+  assert.match(app,/cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction/);
+  assert.match(app,/moveEarlier:\(\)=>activeWorkspace==="presentation"\?movePresentation\(-1\)/);
+  assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
+});
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
   assert.match(html,/id="instructions-shortcuts-button"/);

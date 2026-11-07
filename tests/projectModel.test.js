@@ -224,3 +224,4 @@ test("Ctrl+V is contextual paste while Ctrl+Shift+V remains an explicit insert",
   assert.ok(shortcuts.some(([name,key])=>name==="pasteMedia"&&key.ctrl&&!key.shift&&key.key==="v"));
   assert.ok(shortcuts.some(([name,key])=>name==="pasteInsert"&&key.ctrl&&key.shift&&key.key==="v"));
 });
+test("Ctrl+X is registered for presentation sequence cutting",()=>{assert.ok(shortcuts.some(([name,key])=>name==="cutMedia"&&key.ctrl&&key.key==="x"));});
