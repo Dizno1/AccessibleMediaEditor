@@ -784,6 +784,13 @@ async function importMedia(){
     const paths=await invoke("pick_media_files");
     updateStatus(paths.length ? `Selected ${paths.length} media file(s). Preparing import.` : "Open Media canceled. No files selected.");
     if(!paths.length){updateStatus("Open Media canceled. No files selected.");return;}
+    const projectPaths=paths.filter(path=>/\.ameproject$/i.test(path));
+    if(projectPaths.length){
+      if(paths.length!==1)return announce("A project file cannot be opened together with media. Open the AMEPROJECT separately with Ctrl+Shift+O.",true);
+      if(project.dirty&&!window.confirm("Discard unsaved changes and open the selected project?"))return;
+      updateStatus("Opening Accessible Media Editor project...");
+      const result=await invoke("open_project_path",{path:projectPaths[0]});applyOpenedProject(result);announce(`${project.name} opened as an editable project.`);return;
+    }
     announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
     for(let mediaIndex=0;mediaIndex<paths.length;mediaIndex++){
       const path=paths[mediaIndex],name=baseName(path);
@@ -844,9 +851,12 @@ async function placeImageSource(sourceImage){
   project=next;selectedReplacementId=next.trackReplacements.at(-1).id;undoStack.push(previous);redoStack=[];render();activeMediaId=PROGRAM_ID;editorStates.get(PROGRAM_ID)?.section.focus();announce(`Image displayed from ${readableTime(start)} through ${readableTime(end)}. Duration ${readableTime(end-start)}.`);cue("add");
 }
 function newProject(){if(project.dirty&&!window.confirm("Discard unsaved changes and start a new editing session?"))return;project=createProject();selectedId=selectedSourceId=selectedImageId=selectedReplacementId=activeMediaId=null;mediaClipboard=null;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render();el["import-media-button"].focus();announce("New editing session. Press Ctrl+O to open primary media.");}
+function applyOpenedProject(result){
+  project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});
+}
 async function openProject(){
   if(project.dirty&&!window.confirm("Discard unsaved changes and open another project?"))return;
-  try{const result=await invoke("open_project_dialog");if(!result)return;project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});announce(`${project.name} opened.`);}catch(error){announce(`Project could not be opened. ${error}`,true);}
+  try{const result=await invoke("open_project_dialog");if(!result)return;applyOpenedProject(result);announce(`${project.name} opened.`);}catch(error){announce(`Project could not be opened. ${error}`,true);}
 }
 async function saveProject(saveAs=false){
   try{const content=JSON.stringify(serializable(project),null,2),suggested=`${project.name.replace(/[^a-z0-9 -]/gi,"").trim()||"Untitled Project"}.ameproject`;const path=saveAs||!project.path?await invoke("save_project_dialog",{suggestedName:suggested,content}):await invoke("write_project",{path:project.path,content});if(!path)return;project.path=path;project.name=baseName(path).replace(/\.ameproject$/i,"");project.dirty=false;render();announce(`${project.name} saved.`);cue("save");}catch(error){announce(`Project could not be saved. ${error}`,true);}
@@ -1127,7 +1137,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.16. Task-oriented Presentation Builder, project saving, preview, and automatic music ducking.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.17. Direct Presentation project opening, task-oriented builder, preview, and automatic music ducking.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1166,6 +1176,7 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
 }));
 el["presentation-items"].addEventListener("change",loadPresentationDescriptions);
 el["presentation-new"].addEventListener("click",newPresentation);
+el["presentation-open"].addEventListener("click",openProject);
 el["presentation-save"].addEventListener("click",()=>saveProject(false));
 el["presentation-save-as"].addEventListener("click",()=>saveProject(true));
 el["presentation-create-slideshow"].addEventListener("click",createSlideshow);

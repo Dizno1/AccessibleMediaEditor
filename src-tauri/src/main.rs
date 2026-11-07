@@ -3,6 +3,7 @@
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
@@ -108,6 +109,16 @@ fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjec
     }
     let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Media Editor project. Use Ctrl+O to open media.".to_string())?;
     Ok(Some(OpenProjectResult { path: path.to_string_lossy().into_owned(), content }))
+}
+
+#[tauri::command]
+fn open_project_path(path: String) -> Result<OpenProjectResult, String> {
+    let path = PathBuf::from(path);
+    if path.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("ameproject")) != Some(true) {
+        return Err("That is not an Accessible Media Editor project.".into());
+    }
+    let content = fs::read_to_string(&path).map_err(|error| format!("The project could not be read: {}", error))?;
+    Ok(OpenProjectResult { path: path.to_string_lossy().into_owned(), content })
 }
 
 #[tauri::command]
@@ -508,7 +519,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.16 executable started.");
+    write_startup_log("Build 0.11.17 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -533,7 +544,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

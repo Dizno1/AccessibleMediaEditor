@@ -13,10 +13,17 @@ test("new presentation command exists and is wired",()=>{
   assert.match(app,/el\["presentation-new"\]\.addEventListener\("click",newPresentation\)/);
 });
 test("presentation workspace exposes project save and save as controls",()=>{
+  assert.match(html,/id="presentation-open"[^>]*>Open Presentation Project \(Ctrl\+Shift\+O\)/);
   assert.match(html,/id="presentation-save"[^>]*>Save Presentation Project \(Ctrl\+S\)/);
   assert.match(html,/id="presentation-save-as"[^>]*>Save Presentation Project As \(Ctrl\+Shift\+S\)/);
   assert.match(app,/el\["presentation-save"\]\.addEventListener\("click",\(\)=>saveProject\(false\)\)/);
   assert.match(app,/el\["presentation-save-as"\]\.addEventListener\("click",\(\)=>saveProject\(true\)\)/);
+  assert.match(app,/el\["presentation-open"\]\.addEventListener\("click",openProject\)/);
+});
+test("an AMEPROJECT selected through Open Media is redirected to project opening",()=>{
+  assert.match(app,/const projectPaths=paths\.filter/);
+  assert.match(app,/invoke\("open_project_path",\{path:projectPaths\[0\]\}\)/);
+  assert.match(app,/applyOpenedProject\(result\)/);
 });
 test("presentation builder places sources and sequence in one task-oriented section",()=>{
   assert.match(html,/id="presentation-builder-section"/);

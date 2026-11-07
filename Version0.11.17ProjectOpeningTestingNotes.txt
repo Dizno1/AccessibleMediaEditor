@@ -1,0 +1,11 @@
+Accessible Media Editor Build 0.11.17
+
+The Presentation Builder now includes Open Presentation Project beside Start, Save, and Save As.
+
+Ctrl+Shift+O continues to open an AMEPROJECT from anywhere in the application.
+
+If a user selects or pastes one AMEPROJECT file into the Open Media dialog, the application now recognizes it and opens it as an editable project. It is no longer treated as unsupported media, and the application does not remain in a misleading media-preparation state.
+
+If a project file is selected together with media files, the application explains that the project must be opened separately. This prevents an ambiguous partial import.
+
+Build 0.11.17 retains the task-oriented Presentation Builder, editable saving, complete preview, automatic music ducking, and reduced screen-reader verbosity.
