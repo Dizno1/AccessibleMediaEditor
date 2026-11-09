@@ -225,3 +225,11 @@ test("Ctrl+V is contextual paste while Ctrl+Shift+V remains an explicit insert",
   assert.ok(shortcuts.some(([name,key])=>name==="pasteInsert"&&key.ctrl&&key.shift&&key.key==="v"));
 });
 test("Ctrl+X is registered for presentation sequence cutting",()=>{assert.ok(shortcuts.some(([name,key])=>name==="cutMedia"&&key.ctrl&&key.key==="x"));});
+
+test("additional presentation transitions retain overlap and render type",()=>{
+  for(const type of ["crossfade","fadeblack","fadewhite","wipeleft","wiperight"]){
+    const project=createProject();project.items=[{...item("a",5)},{...item("b",5),transition:{type,duration:2}}];
+    const output=productionRenderItems(project);
+    assert.equal(output[1].transitionType,type);assert.equal(output[1].transitionDuration,2);
+  }
+});

@@ -9,7 +9,7 @@ export function presentationDuckRanges(items = []) {
   }
   return ranges;
 }
-export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||item?.transition?.type!=="crossfade")return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);}
+export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||!["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item?.transition?.type))return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);}
 export function presentationTimelineDuration(items=[]){return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
@@ -201,7 +201,7 @@ export function productionRenderItems(project) {
     segments: normalizedSegments(item),
     mediaKind: item.kind,
     trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both"),
-    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&item.transition?.type==="crossfade"?"crossfade":"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0
+    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0
   }));
 }
 export function productionRenderReplacements(project) {

@@ -1,0 +1,9 @@
+Accessible Media Editor 0.11.28 - Source development package
+
+Implemented: Fade through black, fade through white, wipe left, wipe right in addition to crossfade, for individual and bulk transitions. Native FFmpeg xfade renderer supports these effects. Existing crossfade and music ducking code preserved.
+
+NOT YET IMPLEMENTED: title slide creation, audio attachment/duration matching, opening and closing effects. Do not treat this as the complete requested feature build.
+
+Tests: 75 tests passed. Five jsdom-dependent startup runtime tests could not run because jsdom is not installed in this environment. No Windows installer built or verified.
+
+The ZIP deliberately excludes .git, node_modules and target.
