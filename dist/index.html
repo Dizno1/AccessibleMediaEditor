@@ -133,6 +133,15 @@
         <p>The timeline is the active presentation editing area. Press Alt+P to return here.</p>
         <label for="presentation-items">Presentation Timeline items in playback order</label>
         <select id="presentation-items" size="10" multiple></select>
+        <fieldset>
+          <legend>Apply transition to current or selected timeline items</legend>
+          <label for="presentation-bulk-transition-type">Transition type</label>
+          <select id="presentation-bulk-transition-type"><option value="crossfade">Crossfade</option></select>
+          <label for="presentation-bulk-transition-duration">Duration in seconds</label>
+          <input type="number" id="presentation-bulk-transition-duration" min="0.1" max="10" step="0.001" value="1">
+          <button type="button" id="presentation-bulk-transition-apply">Apply Transition</button>
+          <button type="button" id="presentation-bulk-transition-remove">Remove Transition</button>
+        </fieldset>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>

@@ -1,0 +1,19 @@
+Accessible Media Editor Build 0.11.26
+
+This build corrects three problems found while testing presentation transitions.
+
+Opening Presentation Item Properties now reads the retained edit segment boundaries. Saving a transition no longer resets a trimmed video clip to the full source duration.
+
+The initial rendering message and subsequent rendering progress are sent through the export announcement queue. A screen reader should announce rendering without requiring the user to arrow to visible text.
+
+Crossfade can now be applied to the current item or to multiple selected Presentation Timeline items. Select the desired timeline items, choose a duration, and activate Apply Transition. The first item is skipped because it cannot have an incoming transition. Remove Transition removes incoming transitions from the current or selected items.
+
+Regression checks
+
+Open a saved presentation containing trimmed clips. Open and save item properties without changing the boundaries. Confirm the total duration does not change.
+
+Apply a crossfade to several selected timeline items. Confirm one announcement reports the number of changed items.
+
+Preview the presentation. Confirm rendering is announced automatically without moving focus or using the arrow keys.
+
+Confirm each transition overlaps adjacent items rather than adding time to the presentation.

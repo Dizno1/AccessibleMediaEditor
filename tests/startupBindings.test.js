@@ -54,6 +54,26 @@ test("presentation provides direct timeline and source library navigation",()=>{
 });
 test("native crossfade menu edits the selected presentation item",()=>{assert.match(app,/function addPresentationCrossfade\(\)/);assert.match(app,/addTransition:\(\)=>activeWorkspace==="presentation"\?addPresentationCrossfade\(\):addTransition\(\)/);});
 
+test("presentation transitions can be applied to current or selected timeline items",()=>{
+  assert.match(html,/id="presentation-bulk-transition-duration"/);
+  assert.match(html,/id="presentation-bulk-transition-apply"/);
+  assert.match(html,/id="presentation-bulk-transition-remove"/);
+  assert.match(app,/function applyPresentationTransition\(remove=false\)/);
+  assert.match(app,/presentation-bulk-transition-apply/);
+});
+
+test("opening item properties reads retained edit segment boundaries",()=>{
+  assert.match(app,/function showPresentationItemProperties\(\).*segments=normalizedSegments\(item\),singleSegment=segments\.length===1/);
+  assert.match(app,/writeTime\("presentation-start",singleSegment\?segments\[0\]\.start:0\)/);
+  assert.match(app,/writeTime\("presentation-end",singleSegment\?segments\[0\]\.end:0\)/);
+});
+
+test("presentation rendering announces immediately and accepts native progress events",()=>{
+  assert.match(app,/function showExportProgress\(message\)[\s\S]*queueExportAnnouncement\(message\)/);
+  assert.match(app,/async function previewPresentation\(\)[\s\S]*exportPhase="rendering"/);
+  assert.match(app,/async function exportPresentation\(\)[\s\S]*exportPhase="rendering"/);
+});
+
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
   assert.match(html,/id="instructions-shortcuts-button"/);
   assert.match(app,/el\["instructions-shortcuts-button"\]\.addEventListener\("click",actions\.showShortcuts\)/);

@@ -180,6 +180,7 @@ function showExportProgress(message){
   clearAnnouncements();resetExportNarration();setExportProgress(message);
   if(!el["export-progress-dialog"].open)el["export-progress-dialog"].showModal();
   el["export-progress-heading"].focus();
+  setTimeout(()=>queueExportAnnouncement(message),100);
 }
 function closeExportProgress(){
   stopExportHeartbeat();
@@ -698,6 +699,7 @@ function movePresentation(direction){
   modifyPresentation(next,selected,`${item.label||item.name} moved to presentation position ${target+1}.`);
 }
 function addPresentationCrossfade(){const selected=el["presentation-items"].value,items=presentationItems(),index=items.findIndex(item=>item.id===selected);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);if(index===0)return announce("The first presentation item cannot have an incoming transition. Choose the second item or a later item.",true);const next=structuredClone(project),item=next.presentation.items[index];item.transition={type:"crossfade",duration:1};next.dirty=true;modifyPresentation(next,selected,`Crossfade 1 second added into ${item.label||item.name}, presentation item ${index+1} of ${items.length}.`);el["presentation-items"].focus();}
+function applyPresentationTransition(remove=false){const selected=selectedPresentationItems();if(!selected.length)return announce("Choose one or more Presentation Timeline items first.",true);const selectedIds=new Set(selected.map(item=>item.id)),seconds=Number(el["presentation-bulk-transition-duration"].value);if(!remove&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Transition duration must be between 0.1 and 10 seconds.",true);const next=structuredClone(project),changed=[];next.presentation.items.forEach((item,index)=>{if(!selectedIds.has(item.id)||index===0)return;item.transition=remove?{type:"none",duration:0}:{type:el["presentation-bulk-transition-type"].value,duration:seconds};changed.push(item.id);});if(!changed.length)return announce("The first presentation item cannot have an incoming transition. Choose the second item or a later item.",true);next.dirty=true;undoStack.push(project);redoStack=[];project=next;renderPresentation();for(const option of el["presentation-items"].options)option.selected=changed.includes(option.value);el["presentation-items"].focus();announce(remove?`${changed.length} presentation ${changed.length===1?"transition":"transitions"} removed.`:`Crossfade ${readableTime(seconds)} applied to ${changed.length} presentation ${changed.length===1?"item":"items"}.`);}
 function removePresentation(){
   const selected=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value));
   if(!selected.size&&el["presentation-items"].value)selected.add(el["presentation-items"].value);
@@ -764,11 +766,12 @@ async function renderCompletePresentation(purpose){
   return invoke("render_production",{items:productionRenderItems(renderProject),replacements:[],backgroundMusic:productionRenderBackgroundMusic(renderProject),projectId:`${project.name||"Presentation"}-presentation`});
 }
 async function previewPresentation(){
+  exportPhase="rendering";
   showExportProgress("Rendering presentation preview. Please wait.");
   try{
-    const source=await renderCompletePresentation("preview");closeExportProgress();
+    const source=await renderCompletePresentation("preview");await exportNarrationChain;closeExportProgress();exportPhase="idle";
     const media=el["presentation-preview-media"];media.src=convertFileSrc?convertFileSrc(source):source;media.currentTime=0;media.load();await waitForMediaReady(media);el["presentation-preview-dialog"].showModal();media.focus();
-  }catch(error){closeExportProgress();announce(`Presentation preview failed. ${error}`,true);}
+  }catch(error){closeExportProgress();exportPhase="idle";announce(`Presentation preview failed. ${error}`,true);}
 }
 function closePresentationPreview(){
   const media=el["presentation-preview-media"];media.pause();media.removeAttribute("src");media.load();
@@ -779,14 +782,14 @@ async function exportPresentation(){
   if(!presentationItems().length)return announce("Add items to the presentation before exporting.",true);
   const unsupported=presentationItems().find(item=>!["Video","Image","Audio"].includes(item.kind));
   if(unsupported)return announce("This presentation contains an unsupported item type.",true);
-  showExportProgress("Rendering presentation and background music. Please wait.");
+  exportPhase="rendering";showExportProgress("Rendering presentation and background music. Please wait.");
   try{
-    const source=await renderCompletePresentation("export");
-    closeExportProgress();
+    const source=await renderCompletePresentation("export");await exportNarrationChain;
+    closeExportProgress();exportPhase="choosing-destination";
     const path=await invoke("export_edited_media",{source,suggestedName:`${project.name||"Presentation"}.mp4`,format:"mp4"});
-    if(path){lastExportPath=path;el["export-success-path"].textContent=`Presentation saved to ${path}.`;el["export-success-dialog"].showModal();el["export-success-show-file"].focus();announce("Presentation export completed.");}
+    exportPhase="idle";if(path){lastExportPath=path;el["export-success-path"].textContent=`Presentation saved to ${path}.`;el["export-success-dialog"].showModal();el["export-success-show-file"].focus();announce("Presentation export completed.");}
     else announce("Presentation export save canceled.");
-  }catch(error){closeExportProgress();announce(`Presentation export failed. ${error}`,true);}
+  }catch(error){closeExportProgress();exportPhase="idle";announce(`Presentation export failed. ${error}`,true);}
 }
 function savePresentationDescriptions(){
   const selected=el["presentation-items"].value;if(!selected)return announce("Select a presentation item first.",true);
@@ -795,7 +798,7 @@ function savePresentationDescriptions(){
   modifyPresentation(next,selected,"Presentation item descriptions saved in project metadata.");
 }
 function closePresentationItemProperties(){if(el["presentation-item-properties-dialog"].open)el["presentation-item-properties-dialog"].close();el["presentation-items"].focus();}
-function showPresentationItemProperties(){const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image";el["presentation-item-properties-name"].textContent=`Item ${index+1} of ${items.length}. ${item.kind}. ${item.label||item.name}.`;el["presentation-item-label"].value=item.label||item.name;el["presentation-image-duration-fields"].hidden=!image;el["presentation-item-duration"].value=itemDuration(item);el["presentation-media-boundary-fields"].hidden=!media||Boolean(item.editSegments?.length>1);writeTime("presentation-start",Number(item.inPoint)||0);writeTime("presentation-end",item.outPoint==null?Number(item.duration)||0:Number(item.outPoint));el["presentation-item-audio-fields"].hidden=!media;el["presentation-item-audio-volume"].value=Math.round((item.audioVolume??1)*100);el["presentation-item-audio-muted"].checked=Boolean(item.audioMuted);el["presentation-transition-type"].value=index?item.transition?.type||"none":"none";el["presentation-transition-duration"].value=index?Number(item.transition?.duration)||1:1;el["presentation-transition-type"].disabled=index===0;el["presentation-transition-duration"].disabled=index===0;el["presentation-transition-help"].textContent=index===0?"The first timeline item cannot have an incoming transition.":"The transition overlaps the end of the previous item and the beginning of this item.";el["presentation-item-properties-dialog"].showModal();el["presentation-item-label"].focus();}
+function showPresentationItemProperties(){const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image",segments=normalizedSegments(item),singleSegment=segments.length===1;el["presentation-item-properties-name"].textContent=`Item ${index+1} of ${items.length}. ${item.kind}. ${item.label||item.name}.`;el["presentation-item-label"].value=item.label||item.name;el["presentation-image-duration-fields"].hidden=!image;el["presentation-item-duration"].value=itemDuration(item);el["presentation-media-boundary-fields"].hidden=!media||!singleSegment;writeTime("presentation-start",singleSegment?segments[0].start:0);writeTime("presentation-end",singleSegment?segments[0].end:0);el["presentation-item-audio-fields"].hidden=!media;el["presentation-item-audio-volume"].value=Math.round((item.audioVolume??1)*100);el["presentation-item-audio-muted"].checked=Boolean(item.audioMuted);el["presentation-transition-type"].value=index?item.transition?.type||"none":"none";el["presentation-transition-duration"].value=index?Number(item.transition?.duration)||1:1;el["presentation-transition-type"].disabled=index===0;el["presentation-transition-duration"].disabled=index===0;el["presentation-transition-help"].textContent=index===0?"The first timeline item cannot have an incoming transition.":"The transition overlaps the end of the previous item and the beginning of this item.";el["presentation-item-properties-dialog"].showModal();el["presentation-item-label"].focus();}
 function savePresentationItemProperties(){const selected=el["presentation-items"].value,next=structuredClone(project),items=next.presentation.items,index=items.findIndex(item=>item.id===selected);if(index<0)return closePresentationItemProperties();const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image";item.label=el["presentation-item-label"].value.trim()||item.name;if(image){const value=Number(el["presentation-item-duration"].value);if(!Number.isFinite(value)||value<.001||value>3600)return announce("Enter an image duration between 0.001 and 3600 seconds.",true);item.duration=value;item.inPoint=0;item.outPoint=value;item.editSegments=[{start:0,end:value}];}if(media&&!(item.editSegments?.length>1)){const start=readTime("presentation-start"),end=readTime("presentation-end"),limit=Number(item.duration)||0;if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>limit)return announce("Enter valid start and end times within the source duration.",true);item.inPoint=start;item.outPoint=end;item.editSegments=[{start,end}];}if(media){const volume=Number(el["presentation-item-audio-volume"].value);if(!Number.isFinite(volume)||volume<0||volume>100)return announce("Foreground audio volume must be between 0 and 100 percent.",true);item.audioVolume=volume/100;item.audioMuted=el["presentation-item-audio-muted"].checked;}const type=index?el["presentation-transition-type"].value:"none",seconds=type==="crossfade"?Number(el["presentation-transition-duration"].value):0;if(type==="crossfade"&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Crossfade duration must be between 0.1 and 10 seconds.",true);item.transition={type,duration:seconds};if(index&&type==="crossfade"&&presentationTransitionDuration(item,items[index-1])<seconds-.0005)return announce("The crossfade is too long for one of the neighboring items. Shorten the transition or lengthen the item.",true);next.dirty=true;undoStack.push(project);redoStack=[];project=next;closePresentationItemProperties();renderPresentation();el["presentation-items"].value=selected;el["presentation-items"].focus();announce(`${item.label||item.name} properties saved. ${type==="crossfade"?`Crossfade ${readableTime(seconds)}.`:"No incoming transition."}`);}
 function switchWorkspace(direction=1,target=null){
   const next=target||workspaceOrder[(workspaceOrder.indexOf(activeWorkspace)+direction+workspaceOrder.length)%workspaceOrder.length];
@@ -1177,7 +1180,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.25. Presentation menu crossfades, precise item properties, preview, and automatic music ducking.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.26. Reliable transition editing, bulk crossfades, precise item properties, preview, and automatic music ducking.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1227,6 +1230,7 @@ el["presentation-copy"].addEventListener("click",()=>copyPresentation(false));
 el["presentation-paste"].addEventListener("click",pastePresentation);
 el["presentation-remove"].addEventListener("click",removePresentation);
 el["presentation-properties"].addEventListener("click",showPresentationItemProperties);
+el["presentation-bulk-transition-apply"].addEventListener("click",()=>applyPresentationTransition(false));el["presentation-bulk-transition-remove"].addEventListener("click",()=>applyPresentationTransition(true));
 el["presentation-choose-source"].addEventListener("click",focusPresentationSources);
 el["presentation-go-timeline"].addEventListener("click",focusPresentationTimeline);
 el["presentation-items"].addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
