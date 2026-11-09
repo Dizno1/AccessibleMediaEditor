@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
-const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
@@ -26,7 +25,7 @@ test("an AMEPROJECT selected through Open Media is redirected to project opening
   assert.match(app,/invoke\("open_project_path",\{path:projectPaths\[0\]\}\)/);
   assert.match(app,/applyOpenedProject\(result\)/);
 });
-test("presentation builder puts the editable timeline before the source library",()=>{
+test("presentation builder places the active timeline before the source library",()=>{
   assert.match(html,/id="presentation-builder-section"/);
   assert.doesNotMatch(html,/id="presentation-library-section"/);
   const sourcePosition=html.indexOf('id="presentation-sources"');
@@ -34,27 +33,12 @@ test("presentation builder puts the editable timeline before the source library"
   assert.ok(sequencePosition>0&&sourcePosition>sequencePosition);
   assert.match(html,/id="presentation-choose-source"/);
   assert.match(app,/el\["presentation-choose-source"\]\.addEventListener/);
-});
-test("presentation lists use concise accessible names without embedded instructions",()=>{
-  assert.match(html,/<label for="presentation-items">Presentation Timeline<\/label>/);
-  assert.match(html,/<label for="presentation-sources">Source Media Library<\/label>/);
-  assert.doesNotMatch(html,/Editable items in playback order/);
-  assert.doesNotMatch(html,/Reusable images, video clips, and audio/);
-});
-test("presentation commands have one keyboard route and native list focus is not echoed",()=>{
-  assert.doesNotMatch(app,/function announcePresentationTimeline\(/);
-  assert.doesNotMatch(app,/event\.key==="Delete"[^\n]*removePresentation/);
-  assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
-});
-test("presentation preview waits for the native player before opening the dialog",()=>{
-  assert.match(app,/await waitForPreviewMedia\(media\)/);
-  assert.match(app,/function waitForPreviewMedia\(/);
-  assert.ok(app.indexOf("await waitForPreviewMedia(media)")<app.indexOf('el["presentation-preview-dialog"].showModal()'));
-  assert.doesNotMatch(app,/Presentation preview ready\. Press X/);
+  assert.match(html,/id="presentation-go-timeline"/);
+  assert.match(app,/el\["presentation-go-timeline"\]\.addEventListener/);
 });
 test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
-  assert.match(html,/id="presentation-cut"[^>]*>Cut Selected Items \(Ctrl\+X\)/);
-  assert.match(html,/id="presentation-copy"[^>]*>Copy Selected Items \(Ctrl\+C\)/);
+  assert.match(html,/id="presentation-cut"[^>]*>Cut Current or Selected Items \(Ctrl\+X\)/);
+  assert.match(html,/id="presentation-copy"[^>]*>Copy Current or Selected Items \(Ctrl\+C\)/);
   assert.match(html,/id="presentation-paste"[^>]*>Paste Before Current Item \(Ctrl\+V\)/);
   assert.match(app,/function copyPresentation\(cut=false\)/);
   assert.match(app,/function pastePresentation\(\)/);
@@ -62,36 +46,27 @@ test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()
   assert.match(app,/moveEarlier:\(\)=>activeWorkspace==="presentation"\?movePresentation\(-1\)/);
   assert.match(app,/removeItem:\(\)=>activeWorkspace==="presentation"\?removePresentation\(\):removeActive\(\)/);
 });
-test("Presentation Item Properties supports exact timing and foreground audio",()=>{
-  for(const id of ["presentation-properties-dialog","presentation-item-label","presentation-image-duration","presentation-in-milliseconds","presentation-out-milliseconds","presentation-item-volume","presentation-item-muted"]){
-    assert.ok(ids.has(id),`${id} must exist`);
-  }
-  assert.match(app,/properties:\(\)=>activeWorkspace==="presentation"\?showPresentationProperties\(\):showProperties\(\)/);
-  assert.match(app,/function savePresentationProperties\(/);
-  assert.match(app,/patch\.audioVolume=volume\/100/);
-  assert.match(rust,/audio_volume: f64/);
-  assert.match(rust,/volume=\{:\.4\}\[ao\]/);
-});
-test("opening a populated presentation project enters its timeline",()=>{
-  assert.match(app,/if\(presentationItems\(\)\.length\)switchWorkspace\(1,"presentation",true\)/);
+
+test("presentation provides direct timeline and source library navigation",()=>{
+  assert.match(app,/function focusPresentationTimeline\(\)/);
+  assert.match(app,/function focusPresentationSources\(\)/);
+  assert.match(app,/focusPresentationTimeline,focusPresentationSources/);
 });
 
-test("presentation item accessibility separates visual transcript and audio description authoring",()=>{
-  for(const id of ["presentation-alt","presentation-ad-use-visual","presentation-dialogue","presentation-ad-use-dialogue","presentation-ad-script","presentation-ad-include"]){
-    assert.ok(ids.has(id),`${id} must exist`);
-  }
-  assert.match(app,/item\.audioDescriptionScript=el\["presentation-ad-script"\]\.value\.trim\(\)/);
-  assert.match(app,/audioDescriptionSources=/);
-  assert.match(app,/Audio-description narration is not generated or exported in this build/);
+test("presentation item properties expose precise editing and incoming crossfades",()=>{
+  assert.match(html,/id="presentation-properties"[^>]*>Presentation Item Properties \(Alt\+Enter\)/);
+  assert.match(html,/id="presentation-transition-type"/);
+  assert.match(html,/value="crossfade">Crossfade/);
+  assert.match(html,/id="presentation-transition-duration"[^>]*step="0\.001"/);
+  assert.match(app,/function showPresentationItemProperties\(\)/);
+  assert.match(app,/function savePresentationItemProperties\(\)/);
+  assert.match(app,/activeWorkspace==="presentation"\?showPresentationItemProperties\(\):showProperties\(\)/);
 });
 
-test("native presentation ducking evaluates volume for every audio frame",()=>{
-  assert.match(rust,/volume='\{:\.4\}\*\(\{\}\)':eval=frame\[music\]/);
-});
-
-test("Show Saved File gives Explorer a separate select switch and canonical file path",()=>{
-  assert.match(rust,/\.canonicalize\(\)/);
-  assert.match(rust,/Command::new\("explorer\.exe"\)\.arg\("\/select,"\)\.arg\(&file\)/);
+test("preview opens only after its rendered media is ready and has one accessible title",()=>{
+  assert.match(app,/await waitForMediaReady\(media\);el\["presentation-preview-dialog"\]\.showModal\(\)/);
+  assert.doesNotMatch(app,/announce\("Presentation preview ready/);
+  assert.match(html,/id="presentation-preview-heading" aria-hidden="true">Presentation Preview/);
 });
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{

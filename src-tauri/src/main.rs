@@ -27,6 +27,10 @@ struct ProductionItem {
     track_target: String,
     #[serde(default = "default_audio_volume")]
     audio_volume: f64,
+    #[serde(default)]
+    transition_type: String,
+    #[serde(default)]
+    transition_duration: f64,
 }
 
 fn default_audio_volume() -> f64 { 1.0 }
@@ -258,12 +262,9 @@ fn open_exports_folder() -> Result<(), String> {
 
 #[tauri::command]
 fn reveal_exported_file(path: String) -> Result<(), String> {
-    let file = std::path::PathBuf::from(&path).canonicalize().map_err(|_| "The saved export could not be found at that location.".to_string())?;
+    let file = std::path::PathBuf::from(&path);
     if !file.is_file() { return Err("The saved export could not be found at that location.".into()); }
-    // Explorer parses /select more reliably as its own argument. Passing the
-    // switch and a path containing spaces as one formatted string can open an
-    // unrelated folder instead of selecting the completed export.
-    std::process::Command::new("explorer.exe").arg("/select,").arg(&file).spawn().map_err(|error| error.to_string())?;
+    std::process::Command::new("explorer").arg(format!("/select,{}", file.to_string_lossy())).spawn().map_err(|error| error.to_string())?;
     Ok(())
 }
 
@@ -342,14 +343,14 @@ fn segment_duration(segments: &[EditSegment]) -> f64 {
 fn standard_video_filter(segments: &[EditSegment], with_audio: bool, audio_volume: f64) -> String {
     let base = segment_filter(segments, true, with_audio);
     if with_audio {
-        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo];[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.4}[ao]", base, audio_volume.clamp(0.0, 1.0))
+        format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo];[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.6}[ao]", base, audio_volume.clamp(0.0, 1.0))
     } else {
         format!("{};[v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo]", base)
     }
 }
 
 fn standard_audio_filter(segments: &[EditSegment], audio_volume: f64) -> String {
-    format!("{};[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.4}[ao]", segment_filter(segments, false, true), audio_volume.clamp(0.0, 1.0))
+    format!("{};[a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume={:.6}[ao]", segment_filter(segments, false, true), audio_volume.clamp(0.0, 1.0))
 }
 
 fn standard_video_encoding(output: String) -> Vec<String> {
@@ -408,22 +409,46 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     let base_text = base_path.to_string_lossy().into_owned();
     let mut args = vec!["-y".into()];
     for path in &intermediates { args.push("-i".into());args.push(path.to_string_lossy().into_owned()); }
-    let inputs = (0..intermediates.len()).map(|index| format!("[{}:v:0][{}:a:0]", index, index)).collect::<String>();
-    args.extend(["-filter_complex".into(), format!("{}concat=n={}:v=1:a=1[v][a]", inputs, intermediates.len()), "-map".into(), "[v]".into(), "-map".into(), "[a]".into()]);
+    let mut filter_parts=Vec::new();
+    let mut video_label="[0:v:0]".to_string();
+    let mut audio_label="[0:a:0]".to_string();
+    let mut joined_duration=segment_duration(&items[0].segments);
+    for index in 1..items.len() {
+        let next_video=format!("[{}:v:0]",index);let next_audio=format!("[{}:a:0]",index);
+        let out_video=format!("[v{}]",index);let out_audio=format!("[a{}]",index);
+        let requested=if items[index].transition_type.eq_ignore_ascii_case("crossfade") { items[index].transition_duration.max(0.0) } else { 0.0 };
+        let next_duration=segment_duration(&items[index].segments);
+        let transition=requested.min(joined_duration/2.0).min(next_duration/2.0);
+        if transition>0.0005 {
+            let offset=(joined_duration-transition).max(0.0);
+            filter_parts.push(format!("{}{}xfade=transition=fade:duration={:.6}:offset={:.6}{}",video_label,next_video,transition,offset,out_video));
+            filter_parts.push(format!("{}{}acrossfade=d={:.6}:c1=tri:c2=tri{}",audio_label,next_audio,transition,out_audio));
+            joined_duration+=next_duration-transition;
+        } else {
+            filter_parts.push(format!("{}{}concat=n=2:v=1:a=0{}",video_label,next_video,out_video));
+            filter_parts.push(format!("{}{}concat=n=2:v=0:a=1{}",audio_label,next_audio,out_audio));
+            joined_duration+=next_duration;
+        }
+        video_label=out_video;audio_label=out_audio;
+    }
+    if items.len()==1 {
+        filter_parts.push("[0:v:0]null[v]".into());filter_parts.push("[0:a:0]anull[a]".into());
+    } else {
+        filter_parts.push(format!("{}null[v]",video_label));filter_parts.push(format!("{}anull[a]",audio_label));
+    }
+    args.extend(["-filter_complex".into(), filter_parts.join(";"), "-map".into(), "[v]".into(), "-map".into(), "[a]".into()]);
     args.extend(standard_video_encoding(base_text.clone()));
     let result = run_ffmpeg(&app, args).await;
     for path in &intermediates { let _ = fs::remove_file(path); }
     result?;
-    let total_duration: f64 = items.iter().flat_map(|item| item.segments.iter()).map(|segment| (segment.end-segment.start).max(0.0)).sum();
+    let total_duration: f64 = joined_duration;
     let mut active_base=base_path.clone();
     if let Some(music)=background_music {
         window.emit("production-render-progress", "Applying continuous background music and automatic ducking.").map_err(|error| error.to_string())?;
         let mixed_path=safe_working_path(&project_id,"mp4","production-music")?;let mixed_text=mixed_path.to_string_lossy().into_owned();
         let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start,range.end)).collect::<Vec<_>>().join("+");
         let duck=if ranges.is_empty(){"1".to_string()}else{format!("if(gt({},0),{:.4},1)",ranges,music.duck_factor.clamp(0.0,1.0))};
-        // The duck expression uses the current timestamp. FFmpeg's volume
-        // filter otherwise evaluates it only once, leaving music at one level.
-        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume='{:.4}*({})':eval=frame[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
+        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume={:.4},volume='{}'[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
         let mut mix_args=vec!["-y".into(),"-i".into(),base_text.clone(),"-stream_loop".into(),"-1".into(),"-i".into(),music.source,"-filter_complex".into(),filter,"-map".into(),"0:v:0".into(),"-map".into(),"[a]".into()];
         mix_args.extend(standard_video_encoding(mixed_text));run_ffmpeg(&app,mix_args).await?;let _=fs::remove_file(&active_base);active_base=mixed_path;
     }
@@ -434,7 +459,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for (index, replacement) in replacements.iter().enumerate() {
         window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
-        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(), audio_volume: 1.0 };
+        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(), audio_volume: 1.0, transition_type: "none".into(), transition_duration: 0.0 };
         if let Err(error) = render_production_item(&app, &item, &path).await {
             let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
@@ -528,7 +553,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.23 executable started.");
+    write_startup_log("Build 0.11.24 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

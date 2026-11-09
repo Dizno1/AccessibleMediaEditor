@@ -130,33 +130,36 @@
         <p id="presentation-project-status">Presentation project has not been saved.</p>
 
         <h3>Presentation Timeline</h3>
-        <label for="presentation-items">Presentation Timeline</label>
+        <p>The timeline is the active presentation editing area. Press Alt+P to return here.</p>
+        <label for="presentation-items">Presentation Timeline items in playback order</label>
         <select id="presentation-items" size="10" multiple></select>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
-          <button type="button" id="presentation-cut">Cut Selected Items (Ctrl+X)</button>
-          <button type="button" id="presentation-copy">Copy Selected Items (Ctrl+C)</button>
+          <button type="button" id="presentation-cut">Cut Current or Selected Items (Ctrl+X)</button>
+          <button type="button" id="presentation-copy">Copy Current or Selected Items (Ctrl+C)</button>
           <button type="button" id="presentation-paste">Paste Before Current Item (Ctrl+V)</button>
           <button type="button" id="presentation-remove">Remove Selected Items from Sequence</button>
-          <button type="button" id="presentation-choose-source">Choose Another Source</button>
+          <button type="button" id="presentation-choose-source">Go to Source Media Library (Alt+S)</button>
+          <button type="button" id="presentation-properties">Presentation Item Properties (Alt+Enter)</button>
         </div>
         <p id="presentation-sequence-summary">No production items.</p>
+
         <h3>Source Media Library</h3>
-        <label for="presentation-sources">Source Media Library</label>
+        <p>Reusable source media is not part of the presentation until you add it to the timeline. Press Alt+S to come here.</p>
+        <label for="presentation-sources">Images, video clips, and audio in the shared source library</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
-          <button type="button" id="presentation-insert-before">Add Before Current Production Item</button>
-          <button type="button" id="presentation-insert-after">Add After Current Production Item</button>
+          <button type="button" id="presentation-insert-before">Add Before Current Timeline Item</button>
+          <button type="button" id="presentation-insert-after">Add After Current Timeline Item</button>
           <button type="button" id="presentation-append">Add to End of Presentation</button>
+          <button type="button" id="presentation-go-timeline">Return to Presentation Timeline (Alt+P)</button>
         </div>
 
         <h3>Create Slides from Images</h3>
         <label for="presentation-slide-duration">Default image duration in seconds</label>
         <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
         <button type="button" id="presentation-create-slideshow">Add All Images as Slides</button>
-
-
       </section>
       <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
         <h2 id="presentation-music-heading">Presentation Background Music Track</h2>
@@ -174,18 +177,14 @@
       </section>
       <section class="editor-section" id="presentation-accessibility-section" tabindex="-1" aria-labelledby="presentation-accessibility-heading">
         <h2 id="presentation-accessibility-heading">Item Accessibility</h2>
-        <p>These fields have separate purposes. They are saved with the project. Audio-description narration, captions, and accessibility tracks are not included in preview or export in this build.</p>
+        <p>Descriptions are saved in the project. They are not automatically embedded as accessible tracks in exported MP4 files.</p>
         <label for="presentation-alt">Visual description for identifying this item</label>
         <textarea id="presentation-alt" rows="3"></textarea>
-        <label><input id="presentation-ad-use-visual" type="checkbox"> Use the visual description as a source for future audio-description narration</label>
+        <label><input id="presentation-alt-ad" type="checkbox"> Use the visual description as a source for future audio-description narration</label>
         <label for="presentation-dialogue">Transcript or dialogue already heard in this item</label>
         <textarea id="presentation-dialogue" rows="4"></textarea>
-        <label><input id="presentation-ad-use-dialogue" type="checkbox"> Use the transcript or dialogue as context for future audio-description narration</label>
-        <label for="presentation-ad-script">Audio-description narration script</label>
-        <textarea id="presentation-ad-script" rows="4"></textarea>
-        <label><input id="presentation-ad-include" type="checkbox"> Include audio description for this item when audio-description export becomes available</label>
-        <p id="presentation-ad-status">No audio-description narration is generated in this build.</p>
-        <button type="button" id="presentation-save-accessibility">Save Item Accessibility Information</button>
+        <label><input id="presentation-dialogue-ad" type="checkbox"> Use the transcript or dialogue as context for future audio-description narration</label>
+        <button type="button" id="presentation-save-accessibility">Save Item Descriptions</button>
       </section>
     </div>
 
@@ -205,48 +204,58 @@
 
   <dialog id="presentation-preview-dialog" aria-labelledby="presentation-preview-heading">
     <div>
-      <h2 id="presentation-preview-heading">Presentation Preview</h2>
+      <h2 id="presentation-preview-heading" aria-hidden="true">Presentation Preview</h2>
       <video id="presentation-preview-media" controls preload="metadata"></video>
       <p>Use X to play or pause. Use Left and Right Arrow to move five seconds.</p>
       <button type="button" id="presentation-preview-close">Close Preview</button>
     </div>
   </dialog>
 
-  <dialog id="presentation-properties-dialog" aria-labelledby="presentation-properties-heading">
+  <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading">
     <form method="dialog">
-      <h2 id="presentation-properties-heading">Presentation Item Properties</h2>
-      <p id="presentation-properties-summary"></p>
+      <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2>
+      <p id="presentation-item-properties-name"></p>
       <label for="presentation-item-label">Item label</label>
       <input type="text" id="presentation-item-label">
-      <div id="presentation-image-properties">
-        <label for="presentation-image-duration">Image duration in seconds</label>
-        <input type="number" id="presentation-image-duration" min="0.001" step="0.001">
+      <div id="presentation-image-duration-fields">
+        <label for="presentation-item-duration">Image duration in seconds</label>
+        <input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001">
       </div>
-      <div id="presentation-trim-properties">
-        <p id="presentation-trim-status"></p>
-        <fieldset>
+      <div id="presentation-media-boundary-fields">
+        <fieldset class="time-fields">
           <legend>Start time</legend>
-          <label for="presentation-in-hours">Hours</label><input type="number" id="presentation-in-hours" min="0" step="1">
-          <label for="presentation-in-minutes">Minutes</label><input type="number" id="presentation-in-minutes" min="0" max="59" step="1">
-          <label for="presentation-in-seconds">Seconds</label><input type="number" id="presentation-in-seconds" min="0" max="59" step="1">
-          <label for="presentation-in-milliseconds">Milliseconds</label><input type="number" id="presentation-in-milliseconds" min="0" max="999" step="1">
+          <label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1">
+          <label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1">
+          <label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1">
+          <label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1">
         </fieldset>
-        <fieldset>
+        <fieldset class="time-fields">
           <legend>End time</legend>
-          <label for="presentation-out-hours">Hours</label><input type="number" id="presentation-out-hours" min="0" step="1">
-          <label for="presentation-out-minutes">Minutes</label><input type="number" id="presentation-out-minutes" min="0" max="59" step="1">
-          <label for="presentation-out-seconds">Seconds</label><input type="number" id="presentation-out-seconds" min="0" max="59" step="1">
-          <label for="presentation-out-milliseconds">Milliseconds</label><input type="number" id="presentation-out-milliseconds" min="0" max="999" step="1">
+          <label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1">
+          <label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1">
+          <label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1">
+          <label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1">
         </fieldset>
       </div>
-      <div id="presentation-audio-properties">
-        <label for="presentation-item-volume">Foreground audio volume, percent</label>
-        <input type="number" id="presentation-item-volume" min="0" max="100" step="1">
-        <label><input type="checkbox" id="presentation-item-muted"> Mute this item's foreground audio</label>
+      <div id="presentation-item-audio-fields">
+        <label for="presentation-item-audio-volume">Foreground audio volume, percent</label>
+        <input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100">
+        <label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label>
       </div>
+      <fieldset id="presentation-transition-fields">
+        <legend>Transition into this item</legend>
+        <p id="presentation-transition-help">The first timeline item cannot have an incoming transition.</p>
+        <label for="presentation-transition-type">Transition type</label>
+        <select id="presentation-transition-type">
+          <option value="none">None</option>
+          <option value="crossfade">Crossfade</option>
+        </select>
+        <label for="presentation-transition-duration">Transition duration in seconds</label>
+        <input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1">
+      </fieldset>
       <div class="button-row">
-        <button type="button" id="presentation-properties-save">Save Presentation Item Properties</button>
-        <button type="button" id="presentation-properties-cancel">Cancel</button>
+        <button type="button" id="presentation-item-properties-save">Save Presentation Item Properties</button>
+        <button type="button" id="presentation-item-properties-cancel">Cancel</button>
       </div>
     </form>
   </dialog>
@@ -439,8 +448,12 @@
         <li>Export creates the finished MP4. The MP4 can be edited as one video, but its separate presentation components cannot be recovered from the export.</li>
         <li>In the Production items list, Ctrl+Space selects or deselects one item.</li>
         <li>Shift+Arrow extends a selection, and Ctrl+A selects every presentation item.</li>
-        <li>Ctrl+X cuts selected presentation items. Ctrl+C copies them. Ctrl+V pastes them before the current production item while preserving their order.</li>
+        <li>The Presentation Timeline is the active editing area and appears before the Source Media Library.</li>
+        <li>Alt+P moves to the Presentation Timeline. Alt+S moves to the Source Media Library.</li>
+        <li>Ctrl+X cuts the current or selected presentation items. Ctrl+C copies them. Ctrl+V pastes them before the current timeline item while preserving their order.</li>
         <li>Delete removes selected sequence items without deleting shared library media.</li>
+        <li>Alt+Enter opens properties for the current timeline item. You can change image duration, video or audio boundaries, foreground volume, and the transition into that item.</li>
+        <li>Choose Crossfade as the transition into any item except the first. Enter the overlap duration to the millisecond. None keeps a direct cut.</li>
         <li>Preview Complete Presentation renders an accurate preview before export. In the preview, X plays or pauses and Left or Right Arrow moves five seconds.</li>
         <li>Background music automatically lowers during video or audio items. The music controls set both its normal level and its reduced level.</li>
       </ul>

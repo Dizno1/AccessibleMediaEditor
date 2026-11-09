@@ -9,6 +9,7 @@ export const shortcuts = [
   ["undo", {ctrl:true,key:"z"}], ["redo", {ctrl:true,key:"y"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
   ["cutMedia", {ctrl:true,key:"x"}], ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}], ["pasteInsert", {ctrl:true,shift:true,key:"v"}],
+  ["focusPresentationTimeline", {alt:true,key:"p"}], ["focusPresentationSources", {alt:true,key:"s"}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],
   ["setIn", {key:"["}], ["setOut", {key:"]"}],
   ["scrubBack1", {key:"u"}], ["scrubForward1", {key:"i"}],
@@ -30,9 +31,6 @@ function spaceActivatesControl(target) { return ["button","select","option"].inc
 export function initShortcuts() {
   window.addEventListener("keydown", event => {
     if (editable(event.target) && event.key !== "Escape") return;
-    // Escape first belongs to an open native select control. Let Windows close
-    // the list without also running the application's Cancel command.
-    if (event.key === "Escape" && event.target?.tagName?.toLowerCase() === "select") return;
     // Holding a workspace shortcut must not cycle rapidly through every tab.
     if (event.repeat && event.ctrlKey && event.key.toLowerCase() === "tab") { event.preventDefault(); return; }
     const key = event.key.toLowerCase();

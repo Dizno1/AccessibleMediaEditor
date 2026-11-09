@@ -4,7 +4,8 @@ import {
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
   bracketSelectionPlan, logicalSegmentsForRanges, removeLogicalRanges, productionRenderItems,
-  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges
+  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges,
+  presentationTimelineDuration, presentationTransitionDuration
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "./editorState.js";
@@ -266,9 +267,10 @@ function itemListLabel(item,index,source=false){
   return`${role}. ${item.kind}. ${item.label||item.name}`;
 }
 function migrateProject(value){
-  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],backgroundMusic:value.backgroundMusic||null,editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:5,presentation:{items:Array.isArray(value.presentation?.items)?value.presentation.items:[],backgroundMusic:value.presentation?.backgroundMusic||null}};
+  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],backgroundMusic:value.backgroundMusic||null,editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:6,presentation:{items:Array.isArray(value.presentation?.items)?value.presentation.items:[],backgroundMusic:value.presentation?.backgroundMusic||null}};
   if(next.items[0]&&!next.items[0].role)next.items[0].role="primary";
   next.items.slice(1).forEach(item=>{if(!item.role)item.role="sequence";});
+  next.presentation.items.forEach(item=>{if(item.audioVolume==null)item.audioVolume=1;if(!item.transition)item.transition={type:"none",duration:0};});
   return next;
 }
 function updateLocated(idValue,patch){
@@ -627,19 +629,17 @@ function focusSection(offset){
 }
 function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);}
 function presentationItems(){return project.presentation?.items||[];}
-function presentationDuration(){return presentationItems().reduce((sum,item)=>sum+itemDuration(item),0);}
+function presentationDuration(){return presentationTimelineDuration(presentationItems());}
 function sharedPresentationSources(){
   const seen=new Set();return [...(project.sources||[]),...project.items].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true;});
 }
 function renderPresentation(){
   const items=presentationItems(),sources=sharedPresentationSources();
   const oldSelection=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value)),oldSource=el["presentation-sources"].value;
-  el["presentation-items"].replaceChildren(...items.map(item=>{
-    const description=item.alternativeText?.trim()?` Visual description: ${item.alternativeText.trim()}.`:"";
-    const transcript=item.dialogueDraft?.trim()?" Transcript or dialogue available.":"";
-    const ad=item.audioDescriptionScript?.trim()?" Audio-description script available.":"";
-    const audio=item.muted?" Foreground audio muted.":Number(item.audioVolume??1)!==1?` Foreground audio ${Math.round(Number(item.audioVolume)*100)} percent.`:"";
-    return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${audio}${description}${transcript}${ad}`,item.id);
+  el["presentation-items"].replaceChildren(...items.map((item,index)=>{
+    const transition=index&&item.transition?.type==="crossfade"?` Crossfade ${readableTime(presentationTransitionDuration(item,items[index-1]))}.`:"";
+    const audio=["Video","Audio"].includes(item.kind)?` Foreground audio ${item.audioMuted?"muted":`${Math.round((item.audioVolume??1)*100)} percent`}.`:"";
+    return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${transition}${audio}`,item.id);
   }));
   el["presentation-sources"].replaceChildren(...sources.map(item=>new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.`,item.id)));
   for(const option of el["presentation-items"].options)option.selected=oldSelection.has(option.value);
@@ -658,11 +658,8 @@ function loadPresentationDescriptions(){
   const item=presentationItems().find(item=>item.id===el["presentation-items"].value);
   el["presentation-alt"].value=item?.alternativeText||"";
   el["presentation-dialogue"].value=item?.dialogueDraft||"";
-  el["presentation-ad-script"].value=item?.audioDescriptionScript||"";
-  el["presentation-ad-use-visual"].checked=!!item?.audioDescriptionSources?.visualDescription;
-  el["presentation-ad-use-dialogue"].checked=!!item?.audioDescriptionSources?.transcriptDialogue;
-  el["presentation-ad-include"].checked=!!item?.includeAudioDescription;
-  el["presentation-ad-status"].textContent=item?.includeAudioDescription?"Audio description is marked for this item, but narration is not generated or exported in this build.":"No audio-description narration is generated in this build.";
+  el["presentation-alt-ad"].checked=Boolean(item?.useAlternativeTextForAd);
+  el["presentation-dialogue-ad"].checked=Boolean(item?.useDialogueForAd);
   el["presentation-save-accessibility"].disabled=!item;
 }
 function modifyPresentation(next,selected,description){
@@ -674,7 +671,7 @@ function modifyPresentation(next,selected,description){
 function newPresentation(){
   if(presentationItems().length&&!window.confirm("Clear the current presentation sequence? Shared media and Media Editor edits will be kept."))return;
   const next=structuredClone(project);next.presentation={items:[]};next.dirty=true;
-  modifyPresentation(next,null,"New empty presentation. Shared media remains available.");el["presentation-sources"].focus();
+  modifyPresentation(next,null,"New empty presentation. Presentation Timeline ready. Shared media remains available.");el["presentation-items"].focus();
 }
 function createSlideshow(){
   const images=sharedPresentationSources().filter(item=>item.kind==="Image");
@@ -708,6 +705,7 @@ function movePresentation(direction){
 }
 function removePresentation(){
   const selected=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value));
+  if(!selected.size&&el["presentation-items"].value)selected.add(el["presentation-items"].value);
   if(!selected.size)return announce("Select one or more presentation items first.",true);
   const next=structuredClone(project),before=next.presentation.items.length;
   next.presentation.items=next.presentation.items.filter(item=>!selected.has(item.id));
@@ -721,7 +719,7 @@ function selectedPresentationItems(){
   return presentationItems().filter(item=>selected.has(item.id));
 }
 function copyPresentation(cut=false){
-  const selected=selectedPresentationItems();if(!selected.length)return announce("Select a Presentation Timeline item first.",true);
+  const selected=selectedPresentationItems();if(!selected.length)return announce("Move to the Presentation Timeline and choose an item first. Press Alt+P to go there.",true);
   presentationClipboard=structuredClone(selected);
   if(!cut){announce(`${selected.length} presentation ${selected.length===1?"item":"items"} copied.`);return;}
   const selectedIds=new Set(selected.map(item=>item.id)),items=presentationItems(),firstIndex=items.findIndex(item=>selectedIds.has(item.id));
@@ -739,6 +737,14 @@ function pastePresentation(){
 function copyMediaAction(){if(activeWorkspace==="presentation")return copyPresentation(false);return copySourceSelection();}
 function cutMediaAction(){if(activeWorkspace==="presentation")return copyPresentation(true);announce("Cut is available in the Presentation Production Sequence. Use Ctrl+Delete to remove a marked media range.");}
 function pasteMediaAction(){if(activeWorkspace==="presentation")return pastePresentation();return pasteMedia();}
+function focusPresentationTimeline(){
+  if(activeWorkspace!=="presentation")return announce("The Presentation Timeline is available in the Presentation workspace.",true);
+  el["presentation-items"].focus();announce(`${presentationItems().length} items in the Presentation Timeline. Use Arrow keys to choose an item.`);
+}
+function focusPresentationSources(){
+  if(activeWorkspace!=="presentation")return announce("The Source Media Library is available in the Presentation workspace.",true);
+  el["presentation-sources"].focus();announce(`${sharedPresentationSources().length} items in the Source Media Library. Adding a source does not remove it from the library.`);
+}
 function setPresentationMusic(remove=false){
   const source=remove?"":el["presentation-music-source"].value;
   if(!remove&&!source)return announce("Choose an audio file from the music source list first.",true);
@@ -766,22 +772,9 @@ async function previewPresentation(){
   showExportProgress("Rendering presentation preview. Please wait.");
   try{
     const source=await renderCompletePresentation("preview");closeExportProgress();
-    const media=el["presentation-preview-media"];
-    media.src=convertFileSrc?convertFileSrc(source):source;media.currentTime=0;
-    await waitForPreviewMedia(media);
-    el["presentation-preview-dialog"].showModal();media.focus();
+    const media=el["presentation-preview-media"];media.src=convertFileSrc?convertFileSrc(source):source;media.currentTime=0;media.load();
+    await waitForMediaReady(media);el["presentation-preview-dialog"].showModal();media.focus();
   }catch(error){closeExportProgress();announce(`Presentation preview failed. ${error}`,true);}
-}
-function waitForPreviewMedia(media,timeoutMs=15000){
-  if(media.readyState>=1)return Promise.resolve();
-  return new Promise((resolve,reject)=>{
-    let timer;
-    const finish=callback=>{clearTimeout(timer);media.removeEventListener("loadedmetadata",ready);media.removeEventListener("canplay",ready);media.removeEventListener("error",failed);callback();};
-    const ready=()=>finish(resolve);
-    const failed=()=>finish(()=>reject(new Error("The rendered preview could not be loaded.")));
-    timer=setTimeout(()=>finish(()=>reject(new Error("The rendered preview did not become ready."))),timeoutMs);
-    media.addEventListener("loadedmetadata",ready,{once:true});media.addEventListener("canplay",ready,{once:true});media.addEventListener("error",failed,{once:true});media.load();
-  });
 }
 function closePresentationPreview(){
   const media=el["presentation-preview-media"];media.pause();media.removeAttribute("src");media.load();
@@ -804,79 +797,71 @@ async function exportPresentation(){
 function savePresentationDescriptions(){
   const selected=el["presentation-items"].value;if(!selected)return announce("Select a presentation item first.",true);
   const next=structuredClone(project),item=next.presentation.items.find(item=>item.id===selected);
-  item.alternativeText=el["presentation-alt"].value.trim();
-  item.dialogueDraft=el["presentation-dialogue"].value.trim();
-  item.audioDescriptionScript=el["presentation-ad-script"].value.trim();
-  item.audioDescriptionSources={visualDescription:el["presentation-ad-use-visual"].checked,transcriptDialogue:el["presentation-ad-use-dialogue"].checked};
-  item.includeAudioDescription=el["presentation-ad-include"].checked;next.dirty=true;
-  modifyPresentation(next,selected,"Item accessibility information saved. Audio-description narration is not generated or exported in this build.");
+  item.alternativeText=el["presentation-alt"].value;item.dialogueDraft=el["presentation-dialogue"].value;
+  item.useAlternativeTextForAd=el["presentation-alt-ad"].checked;item.useDialogueForAd=el["presentation-dialogue-ad"].checked;next.dirty=true;
+  modifyPresentation(next,selected,"Presentation item descriptions saved in project metadata.");
 }
-function showPresentationProperties(){
-  const item=presentationItems().find(item=>item.id===el["presentation-items"].value);
-  if(!item)return announce("Select a Presentation Timeline item first.",true);
-  const media=["Video","Audio"].includes(item.kind),segments=normalizedSegments(item),continuous=media&&segments.length===1;
-  el["presentation-properties-dialog"].dataset.itemId=item.id;
-  el["presentation-properties-summary"].textContent=`${item.kind}. Current duration ${readableTime(itemDuration(item))}.`;
+function showPresentationItemProperties(){
+  const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);
+  if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);
+  const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image";
+  el["presentation-item-properties-name"].textContent=`Item ${index+1} of ${items.length}. ${item.kind}. ${item.label||item.name}.`;
   el["presentation-item-label"].value=item.label||item.name;
-  el["presentation-image-properties"].hidden=item.kind!=="Image";
-  el["presentation-image-duration"].value=item.kind==="Image"?itemDuration(item):"";
-  el["presentation-trim-properties"].hidden=!media;
-  el["presentation-trim-status"].textContent=continuous?"Change the exact retained start and end times.":media?"This item contains multiple retained segments. Change its boundaries in the Media Editor.":"";
-  for(const input of el["presentation-trim-properties"].querySelectorAll("input"))input.disabled=!continuous;
-  if(media){writeTime("presentation-in",segments[0]?.start||0);writeTime("presentation-out",segments.at(-1)?.end||itemDuration(item));}
-  el["presentation-audio-properties"].hidden=!media;
-  el["presentation-item-volume"].value=Math.round(Number(item.audioVolume??1)*100);
-  el["presentation-item-muted"].checked=!!item.muted;
-  el["presentation-properties-dialog"].showModal();el["presentation-item-label"].focus();
+  el["presentation-image-duration-fields"].hidden=!image;
+  el["presentation-item-duration"].value=itemDuration(item);
+  el["presentation-media-boundary-fields"].hidden=!media||Boolean(item.editSegments?.length>1);
+  writeTime("presentation-start",Number(item.inPoint)||0);
+  writeTime("presentation-end",item.outPoint==null?Number(item.duration)||0:Number(item.outPoint));
+  el["presentation-item-audio-fields"].hidden=!media;
+  el["presentation-item-audio-volume"].value=Math.round((item.audioVolume??1)*100);
+  el["presentation-item-audio-muted"].checked=Boolean(item.audioMuted);
+  el["presentation-transition-type"].value=index?item.transition?.type||"none":"none";
+  el["presentation-transition-duration"].value=index?Number(item.transition?.duration)||1:1;
+  el["presentation-transition-type"].disabled=index===0;
+  el["presentation-transition-duration"].disabled=index===0;
+  el["presentation-transition-help"].textContent=index===0?"The first timeline item cannot have an incoming transition.":"The transition overlaps the end of the previous item and the beginning of this item.";
+  el["presentation-item-properties-dialog"].showModal();el["presentation-item-label"].focus();
 }
-function savePresentationProperties(){
-  const idValue=el["presentation-properties-dialog"].dataset.itemId,item=presentationItems().find(item=>item.id===idValue);
-  if(!item)return announce("The selected presentation item is no longer available.",true);
-  const next=structuredClone(project),updated=next.presentation.items.find(value=>value.id===idValue),patch={label:el["presentation-item-label"].value.trim()||item.name};
-  if(item.kind==="Image"){
-    const seconds=Number(el["presentation-image-duration"].value);
-    if(!Number.isFinite(seconds)||seconds<0.001)return announce("Enter a valid image duration.",true);
-    Object.assign(patch,{duration:seconds,inPoint:0,outPoint:seconds,editSegments:[{start:0,end:seconds}]});
+function closePresentationItemProperties(){
+  if(el["presentation-item-properties-dialog"].open)el["presentation-item-properties-dialog"].close();
+  el["presentation-items"].focus();
+}
+function savePresentationItemProperties(){
+  const selected=el["presentation-items"].value,next=structuredClone(project),items=next.presentation.items,index=items.findIndex(item=>item.id===selected);
+  if(index<0)return closePresentationItemProperties();
+  const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image";
+  item.label=el["presentation-item-label"].value.trim()||item.name;
+  if(image){const value=Number(el["presentation-item-duration"].value);if(!Number.isFinite(value)||value<.001||value>3600)return announce("Enter an image duration between 0.001 and 3600 seconds.",true);item.duration=value;item.inPoint=0;item.outPoint=value;item.editSegments=[{start:0,end:value}];}
+  if(media&&!(item.editSegments?.length>1)){
+    const start=readTime("presentation-start"),end=readTime("presentation-end"),limit=Number(item.duration)||0;
+    if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>limit)return announce("Enter valid start and end times within the source duration.",true);
+    item.inPoint=start;item.outPoint=end;item.editSegments=[{start,end}];
   }
-  if(["Video","Audio"].includes(item.kind)){
-    const segments=normalizedSegments(item);
-    if(segments.length===1){
-      const start=readTime("presentation-in"),end=readTime("presentation-out"),sourceDuration=Number(item.duration)||Math.max(end,segments[0].end);
-      if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>sourceDuration+0.0005)return announce("Enter valid start and end times within the source duration.",true);
-      patch.editSegments=[{start,end}];
-    }
-    const volume=Number(el["presentation-item-volume"].value);
-    if(!Number.isFinite(volume)||volume<0||volume>100)return announce("Foreground audio volume must be between 0 and 100 percent.",true);
-    patch.audioVolume=volume/100;patch.muted=el["presentation-item-muted"].checked;
-  }
-  Object.assign(updated,patch);next.dirty=true;el["presentation-properties-dialog"].close();
-  modifyPresentation(next,idValue,`${updated.kind} properties saved. Duration ${readableTime(itemDuration(updated))}.`);el["presentation-items"].focus();
+  if(media){const volume=Number(el["presentation-item-audio-volume"].value);if(!Number.isFinite(volume)||volume<0||volume>100)return announce("Foreground audio volume must be between 0 and 100 percent.",true);item.audioVolume=volume/100;item.audioMuted=el["presentation-item-audio-muted"].checked;}
+  const transitionType=index?el["presentation-transition-type"].value:"none",transitionDuration=transitionType==="crossfade"?Number(el["presentation-transition-duration"].value):0;
+  if(transitionType==="crossfade"&&(!Number.isFinite(transitionDuration)||transitionDuration<.1||transitionDuration>10))return announce("Crossfade duration must be between 0.1 and 10 seconds.",true);
+  item.transition={type:transitionType,duration:transitionDuration};
+  if(index&&transitionType==="crossfade"&&presentationTransitionDuration(item,items[index-1])<transitionDuration-.0005)return announce("The crossfade is too long for one of the neighboring items. Shorten the transition or lengthen the item.",true);
+  next.dirty=true;undoStack.push(project);redoStack=[];project=next;closePresentationItemProperties();renderPresentation();el["presentation-items"].value=selected;el["presentation-items"].focus();
+  announce(`${item.label||item.name} properties saved. ${transitionType==="crossfade"?`Crossfade ${readableTime(transitionDuration)}.`:"No incoming transition."}`);
 }
-function focusWorkspaceContent(name){
-  if(name==="presentation")return el["presentation-items"].focus();
-  if(name==="audio")return el["audio-studio-heading"].focus();
-  const state=activeState();
-  if(state?.slider)return state.slider.focus();
-  if(project.items.length)return el["project-items"].focus();
-  el["import-media-button"].focus();
-}
-function switchWorkspace(direction=1,target=null,focusContent=false){
+function switchWorkspace(direction=1,target=null){
   const next=target||workspaceOrder[(workspaceOrder.indexOf(activeWorkspace)+direction+workspaceOrder.length)%workspaceOrder.length];
   if(!workspaceTabs[next]||!workspacePanels[next])return;
-  if(next===activeWorkspace){(focusContent?focusWorkspaceContent(next):el[workspaceTabs[next]].focus());return;}
-  // Make the destination available before hiding the currently focused panel.
-  // This prevents focus from falling to the WebView document and announcing the
-  // page title during Ctrl+Tab workspace changes.
-  el[workspacePanels[next]].hidden=false;
+  // The selected tab is the single accessible announcement source. Focusing the
+  // entire tab panel made JAWS repeatedly announce the document/window title.
+  // Do not also announce the workspace through a live region.
+  if(next===activeWorkspace)return;
   activeWorkspace=next;
   for(const name of workspaceOrder){
     const selected=name===next;
     el[workspaceTabs[name]].setAttribute("aria-selected",String(selected));
     el[workspaceTabs[name]].tabIndex=selected?0:-1;
+    el[workspacePanels[name]].hidden=!selected;
   }
   if(next==="presentation")renderPresentation();
-  if(focusContent)focusWorkspaceContent(next);else el[workspaceTabs[next]].focus();
-  for(const name of workspaceOrder)if(name!==next)el[workspacePanels[name]].hidden=true;
+  const destination=next==="presentation"?el["presentation-items"]:next==="media"?(editorStates.get(activeMediaId)?.slider||(project.items.length?el["project-items"]:el["import-media-button"])):el["audio-studio-heading"];
+  destination?.focus();
 }
 
 async function importMedia(){
@@ -955,7 +940,7 @@ async function placeImageSource(sourceImage){
 }
 function newProject(){if(project.dirty&&!window.confirm("Discard unsaved changes and start a new editing session?"))return;project=createProject();selectedId=selectedSourceId=selectedImageId=selectedReplacementId=activeMediaId=null;mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render();el["import-media-button"].focus();announce("New editing session. Press Ctrl+O to open primary media.");}
 function applyOpenedProject(result){
-  project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});if(presentationItems().length)switchWorkspace(1,"presentation",true);else if(activeWorkspace==="presentation")el["presentation-items"].focus();
+  project=migrateProject(JSON.parse(result.content));project.path=result.path;project.name=baseName(result.path).replace(/\.ameproject$/i,"");project.dirty=false;selectedId=project.items[0]?.id||null;selectedSourceId=project.sources.find(item=>item.kind!=="Image")?.id||null;selectedImageId=project.sources.find(item=>item.kind==="Image")?.id||null;selectedReplacementId=project.trackReplacements.at(-1)?.id||null;activeMediaId=project.items.length?PROGRAM_ID:(selectedSourceId||selectedImageId);mediaClipboard=null;presentationClipboard=[];editorStates.clear();editorNodes.clear();el["media-editor-sections"].replaceChildren();undoStack=[];redoStack=[];render({focus:true});if(activeWorkspace==="presentation"&&presentationItems().length)el["presentation-items"].focus();
 }
 async function openProject(){
   if(project.dirty&&!window.confirm("Discard unsaved changes and open another project?"))return;
@@ -1114,9 +1099,9 @@ function addTransition(){const after=selectedId,item={id:id(),source:null,name:"
 function undo(){
   const state=activeState();
   if(state?.markHistory?.length){const change=state.markHistory.pop();if(change.which==="in")state.markIn=change.previous;else state.markOut=change.previous;const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);return announce(`${change.which==="in"?"Left":"Right"} bracket removed.`);}
-  if(!undoStack.length)return announce("Nothing to undo.");const restore=removedLibraryItemUndo,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:((project.sources||[]).find(item=>item.kind!=="Image")?.id||null);if(restore&&(project.sources||[]).some(item=>item.id===restore.id)){if(restore.collection==="image")selectedImageId=restore.id;else selectedSourceId=restore.id;}activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedLibraryItemUndo=null;render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Undo completed in Presentation Timeline.");}else if(restore){const list=el[restore.collection==="image"?"image-items":"source-items"],remaining=(project.sources||[]).filter(item=>restore.collection==="image"?item.kind==="Image":item.kind!=="Image").length;list.focus();announce(`${restore.label} restored to ${restore.collection==="image"?"Project Image Library":"Source media"}. ${remaining} ${restore.collection==="image"?(remaining===1?"image":"images"):(remaining===1?"source item":"source items")} available.`);}else{editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");}
+  if(!undoStack.length)return announce("Nothing to undo.");const restore=removedLibraryItemUndo,previousActiveId=activeMediaId,previousSelectedId=selectedId,previousSelectedSourceId=selectedSourceId;redoStack.push(project);project=undoStack.pop();selectedId=project.items.some(item=>item.id===previousSelectedId)?previousSelectedId:(project.items[0]?.id||null);selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:((project.sources||[]).find(item=>item.kind!=="Image")?.id||null);if(restore&&(project.sources||[]).some(item=>item.id===restore.id)){if(restore.collection==="image")selectedImageId=restore.id;else selectedSourceId=restore.id;}activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);removedLibraryItemUndo=null;render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Undo completed in Production Sequence.");}else if(restore){const list=el[restore.collection==="image"?"image-items":"source-items"],remaining=(project.sources||[]).filter(item=>restore.collection==="image"?item.kind==="Image":item.kind!=="Image").length;list.focus();announce(`${restore.label} restored to ${restore.collection==="image"?"Project Image Library":"Source media"}. ${remaining} ${restore.collection==="image"?(remaining===1?"image":"images"):(remaining===1?"source item":"source items")} available.`);}else{editorStates.get(activeMediaId)?.section.focus();announce("Undo completed.");}
 }
-function redo(){if(!redoStack.length)return announce("Nothing to redo.");const previousActiveId=activeMediaId,previousSelectedSourceId=selectedSourceId;undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Redo completed in Presentation Timeline.");}else{editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}}
+function redo(){if(!redoStack.length)return announce("Nothing to redo.");const previousActiveId=activeMediaId,previousSelectedSourceId=selectedSourceId;undoStack.push(project);project=redoStack.pop();selectedId=project.items[0]?.id||null;selectedSourceId=(project.sources||[]).some(item=>item.id===previousSelectedSourceId)?previousSelectedSourceId:(project.sources?.[0]?.id||null);activeMediaId=locateItem(previousActiveId)?previousActiveId:(project.items.length?PROGRAM_ID:selectedSourceId);render();if(activeWorkspace==="presentation"){el["presentation-items"].focus();announce("Redo completed in Production Sequence.");}else{editorStates.get(activeMediaId)?.section.focus();announce("Redo completed.");}}
 
 function currentLogicalPosition(location,state){
   if(location.type==="program"){
@@ -1225,22 +1210,23 @@ function setTrackTarget(target){
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);if(state.imageOnly)return announce("Source Images do not have a playhead. Set the placement time in Primary Production.");writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto"),bounds=location?editorBounds(location.item,location.type):null;if(!state||!location||!Number.isFinite(point)||point>bounds.end)return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move the playhead inside the media before splitting.",true);clearProgramMarks();selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
-function cancel(){const state=activeState();if(el["presentation-properties-dialog"].open)el["presentation-properties-dialog"].close();else if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
+function cancel(){const state=activeState();if(el["presentation-item-properties-dialog"].open)closePresentationItemProperties();else if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
 
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
-  previousWorkspace:()=>switchWorkspace(-1,null,true),nextWorkspace:()=>switchWorkspace(1,null,true),showMediaWorkspace:()=>switchWorkspace(1,"media",true),showPresentationWorkspace:()=>switchWorkspace(1,"presentation",true),showAudioWorkspace:()=>switchWorkspace(1,"audio",true),
+  previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showPresentationWorkspace:()=>switchWorkspace(1,"presentation"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
-  addText:showTextDialog,addTransition,moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
+  addText:showTextDialog,addTransition,moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationItemProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
   preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
   saveSourceClip,cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:commitPrimaryEdit,
+  focusPresentationTimeline,focusPresentationSources,
   scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
   jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.23. Added Presentation Item Properties, direct presentation opening, and quieter workspace navigation.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.24. Precise presentation item properties, foreground volume, accessible crossfades, preview, and automatic music ducking.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1278,13 +1264,6 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
   switchWorkspace(1,target);el[workspaceTabs[target]].focus();
 }));
 el["presentation-items"].addEventListener("change",loadPresentationDescriptions);
-// Production-first navigation: source media never becomes the implicit edit target.
-document.addEventListener("keydown",event=>{
-  if(activeWorkspace!=="presentation"||!event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;
-  const target=event.key.toLowerCase()==="p"?"presentation-items":event.key.toLowerCase()==="s"?"presentation-sources":null;
-  if(!target)return;
-  event.preventDefault();event.stopPropagation();el[target].focus();
-},true);
 el["presentation-new"].addEventListener("click",newPresentation);
 el["presentation-open"].addEventListener("click",openProject);
 el["presentation-save"].addEventListener("click",()=>saveProject(false));
@@ -1296,20 +1275,23 @@ el["presentation-cut"].addEventListener("click",()=>copyPresentation(true));
 el["presentation-copy"].addEventListener("click",()=>copyPresentation(false));
 el["presentation-paste"].addEventListener("click",pastePresentation);
 el["presentation-remove"].addEventListener("click",removePresentation);
-el["presentation-choose-source"].addEventListener("click",()=>el["presentation-sources"].focus());
+el["presentation-properties"].addEventListener("click",showPresentationItemProperties);
+el["presentation-choose-source"].addEventListener("click",focusPresentationSources);
+el["presentation-go-timeline"].addEventListener("click",focusPresentationTimeline);
 el["presentation-items"].addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
 el["presentation-music-apply"].addEventListener("click",()=>setPresentationMusic(false));
 el["presentation-music-remove"].addEventListener("click",()=>setPresentationMusic(true));
 el["presentation-preview"].addEventListener("click",previewPresentation);
 el["presentation-preview-close"].addEventListener("click",closePresentationPreview);
 el["presentation-preview-dialog"].addEventListener("cancel",event=>{event.preventDefault();closePresentationPreview();});
-el["presentation-properties-save"].addEventListener("click",savePresentationProperties);
-el["presentation-properties-cancel"].addEventListener("click",()=>{el["presentation-properties-dialog"].close();el["presentation-items"].focus();});
 el["presentation-export"].addEventListener("click",exportPresentation);
 el["presentation-insert-before"].addEventListener("click",()=>addPresentationSource("before"));
 el["presentation-insert-after"].addEventListener("click",()=>addPresentationSource("after"));
 el["presentation-append"].addEventListener("click",()=>addPresentationSource("end"));
 el["presentation-save-accessibility"].addEventListener("click",savePresentationDescriptions);
+el["presentation-item-properties-save"].addEventListener("click",savePresentationItemProperties);
+el["presentation-item-properties-cancel"].addEventListener("click",closePresentationItemProperties);
+el["presentation-item-properties-dialog"].addEventListener("cancel",event=>{event.preventDefault();closePresentationItemProperties();});
 el["save-properties-button"].addEventListener("click",saveProperties);el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());el["save-text-button"].addEventListener("click",saveText);el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 el["insert-image-confirm"].addEventListener("click",confirmImagePlacement);el["insert-image-cancel"].addEventListener("click",()=>finishImagePlacement(null));

@@ -1,0 +1,57 @@
+Accessible Media Editor Build 0.11.24
+
+This build preserves the presentation properties, preview, background music, automatic ducking, project saving, and timeline editing verified in Build 0.11.23.
+
+New presentation transition workflow
+
+Move to the Presentation Timeline and select the item that the transition should lead into.
+
+Press Alt+Enter or activate Presentation Item Properties.
+
+Under Transition into this item, choose Crossfade.
+
+Enter the transition duration in seconds. Millisecond values are supported. For example, 1.250 creates a one second, 250 millisecond crossfade.
+
+Save Presentation Item Properties.
+
+The timeline item announces the crossfade and its duration. The total presentation duration is reduced by the overlap duration.
+
+The first timeline item cannot have an incoming transition.
+
+Choose None to restore a direct cut into the selected item.
+
+Recommended test
+
+Open a saved presentation project.
+
+Select the second timeline item.
+
+Press Alt+Enter.
+
+Choose Crossfade and enter 1.000 seconds.
+
+Save the properties.
+
+Confirm that focus returns to the same timeline item and that JAWS announces Crossfade 1 second.
+
+Preview the complete presentation. Confirm that the first item dissolves into the second over one second and that their audio also crossfades when both items contain audio.
+
+Export the presentation and confirm that the exported MP4 matches the preview.
+
+Save the project, close it, reopen it, and confirm that the crossfade remains assigned to the same item.
+
+Also confirm that background music continues playing and continues to duck during foreground video or audio.
+
+Additional cleanup
+
+The presentation preview dialog now has one screen-reader title announcement.
+
+Ctrl+Tab continues to place focus on the useful control in the destination workspace without announcing the WebView page title.
+
+Automated verification
+
+All 78 automated tests passed.
+
+The distribution frontend was rebuilt and verified against the edited source.
+
+The Rust and Tauri Windows compilation must still be completed by GitHub Actions because the local environment does not include the Rust compiler.
