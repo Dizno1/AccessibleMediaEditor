@@ -25,6 +25,13 @@ test("an AMEPROJECT selected through Open Media is redirected to project opening
   assert.match(app,/invoke\("open_project_path",\{path:projectPaths\[0\]\}\)/);
   assert.match(app,/applyOpenedProject\(result\)/);
 });
+test("opening a presentation project switches workspace and focuses its timeline",()=>{
+  const opening=app.slice(app.indexOf("function applyOpenedProject("),app.indexOf("async function openProject("));
+  assert.match(opening,/presentationProject=presentationItems\(\)\.length>0/);
+  assert.match(opening,/switchWorkspace\(1,"presentation"\)/);
+  assert.match(opening,/el\["presentation-items"\]\.focus\(\)/);
+  assert.match(opening,/switchWorkspace\(1,"media"\)/);
+});
 test("presentation builder places the active timeline before the source library",()=>{
   assert.match(html,/id="presentation-builder-section"/);
   assert.doesNotMatch(html,/id="presentation-library-section"/);

@@ -1,0 +1,11 @@
+Accessible Media Editor Build 0.11.27
+
+Opening a saved project now selects the workspace that contains its editable production.
+
+A project containing Presentation Timeline items opens in the Presentation workspace with keyboard focus in the Presentation Timeline.
+
+A project without Presentation Timeline items opens in the Media Editor workspace with focus in its active editor or primary media list.
+
+Regression test
+
+Start the app in Media Editor. Open a saved presentation project. Confirm that JAWS announces the Presentation workspace and places focus on the first selected Presentation Timeline item without requiring a manual workspace change.
