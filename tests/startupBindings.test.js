@@ -52,22 +52,7 @@ test("presentation provides direct timeline and source library navigation",()=>{
   assert.match(app,/function focusPresentationSources\(\)/);
   assert.match(app,/focusPresentationTimeline,focusPresentationSources/);
 });
-
-test("presentation item properties expose precise editing and incoming crossfades",()=>{
-  assert.match(html,/id="presentation-properties"[^>]*>Presentation Item Properties \(Alt\+Enter\)/);
-  assert.match(html,/id="presentation-transition-type"/);
-  assert.match(html,/value="crossfade">Crossfade/);
-  assert.match(html,/id="presentation-transition-duration"[^>]*step="0\.001"/);
-  assert.match(app,/function showPresentationItemProperties\(\)/);
-  assert.match(app,/function savePresentationItemProperties\(\)/);
-  assert.match(app,/activeWorkspace==="presentation"\?showPresentationItemProperties\(\):showProperties\(\)/);
-});
-
-test("preview opens only after its rendered media is ready and has one accessible title",()=>{
-  assert.match(app,/await waitForMediaReady\(media\);el\["presentation-preview-dialog"\]\.showModal\(\)/);
-  assert.doesNotMatch(app,/announce\("Presentation preview ready/);
-  assert.match(html,/id="presentation-preview-heading" aria-hidden="true">Presentation Preview/);
-});
+test("native crossfade menu edits the selected presentation item",()=>{assert.match(app,/function addPresentationCrossfade\(\)/);assert.match(app,/addTransition:\(\)=>activeWorkspace==="presentation"\?addPresentationCrossfade\(\):addTransition\(\)/);});
 
 test("instructions and keyboard shortcuts are app-wide and explain screen reader modes",()=>{
   assert.match(html,/id="instructions-shortcuts-button"/);

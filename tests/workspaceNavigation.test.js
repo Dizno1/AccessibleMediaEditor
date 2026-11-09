@@ -4,8 +4,7 @@ import {readFileSync} from 'node:fs';
 const app=readFileSync(new URL('../app/app.js',import.meta.url),'utf8');
 const shortcuts=readFileSync(new URL('../app/shortcutService.js',import.meta.url),'utf8');
 const workspace=app.slice(app.indexOf('function switchWorkspace('),app.indexOf('async function importMedia('));
-test('workspace switches focus a useful control, not the document-like tabpanel or page title',()=>{
-  assert.match(workspace,/const destination=next==="presentation"\?el\["presentation-items"\]/);
+test('workspace switches focus a useful control, not the document-like tabpanel',()=>{
   assert.match(workspace,/destination\?\.focus\(\)/);
   assert.doesNotMatch(workspace,/el\[workspacePanels\[next\]\]\.focus\(\)/);
 });

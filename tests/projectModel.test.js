@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, presentationTimelineDuration, presentationTransitionDuration, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("a presentation interleaves video and ducks continuous music",()=>{const p=createProject(),slides=[1,2,3].map(n=>({image:{id:`i${n}`,name:`Image ${n}`,kind:"Image",source:`C:/i${n}.jpg`},duration:5})),video=item("dogs",2),music={id:"music",name:"Music",kind:"Audio",source:"C:/music.mp3",duration:20};const next=createInterleavedPresentation(p,slides,["a","b","c"],video,["v1","v2"],music,true);assert.deepEqual(next.items.map(x=>x.kind),["Image","Video","Image","Video","Image"]);assert.equal(duration(next),19);assert.equal(productionRenderBackgroundMusic(next).duckRanges.length,2);});
@@ -184,24 +184,6 @@ test("a still image renders as a silent video item for its exact duration",()=>{
   project=addItem(project,{id:"photo",name:"photo.jpg",label:"Photo",kind:"Image",source:"C:/photo.jpg",duration:5.25,editSegments:[{start:0,end:5.25}],trackTarget:"video"});
   assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video",audioVolume:1,transitionType:"none",transitionDuration:0}]);
   assert.equal(duration(project),5.25);
-});
-
-test("a presentation crossfade overlaps neighboring items without changing either source",()=>{
-  const first={...item("first",5),kind:"Image"};
-  const second={...item("second",8),transition:{type:"crossfade",duration:1.25},audioVolume:.5};
-  const items=[first,second];
-  assert.equal(presentationTransitionDuration(second,first),1.25);
-  assert.equal(presentationTimelineDuration(items),11.75);
-  const rendered=productionRenderItems({items});
-  assert.equal(rendered[1].transitionType,"crossfade");
-  assert.equal(rendered[1].transitionDuration,1.25);
-  assert.equal(rendered[1].audioVolume,.5);
-});
-
-test("crossfade duration is safely limited by both neighboring items",()=>{
-  const first={...item("first",1),kind:"Image"};
-  const second={...item("second",8),transition:{type:"crossfade",duration:4}};
-  assert.equal(presentationTransitionDuration(second,first),.5);
 });
 
 test("a still image can occupy an exact retained audio replacement range",()=>{

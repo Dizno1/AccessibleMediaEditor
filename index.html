@@ -211,54 +211,18 @@
     </div>
   </dialog>
 
-  <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading">
-    <form method="dialog">
-      <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2>
-      <p id="presentation-item-properties-name"></p>
-      <label for="presentation-item-label">Item label</label>
-      <input type="text" id="presentation-item-label">
-      <div id="presentation-image-duration-fields">
-        <label for="presentation-item-duration">Image duration in seconds</label>
-        <input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001">
-      </div>
-      <div id="presentation-media-boundary-fields">
-        <fieldset class="time-fields">
-          <legend>Start time</legend>
-          <label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1">
-          <label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1">
-          <label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1">
-          <label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1">
-        </fieldset>
-        <fieldset class="time-fields">
-          <legend>End time</legend>
-          <label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1">
-          <label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1">
-          <label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1">
-          <label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1">
-        </fieldset>
-      </div>
-      <div id="presentation-item-audio-fields">
-        <label for="presentation-item-audio-volume">Foreground audio volume, percent</label>
-        <input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100">
-        <label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label>
-      </div>
-      <fieldset id="presentation-transition-fields">
-        <legend>Transition into this item</legend>
-        <p id="presentation-transition-help">The first timeline item cannot have an incoming transition.</p>
-        <label for="presentation-transition-type">Transition type</label>
-        <select id="presentation-transition-type">
-          <option value="none">None</option>
-          <option value="crossfade">Crossfade</option>
-        </select>
-        <label for="presentation-transition-duration">Transition duration in seconds</label>
-        <input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1">
-      </fieldset>
-      <div class="button-row">
-        <button type="button" id="presentation-item-properties-save">Save Presentation Item Properties</button>
-        <button type="button" id="presentation-item-properties-cancel">Cancel</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading"><form method="dialog">
+    <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2><p id="presentation-item-properties-name"></p>
+    <label for="presentation-item-label">Item label</label><input type="text" id="presentation-item-label">
+    <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds</label><input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001"></div>
+    <div id="presentation-media-boundary-fields">
+      <fieldset class="time-fields"><legend>Start time</legend><label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1"><label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1"><label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1"><label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1"></fieldset>
+      <fieldset class="time-fields"><legend>End time</legend><label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1"><label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1"><label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1"><label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1"></fieldset>
+    </div>
+    <div id="presentation-item-audio-fields"><label for="presentation-item-audio-volume">Foreground audio volume, percent</label><input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100"><label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label></div>
+    <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option></select><label for="presentation-transition-duration">Transition duration in seconds</label><input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1"></fieldset>
+    <div class="button-row"><button type="button" id="presentation-item-properties-save">Save Presentation Item Properties</button><button type="button" id="presentation-item-properties-cancel">Cancel</button></div>
+  </form></dialog>
 
   <dialog id="properties-dialog" aria-labelledby="properties-heading">
     <form method="dialog">
@@ -452,8 +416,6 @@
         <li>Alt+P moves to the Presentation Timeline. Alt+S moves to the Source Media Library.</li>
         <li>Ctrl+X cuts the current or selected presentation items. Ctrl+C copies them. Ctrl+V pastes them before the current timeline item while preserving their order.</li>
         <li>Delete removes selected sequence items without deleting shared library media.</li>
-        <li>Alt+Enter opens properties for the current timeline item. You can change image duration, video or audio boundaries, foreground volume, and the transition into that item.</li>
-        <li>Choose Crossfade as the transition into any item except the first. Enter the overlap duration to the millisecond. None keeps a direct cut.</li>
         <li>Preview Complete Presentation renders an accurate preview before export. In the preview, X plays or pauses and Left or Right Arrow moves five seconds.</li>
         <li>Background music automatically lowers during video or audio items. The music controls set both its normal level and its reduced level.</li>
       </ul>

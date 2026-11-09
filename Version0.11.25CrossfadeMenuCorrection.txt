@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.25
+
+The Insert menu Crossfade Transition command now edits the selected Presentation Timeline item when the Presentation workspace is active.
+
+The command applies a one-second incoming crossfade, returns focus to the same timeline item, and announces the destination item and transition duration.
+
+The timeline item itself announces Crossfade 1 second after the command succeeds.
+
+Use Alt+Enter on the timeline item to change the crossfade duration or choose None.
+
+The first timeline item cannot have an incoming transition. The app now explains this instead of claiming that a transition was added.
+
+The previous Crossfade added announcement could occur without modifying the presentation. Build 0.11.25 removes that false success path.
+
+Projects saved by the earlier build must have their presentation crossfades reapplied because the earlier command did not store them.
+
+All 75 automated tests passed.

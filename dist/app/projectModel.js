@@ -2,22 +2,15 @@ export function createProject(name = "Untitled Project") { return { format: "Ope
 export function presentationDuckRanges(items = []) {
   let cursor=0;const ranges=[];
   for(const [index,item] of items.entries()){
-    const overlap=index?presentationTransitionDuration(item,items[index-1]):0;
-    cursor=Math.max(0,cursor-overlap);
+    const overlap=index?presentationTransitionDuration(item,items[index-1]):0;cursor=Math.max(0,cursor-overlap);
     const length=itemDuration(item);
     if(length>0&&["Video","Audio"].includes(item.kind))ranges.push({start:cursor,end:cursor+length});
     cursor+=length;
   }
   return ranges;
 }
-export function presentationTransitionDuration(item,previousItem=null){
-  if(!previousItem||item?.transition?.type!=="crossfade")return 0;
-  const requested=Math.max(0,Number(item.transition.duration)||0);
-  return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);
-}
-export function presentationTimelineDuration(items=[]){
-  return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);
-}
+export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||item?.transition?.type!=="crossfade")return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);}
+export function presentationTimelineDuration(items=[]){return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);
@@ -208,9 +201,7 @@ export function productionRenderItems(project) {
     segments: normalizedSegments(item),
     mediaKind: item.kind,
     trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both"),
-    audioVolume: item.audioMuted ? 0 : Math.max(0,Math.min(1,Number(item.audioVolume??1))),
-    transitionType: index&&item.transition?.type==="crossfade" ? "crossfade" : "none",
-    transitionDuration: index ? presentationTransitionDuration(item,project.items[index-1]) : 0
+    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&item.transition?.type==="crossfade"?"crossfade":"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0
   }));
 }
 export function productionRenderReplacements(project) {
