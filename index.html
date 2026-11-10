@@ -129,6 +129,7 @@
         <button type="button" id="presentation-save-as">Save Presentation Project As (Ctrl+Shift+S)</button>
         <p id="presentation-project-status">Presentation project has not been saved.</p>
 
+        <button type="button" id="presentation-create-title">Create Title Slide</button>
         <h3>Presentation Timeline</h3>
         <p>The timeline is the active presentation editing area. Press Alt+P to return here.</p>
         <label for="presentation-items">Presentation Timeline items in playback order</label>
@@ -220,6 +221,18 @@
     </div>
   </dialog>
 
+  <dialog id="presentation-title-dialog" aria-labelledby="presentation-title-heading"><form method="dialog">
+    <h2 id="presentation-title-heading">Create Title Slide</h2>
+    <label for="presentation-title-text">Title</label><input id="presentation-title-text" type="text" required>
+    <label for="presentation-title-subtitle">Subtitle (optional)</label><input id="presentation-title-subtitle" type="text">
+    <label for="presentation-title-credit">Presenter or organization (optional)</label><input id="presentation-title-credit" type="text">
+    <label for="presentation-title-background">Background color</label><input id="presentation-title-background" type="color" value="#14213d">
+    <label for="presentation-title-foreground">Text color</label><input id="presentation-title-foreground" type="color" value="#ffffff">
+    <label for="presentation-title-duration">Duration in seconds</label><input id="presentation-title-duration" type="number" min="0.1" max="3600" step="0.001" value="5">
+    <label for="presentation-title-audio">Attach audio from Source Media Library</label><select id="presentation-title-audio"><option value="">No attached audio</option></select>
+    <label><input id="presentation-title-match-audio" type="checkbox">Match slide duration to attached audio</label>
+    <div class="button-row"><button type="button" id="presentation-title-confirm">Create Title Slide</button><button type="button" id="presentation-title-cancel">Cancel</button></div>
+  </form></dialog>
   <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading"><form method="dialog">
     <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2><p id="presentation-item-properties-name"></p>
     <label for="presentation-item-label">Item label</label><input type="text" id="presentation-item-label">
@@ -227,6 +240,10 @@
     <div id="presentation-media-boundary-fields">
       <fieldset class="time-fields"><legend>Start time</legend><label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1"><label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1"><label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1"><label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1"></fieldset>
       <fieldset class="time-fields"><legend>End time</legend><label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1"><label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1"><label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1"><label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1"></fieldset>
+    </div>
+    <div id="presentation-still-audio-fields">
+      <label for="presentation-still-audio">Attached audio for this image or title slide</label><select id="presentation-still-audio"><option value="">No attached audio</option></select>
+      <label><input id="presentation-still-match-audio" type="checkbox">Match visual duration to attached audio</label>
     </div>
     <div id="presentation-item-audio-fields"><label for="presentation-item-audio-volume">Foreground audio volume, percent</label><input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100"><label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label></div>
     <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select><label for="presentation-transition-duration">Transition duration in seconds</label><input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1"></fieldset>

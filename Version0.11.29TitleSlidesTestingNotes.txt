@@ -1,0 +1,19 @@
+AccessibleMediaEditor 0.11.29 - source-only development build
+
+Implemented:
+- Create Title Slide dialog with title, optional subtitle and presenter/organization, foreground/background colors, exact duration.
+- Renders title slide to a PNG in Documents/Accessible Media Editor/Library using the installed application's native command.
+- Inserts the generated title image into the Presentation Timeline before the focused item (or at the beginning if no item is selected).
+- Attach an existing Source Media Library audio item when creating a title slide, optionally matching slide duration to audio duration.
+- Image and title-slide item properties allow attaching or removing audio and matching duration.
+- Native renderer now includes the attached audio as foreground sound for still images.
+- Music ducking timeline now includes still images with attached audio.
+- Timeline announces attached audio and duration-matching state.
+
+Limitations and testing:
+- This is source, not a Windows installer. Native Windows build and audiovisual export have not been verified.
+- Opening/closing effects are NOT implemented in this package.
+- Title content is baked into a generated PNG. Editing title text later requires recreating the slide.
+- Audio matching occurs when the audio is attached; later edits to the audio source do not automatically update slide duration.
+- Automated tests: 76 pass, 5 startup runtime tests blocked by missing jsdom in this environment.
+- .git, node_modules, target and dist excluded from ZIP.

@@ -28,6 +28,7 @@ struct ProductionItem {
     #[serde(default = "default_audio_volume")] audio_volume: f64,
     #[serde(default)] transition_type: String,
     #[serde(default)] transition_duration: f64,
+    #[serde(default)] attached_audio_source: String,
 }
 fn default_audio_volume() -> f64 { 1.0 }
 
@@ -71,6 +72,20 @@ fn write_startup_log(message: &str) {
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
         let _ = writeln!(file, "{} {}", milliseconds, message);
     }
+}
+
+#[tauri::command]
+fn save_title_slide_image(data_url: String) -> Result<String, String> {
+    let encoded=data_url.strip_prefix("data:image/png;base64,").ok_or("Expected a PNG image.")?;
+    if encoded.len()>12_000_000 {return Err("Title image is too large.".into());}
+    use base64::Engine;
+    let bytes=base64::engine::general_purpose::STANDARD.decode(encoded).map_err(|error|error.to_string())?;
+    if !bytes.starts_with(&[137,80,78,71,13,10,26,10]) {return Err("Invalid PNG data.".into());}
+    let folder=app_folder("Library").ok_or("Unable to access media library.")?;
+    let stamp=SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error|error.to_string())?.as_nanos();
+    let path=folder.join(format!("TitleSlide-{}.png",stamp));
+    fs::write(&path,bytes).map_err(|error|error.to_string())?;
+    Ok(path.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
@@ -360,7 +375,13 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
     let output_text = output.to_string_lossy().into_owned();
     if item.media_kind.eq_ignore_ascii_case("image") {
         let filter = "[0:v:0]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=nv12[vo]";
-        let mut args = vec!["-y".into(), "-loop".into(), "1".into(), "-i".into(), item.source.clone(), "-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into(), "-filter_complex".into(), filter.into(), "-map".into(), "[vo]".into(), "-map".into(), "1:a:0".into(), "-t".into(), format!("{:.6}", duration)];
+        let mut args = vec!["-y".into(), "-loop".into(), "1".into(), "-i".into(), item.source.clone()];
+        if item.attached_audio_source.is_empty() {
+            args.extend(["-f".into(), "lavfi".into(), "-i".into(), "anullsrc=r=48000:cl=stereo".into()]);
+        } else {
+            args.extend(["-i".into(),item.attached_audio_source.clone()]);
+        }
+        args.extend(["-filter_complex".into(),filter.into(),"-map".into(),"[vo]".into(),"-map".into(),"1:a:0".into(),"-t".into(),format!("{:.6}",duration)]);
         args.extend(standard_video_encoding(output_text));
         return run_ffmpeg(app, args).await;
     }
@@ -431,7 +452,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for (index, replacement) in replacements.iter().enumerate() {
         window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
-        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0 };
+        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0,attached_audio_source:String::new() };
         if let Err(error) = render_production_item(&app, &item, &path).await {
             let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
@@ -550,7 +571,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

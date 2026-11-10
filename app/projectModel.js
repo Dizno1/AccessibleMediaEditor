@@ -4,7 +4,7 @@ export function presentationDuckRanges(items = []) {
   for(const [index,item] of items.entries()){
     const overlap=index?presentationTransitionDuration(item,items[index-1]):0;cursor=Math.max(0,cursor-overlap);
     const length=itemDuration(item);
-    if(length>0&&["Video","Audio"].includes(item.kind))ranges.push({start:cursor,end:cursor+length});
+    if(length>0&&(["Video","Audio"].includes(item.kind)||Boolean(item.attachedAudio?.source)) )ranges.push({start:cursor,end:cursor+length});
     cursor+=length;
   }
   return ranges;
@@ -200,8 +200,9 @@ export function productionRenderItems(project) {
     source: item.source,
     segments: normalizedSegments(item),
     mediaKind: item.kind,
-    trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both"),
-    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0
+    trackTarget: item.kind === "Audio" ? "audio" : ["Image","Title"].includes(item.kind) ? "video" : (item.trackTarget || "both"),
+    attachedAudioSource:item.attachedAudio?.source||"",
+    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0,attachedAudioSource:item.attachedAudio?.source||""
   }));
 }
 export function productionRenderReplacements(project) {
