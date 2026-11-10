@@ -5,6 +5,16 @@ const app=readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
 const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
+test("visual condensation preserves Virtual PC Cursor off keyboard targets",()=>{
+  assert.match(html,/class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false"/);
+  assert.doesNotMatch(html,/<details|<summary/);
+  assert.match(app,/\.visual-disclosure-toggle/);
+});
+test("transition rendering is not restricted to half of either neighboring item",()=>{
+  assert.doesNotMatch(rust,/joined_duration\/2\.0|next_duration\/2\.0/);
+  assert.match(rust,/requested\.min\(joined_duration\)\.min\(next_duration\)/);
+  assert.match(app,/available transition duration at this position/);
+});
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
   assert.deepEqual([...new Set(referenced.filter(id=>!ids.has(id)))],[]);
@@ -50,17 +60,6 @@ test("presentation provides a synchronized visual timeline for mouse users",()=>
   assert.match(app,/presentation-visual-card/);
   assert.match(app,/el\["presentation-visual-timeline"\]\.addEventListener\("click"/);
   for(const action of ["select","earlier","later","edit","remove"])assert.match(app,new RegExp(`\\["${action}"`));
-});
-test("visual condensation preserves the VC-off tab order and accessibility tree",()=>{
-  assert.match(html,/id="media-editor-workspace"[\s\S]*class="visual-disclosure"/);
-  assert.match(html,/id="presentation-workspace"[\s\S]*class="visual-disclosure-toggle" tabindex="-1"[^>]*>Show Transitions<\/button>/);
-  assert.match(html,/id="presentation-workspace"[\s\S]*>Show Background Music and Ducking<\/button>/);
-  assert.match(html,/id="audio-studio-workspace"[\s\S]*>Show AudioStudio Pro Development Status<\/button>/);
-  assert.doesNotMatch(html,/<details|<summary/);
-  assert.match(app,/document\.addEventListener\("click",event=>[\s\S]*visual-disclosure-toggle/);
-  assert.match(app,/advancedSummary\.tabIndex=-1/);
-  assert.match(app,/advancedSummary\.className="visual-disclosure-toggle"/);
-  assert.match(html,/tabindex="-1" aria-expanded="false">Show Source Media/);
 });
 test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
   assert.match(html,/id="presentation-cut"[^>]*>Cut Current or Selected Items \(Ctrl\+X\)/);

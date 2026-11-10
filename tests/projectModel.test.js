@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, presentationTransitionDuration, presentationTimelineDuration, maxPresentationTransitionDuration, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("a presentation interleaves video and ducks continuous music",()=>{const p=createProject(),slides=[1,2,3].map(n=>({image:{id:`i${n}`,name:`Image ${n}`,kind:"Image",source:`C:/i${n}.jpg`},duration:5})),video=item("dogs",2),music={id:"music",name:"Music",kind:"Audio",source:"C:/music.mp3",duration:20};const next=createInterleavedPresentation(p,slides,["a","b","c"],video,["v1","v2"],music,true);assert.deepEqual(next.items.map(x=>x.kind),["Image","Video","Image","Video","Image"]);assert.equal(duration(next),19);assert.equal(productionRenderBackgroundMusic(next).duckRanges.length,2);});
@@ -232,6 +232,15 @@ test("additional presentation transitions retain overlap and render type",()=>{
     const output=productionRenderItems(project);
     assert.equal(output[1].transitionType,type);assert.equal(output[1].transitionDuration,2);
   }
+});
+test("a transition may exceed half an item when the neighboring overlap still fits",()=>{
+  const title={id:"title",name:"Title",kind:"Image",source:"C:/title.png",duration:4.702041,transition:{type:"none",duration:0}};
+  const video={...item("video",7.916),transition:{type:"wiperight",duration:3}};
+  const image={id:"image",name:"Image",kind:"Image",source:"C:/image.png",duration:5,transition:{type:"crossfade",duration:2}};
+  const items=[title,video,image];
+  assert.equal(presentationTransitionDuration(video,title),3);
+  assert.equal(maxPresentationTransitionDuration(items,1),4.702041);
+  assert.ok(Math.abs(presentationTimelineDuration(items)-12.618041)<0.000001);
 });
 
 test("attached narration is passed to production renderer and triggers music ducking",()=>{

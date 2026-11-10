@@ -1,0 +1,15 @@
+Accessible Media Editor Build 0.11.38
+
+Transition duration correction
+
+Build 0.11.37 incorrectly restricted a transition to half the duration of either neighboring presentation item. A three-second Wipe Right transition after a 4.702-second title slide was therefore rejected even though the overlap fit.
+
+Build 0.11.38 uses the actual available overlap. It also considers adjacent incoming and outgoing transitions when validating a transition. The transition duration field announces the available duration for the selected timeline position.
+
+Visual layout
+
+Visual disclosure groups reduce visual noise without removing controls from the accessibility tree or the normal keyboard order. The disclosure buttons are not additional Virtual PC Cursor off Tab stops. Focusing a control inside a visually condensed group reveals that group.
+
+Testing
+
+Open DogsFirst Test Presentation. Select the first video after the title slide. Open Presentation Item Properties. Choose Wipe Right and enter 3 seconds. Save the properties. Preview the complete presentation and confirm that the title slide overlaps the video by 3 seconds without cutting off either source.

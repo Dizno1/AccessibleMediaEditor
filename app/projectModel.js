@@ -9,7 +9,8 @@ export function presentationDuckRanges(items = []) {
   }
   return ranges;
 }
-export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||!["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item?.transition?.type))return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);}
+export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||!["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item?.transition?.type))return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem),itemDuration(item));}
+export function maxPresentationTransitionDuration(items=[],index,limit=10){if(index<=0||index>=items.length)return 0;const previous=items[index-1],current=items[index];const previousIncoming=index>1?presentationTransitionDuration(previous,items[index-2]):0;const currentOutgoing=index+1<items.length?presentationTransitionDuration(items[index+1],current):0;return Math.max(0,Math.min(limit,itemDuration(previous)-previousIncoming,itemDuration(current)-currentOutgoing));}
 export function presentationTimelineDuration(items=[]){return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
