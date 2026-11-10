@@ -1,0 +1,40 @@
+Accessible Media Editor 0.11.30
+Effects and Title Editing Testing Notes
+
+This build continues directly from 0.11.29.
+
+New presentation features
+
+The first presentation item can use Fade In from Black or Fade In from White.
+
+The final presentation item can use Fade Out to Black or Fade Out to White.
+
+Opening and closing effects do not change the presentation duration.
+
+Title slide text and named high contrast colors can be edited later from Presentation Item Properties.
+
+Title slide creation now reports its exact timeline position, duration, and attached audio status, then returns focus to the new timeline item.
+
+The first timeline item message now directs the user to Opening Effect instead of treating title creation as a transition error.
+
+Bulk transition results report when the first timeline item was skipped.
+
+The title slide duration field presents a clean minimum of 0.1 seconds instead of a long floating point value.
+
+Verification
+
+All 83 automated JavaScript tests passed, including the five startup recovery scenarios.
+
+Rust compilation must still be completed by the Windows GitHub Actions build because Rust is not installed in the packaging environment.
+
+Suggested JAWS test
+
+Open the saved Dogs presentation.
+
+Apply Fade In from Black to the opening and Fade Out to Black to the closing, each for one second.
+
+Open the title slide properties and change its title or subtitle.
+
+Confirm focus returns to the same timeline item and the updated title is announced.
+
+Preview and export. Confirm the opening, closing, attached title audio, automatic music ducking, and Show Saved File behavior.

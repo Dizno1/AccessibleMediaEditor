@@ -1,4 +1,4 @@
-export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 6, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: []}, editTarget: "both" }; }
+export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 7, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: [],openingEffect:{type:"none",duration:0},closingEffect:{type:"none",duration:0}}, editTarget: "both" }; }
 export function presentationDuckRanges(items = []) {
   let cursor=0;const ranges=[];
   for(const [index,item] of items.entries()){
@@ -202,7 +202,13 @@ export function productionRenderItems(project) {
     mediaKind: item.kind,
     trackTarget: item.kind === "Audio" ? "audio" : ["Image","Title"].includes(item.kind) ? "video" : (item.trackTarget || "both"),
     attachedAudioSource:item.attachedAudio?.source||"",
-    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0,attachedAudioSource:item.attachedAudio?.source||""
+    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),
+    transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",
+    transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0,
+    openingEffectType:index===0&&["fadeblack","fadewhite"].includes(project.openingEffect?.type)?project.openingEffect.type:"none",
+    openingEffectDuration:index===0?Math.max(0,Number(project.openingEffect?.duration)||0):0,
+    closingEffectType:index===project.items.length-1&&["fadeblack","fadewhite"].includes(project.closingEffect?.type)?project.closingEffect.type:"none",
+    closingEffectDuration:index===project.items.length-1?Math.max(0,Number(project.closingEffect?.duration)||0):0
   }));
 }
 export function productionRenderReplacements(project) {

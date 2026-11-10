@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const app=readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
@@ -67,6 +68,15 @@ test("presentation transitions can be applied to current or selected timeline it
   assert.match(html,/id="presentation-bulk-transition-remove"/);
   assert.match(app,/function applyPresentationTransition\(remove=false\)/);
   assert.match(app,/presentation-bulk-transition-apply/);
+});
+test("presentation exposes opening closing and editable title slide controls",()=>{
+  for(const id of ["presentation-opening-effect","presentation-closing-effect","presentation-effects-apply","presentation-title-property-fields","presentation-edit-title"])assert.match(html,new RegExp(`id="${id}"`));
+  assert.match(app,/function applyPresentationEffects\(\)/);
+  assert.match(app,/async function renderTitleSlideImage/);
+  assert.match(app,/Title slide \$\{title\} created at position/);
+  assert.match(rust,/opening_effect_type/);
+  assert.match(rust,/fade=t=in/);
+  assert.match(rust,/fade=t=out/);
 });
 
 test("opening item properties reads retained edit segment boundaries",()=>{

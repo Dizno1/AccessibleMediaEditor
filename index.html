@@ -143,6 +143,18 @@
           <button type="button" id="presentation-bulk-transition-apply">Apply Transition</button>
           <button type="button" id="presentation-bulk-transition-remove">Remove Transition</button>
         </fieldset>
+        <fieldset>
+          <legend>Opening and closing effects</legend>
+          <label for="presentation-opening-effect">Opening effect for the first item</label>
+          <select id="presentation-opening-effect"><option value="none">None</option><option value="fadeblack">Fade in from black</option><option value="fadewhite">Fade in from white</option></select>
+          <label for="presentation-opening-duration">Opening effect duration in seconds</label>
+          <input type="number" id="presentation-opening-duration" min="0.1" max="10" step="0.1" value="1">
+          <label for="presentation-closing-effect">Closing effect for the final item</label>
+          <select id="presentation-closing-effect"><option value="none">None</option><option value="fadeblack">Fade out to black</option><option value="fadewhite">Fade out to white</option></select>
+          <label for="presentation-closing-duration">Closing effect duration in seconds</label>
+          <input type="number" id="presentation-closing-duration" min="0.1" max="10" step="0.1" value="1">
+          <button type="button" id="presentation-effects-apply">Apply Opening and Closing Effects</button>
+        </fieldset>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
@@ -226,9 +238,9 @@
     <label for="presentation-title-text">Title</label><input id="presentation-title-text" type="text" required>
     <label for="presentation-title-subtitle">Subtitle (optional)</label><input id="presentation-title-subtitle" type="text">
     <label for="presentation-title-credit">Presenter or organization (optional)</label><input id="presentation-title-credit" type="text">
-    <label for="presentation-title-background">Background color</label><input id="presentation-title-background" type="color" value="#14213d">
-    <label for="presentation-title-foreground">Text color</label><input id="presentation-title-foreground" type="color" value="#ffffff">
-    <label for="presentation-title-duration">Duration in seconds</label><input id="presentation-title-duration" type="number" min="0.1" max="3600" step="0.001" value="5">
+    <label for="presentation-title-background">Background color</label><select id="presentation-title-background"><option value="#14213d">Dark blue</option><option value="#000000">Black</option><option value="#ffffff">White</option><option value="#e5e7eb">Light gray</option></select>
+    <label for="presentation-title-foreground">Text color</label><select id="presentation-title-foreground"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="#fff200">Yellow</option><option value="#bde0fe">Light blue</option></select>
+    <label for="presentation-title-duration">Duration in seconds, minimum 0.1</label><input id="presentation-title-duration" type="text" inputmode="decimal" value="5">
     <label for="presentation-title-audio">Attach audio from Source Media Library</label><select id="presentation-title-audio"><option value="">No attached audio</option></select>
     <label><input id="presentation-title-match-audio" type="checkbox">Match slide duration to attached audio</label>
     <div class="button-row"><button type="button" id="presentation-title-confirm">Create Title Slide</button><button type="button" id="presentation-title-cancel">Cancel</button></div>
@@ -236,6 +248,15 @@
   <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading"><form method="dialog">
     <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2><p id="presentation-item-properties-name"></p>
     <label for="presentation-item-label">Item label</label><input type="text" id="presentation-item-label">
+    <div id="presentation-title-property-fields" hidden>
+      <fieldset><legend>Title slide text and colors</legend>
+        <label for="presentation-edit-title">Title</label><input type="text" id="presentation-edit-title">
+        <label for="presentation-edit-subtitle">Subtitle</label><input type="text" id="presentation-edit-subtitle">
+        <label for="presentation-edit-credit">Presenter or organization</label><input type="text" id="presentation-edit-credit">
+        <label for="presentation-edit-background">Background color</label><select id="presentation-edit-background"><option value="#14213d">Dark blue</option><option value="#000000">Black</option><option value="#ffffff">White</option><option value="#e5e7eb">Light gray</option></select>
+        <label for="presentation-edit-foreground">Text color</label><select id="presentation-edit-foreground"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="#fff200">Yellow</option><option value="#bde0fe">Light blue</option></select>
+      </fieldset>
+    </div>
     <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds</label><input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001"></div>
     <div id="presentation-media-boundary-fields">
       <fieldset class="time-fields"><legend>Start time</legend><label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1"><label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1"><label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1"><label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1"></fieldset>

@@ -29,6 +29,10 @@ struct ProductionItem {
     #[serde(default)] transition_type: String,
     #[serde(default)] transition_duration: f64,
     #[serde(default)] attached_audio_source: String,
+    #[serde(default)] opening_effect_type: String,
+    #[serde(default)] opening_effect_duration: f64,
+    #[serde(default)] closing_effect_type: String,
+    #[serde(default)] closing_effect_duration: f64,
 }
 fn default_audio_volume() -> f64 { 1.0 }
 
@@ -428,7 +432,16 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for path in &intermediates { args.push("-i".into());args.push(path.to_string_lossy().into_owned()); }
     let mut filter_parts=Vec::new();let mut video_label="[0:v:0]".to_string();let mut audio_label="[0:a:0]".to_string();let mut joined_duration=segment_duration(&items[0].segments);
     for index in 1..items.len(){let nv=format!("[{}:v:0]",index);let na=format!("[{}:a:0]",index);let ov=format!("[v{}]",index);let oa=format!("[a{}]",index);let kind=items[index].transition_type.to_ascii_lowercase();let effect=match kind.as_str(){"crossfade"=>Some("fade"),"fadeblack"=>Some("fadeblack"),"fadewhite"=>Some("fadewhite"),"wipeleft"=>Some("wipeleft"),"wiperight"=>Some("wiperight"),_=>None};let requested=if effect.is_some(){items[index].transition_duration.max(0.0)}else{0.0};let next_duration=segment_duration(&items[index].segments);let transition=requested.min(joined_duration/2.0).min(next_duration/2.0);if transition>0.0005{let offset=(joined_duration-transition).max(0.0);filter_parts.push(format!("{}{}xfade=transition={}:duration={:.6}:offset={:.6}{}",video_label,nv,effect.unwrap_or("fade"),transition,offset,ov));filter_parts.push(format!("{}{}acrossfade=d={:.6}:c1=tri:c2=tri{}",audio_label,na,transition,oa));joined_duration+=next_duration-transition;}else{filter_parts.push(format!("{}{}concat=n=2:v=1:a=0{}",video_label,nv,ov));filter_parts.push(format!("{}{}concat=n=2:v=0:a=1{}",audio_label,na,oa));joined_duration+=next_duration;}video_label=ov;audio_label=oa;}
-    if items.len()==1{filter_parts.push("[0:v:0]null[v]".into());filter_parts.push("[0:a:0]anull[a]".into());}else{filter_parts.push(format!("{}null[v]",video_label));filter_parts.push(format!("{}anull[a]",audio_label));}
+    if items.len()==1{filter_parts.push("[0:v:0]null[vjoined]".into());filter_parts.push("[0:a:0]anull[ajoined]".into());}else{filter_parts.push(format!("{}null[vjoined]",video_label));filter_parts.push(format!("{}anull[ajoined]",audio_label));}
+    let opening=&items[0];let closing=&items[items.len()-1];
+    let opening_duration=opening.opening_effect_duration.max(0.0).min(joined_duration);
+    let closing_duration=closing.closing_effect_duration.max(0.0).min(joined_duration);
+    let opening_color=match opening.opening_effect_type.to_ascii_lowercase().as_str(){"fadeblack"=>Some("black"),"fadewhite"=>Some("white"),_=>None};
+    let closing_color=match closing.closing_effect_type.to_ascii_lowercase().as_str(){"fadeblack"=>Some("black"),"fadewhite"=>Some("white"),_=>None};
+    let mut effect_video="[vjoined]".to_string();let mut effect_audio="[ajoined]".to_string();
+    if let Some(color)=opening_color {if opening_duration>0.0005{filter_parts.push(format!("{}fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_duration,color));filter_parts.push(format!("{}afade=t=in:st=0:d={:.6}[aopen]",effect_audio,opening_duration));effect_video="[vopen]".into();effect_audio="[aopen]".into();}}
+    if let Some(color)=closing_color {if closing_duration>0.0005{let start=(joined_duration-closing_duration).max(0.0);filter_parts.push(format!("{}fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,start,closing_duration,color));filter_parts.push(format!("{}afade=t=out:st={:.6}:d={:.6}[a]",effect_audio,start,closing_duration));effect_video="[v]".into();effect_audio="[a]".into();}}
+    if effect_video!="[v]"{filter_parts.push(format!("{}null[v]",effect_video));}if effect_audio!="[a]"{filter_parts.push(format!("{}anull[a]",effect_audio));}
     args.extend(["-filter_complex".into(),filter_parts.join(";"),"-map".into(),"[v]".into(),"-map".into(),"[a]".into()]);
     args.extend(standard_video_encoding(base_text.clone()));
     let result = run_ffmpeg(&app, args).await;
@@ -452,7 +465,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for (index, replacement) in replacements.iter().enumerate() {
         window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
-        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0,attached_audio_source:String::new() };
+        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0,attached_audio_source:String::new(),opening_effect_type:"none".into(),opening_effect_duration:0.0,closing_effect_type:"none".into(),closing_effect_duration:0.0 };
         if let Err(error) = render_production_item(&app, &item, &path).await {
             let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
@@ -546,7 +559,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.28 executable started.");
+    write_startup_log("Build 0.11.30 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

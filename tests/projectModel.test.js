@@ -140,8 +140,8 @@ test("production rendering receives every timeline item in order",()=>{
   let project=addItem(createProject(),{...item("primary",10),workingSource:"C:/working-primary.mp4",editSegments:[{start:1,end:4}],trackTarget:"both"});
   project=addItem(project,{...item("inserted",8),kind:"Audio",workingSource:"C:/inserted.m4a",editSegments:[{start:2,end:6}],trackTarget:"audio"});
   assert.deepEqual(productionRenderItems(project),[
-    {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:""},
-    {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:""}
+    {source:"C:/primary.mp4",segments:[{start:1,end:4}],mediaKind:"Video",trackTarget:"both",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:"",openingEffectType:"none",openingEffectDuration:0,closingEffectType:"none",closingEffectDuration:0},
+    {source:"C:/inserted.mp4",segments:[{start:2,end:6}],mediaKind:"Audio",trackTarget:"audio",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:"",openingEffectType:"none",openingEffectDuration:0,closingEffectType:"none",closingEffectDuration:0}
   ]);
 });
 test("audio replacement preserves production duration and stores an exact timeline range",()=>{
@@ -182,7 +182,7 @@ test("track replacements are passed to FFmpeg in project order",()=>{
 test("a still image renders as a silent video item for its exact duration",()=>{
   let project=createProject("Images");
   project=addItem(project,{id:"photo",name:"photo.jpg",label:"Photo",kind:"Image",source:"C:/photo.jpg",duration:5.25,editSegments:[{start:0,end:5.25}],trackTarget:"video"});
-  assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:""}]);
+  assert.deepEqual(productionRenderItems(project),[{source:"C:/photo.jpg",segments:[{start:0,end:5.25}],mediaKind:"Image",trackTarget:"video",audioVolume:1,transitionType:"none",transitionDuration:0,attachedAudioSource:"",openingEffectType:"none",openingEffectDuration:0,closingEffectType:"none",closingEffectDuration:0}]);
   assert.equal(duration(project),5.25);
 });
 
@@ -239,4 +239,10 @@ test("attached narration is passed to production renderer and triggers music duc
   const project={...createProject(),items:[image]};
   assert.equal(productionRenderItems(project)[0].attachedAudioSource,"C:/voice.m4a");
   assert.deepEqual(presentationDuckRanges([image]),[{start:0,end:7}]);
+});
+test("opening and closing effects are assigned only to presentation boundaries",()=>{
+  const project=createProject();project.items=[{...item("first",5)},{...item("last",6)}];project.openingEffect={type:"fadewhite",duration:1.5};project.closingEffect={type:"fadeblack",duration:2};
+  const output=productionRenderItems(project);
+  assert.equal(output[0].openingEffectType,"fadewhite");assert.equal(output[0].openingEffectDuration,1.5);assert.equal(output[0].closingEffectType,"none");
+  assert.equal(output[1].openingEffectType,"none");assert.equal(output[1].closingEffectType,"fadeblack");assert.equal(output[1].closingEffectDuration,2);
 });
