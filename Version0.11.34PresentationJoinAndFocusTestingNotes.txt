@@ -1,0 +1,31 @@
+Accessible Media Editor Build 0.11.34 Testing Notes
+
+This build addresses the presentation-preview failure that occurred after all 11 individual items rendered successfully.
+
+Before joining items, the renderer now normalizes every intermediate video to 1280 by 720, 30 frames per second, YUV 4:2:0 pixel format, a common time base, and timestamps starting at zero.
+
+Every intermediate audio stream is normalized to 48 kilohertz stereo floating-point audio with timestamps starting at zero.
+
+Transitions, opening effects, and closing effects are applied only after that normalization.
+
+If joining still fails, StartupLog now identifies the joining stage and preserves a longer section of the FFmpeg diagnostic output.
+
+Focus correction
+
+After Apply Opening and Closing Effects is activated, focus returns to the first item in the Presentation Timeline. In the current test project, that is Title Slide - Dogs At Play.
+
+Saving Presentation Item Properties continues to return focus to the presentation item whose properties were saved.
+
+Suggested test
+
+Open DogsFirst Test Presentation.
+
+Apply Fade in from black and Fade out to white.
+
+Confirm that focus returns to Title Slide - Dogs At Play.
+
+Open its properties, confirm that 00000134.mp3 remains attached and that the duration is 4 seconds, 702 milliseconds, then save.
+
+Confirm that focus returns to the title slide.
+
+Activate Preview Complete Presentation and confirm that rendering proceeds through all 11 items, joins them, applies background music, and opens the preview player.

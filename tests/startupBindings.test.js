@@ -78,6 +78,17 @@ test("presentation exposes opening closing and editable title slide controls",()
   assert.match(rust,/fade=t=in/);
   assert.match(rust,/fade=t=out/);
 });
+test("opening and closing effects return focus to the first timeline item",()=>{
+  const effects=app.slice(app.indexOf("function applyPresentationEffects("),app.indexOf("function addPresentationSource("));
+  assert.match(effects,/const first=next\.presentation\.items\[0\]/);
+  assert.match(effects,/el\["presentation-items"\]\.value=first\.id/);
+  assert.match(effects,/el\["presentation-items"\]\.focus\(\)/);
+});
+test("presentation join normalizes every intermediate stream before transitions",()=>{
+  assert.match(rust,/fps=30,scale=1280:720,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS\[vin/);
+  assert.match(rust,/aresample=48000,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,asetpts=PTS-STARTPTS\[ain/);
+  assert.match(rust,/Joining rendered presentation items failed/);
+});
 test("decimal time entry never exposes floating point spin box limits",()=>{
   for(const id of ["presentation-bulk-transition-duration","presentation-opening-duration","presentation-closing-duration","presentation-slide-duration","presentation-title-duration","presentation-item-duration","presentation-transition-duration","item-duration","text-duration"]){
     assert.match(html,new RegExp(`<input[^>]*type="text"[^>]*id="${id}"|<input[^>]*id="${id}"[^>]*type="text"`));

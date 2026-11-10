@@ -337,7 +337,7 @@ async fn run_ffmpeg(app: &tauri::AppHandle, args: Vec<String>) -> Result<(), Str
     let output = app.shell().sidecar("ffmpeg").map_err(|error| error.to_string())?.args(args).output().await.map_err(|error| error.to_string())?;
     if output.status.success() { Ok(()) } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(stderr.lines().filter(|line| !line.trim().is_empty()).rev().take(12).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" "))
+        Err(stderr.lines().filter(|line| !line.trim().is_empty()).rev().take(40).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" "))
     }
 }
 
@@ -471,8 +471,13 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     let base_text = base_path.to_string_lossy().into_owned();
     let mut args = vec!["-y".into()];
     for path in &intermediates { args.push("-i".into());args.push(path.to_string_lossy().into_owned()); }
-    let mut filter_parts=Vec::new();let mut video_label="[0:v:0]".to_string();let mut audio_label="[0:a:0]".to_string();let mut joined_duration=segment_duration(&items[0].segments);
-    for index in 1..items.len(){let nv=format!("[{}:v:0]",index);let na=format!("[{}:a:0]",index);let ov=format!("[v{}]",index);let oa=format!("[a{}]",index);let kind=items[index].transition_type.to_ascii_lowercase();let effect=match kind.as_str(){"crossfade"=>Some("fade"),"fadeblack"=>Some("fadeblack"),"fadewhite"=>Some("fadewhite"),"wipeleft"=>Some("wipeleft"),"wiperight"=>Some("wiperight"),_=>None};let requested=if effect.is_some(){items[index].transition_duration.max(0.0)}else{0.0};let next_duration=segment_duration(&items[index].segments);let transition=requested.min(joined_duration/2.0).min(next_duration/2.0);if transition>0.0005{let offset=(joined_duration-transition).max(0.0);filter_parts.push(format!("{}{}xfade=transition={}:duration={:.6}:offset={:.6}{}",video_label,nv,effect.unwrap_or("fade"),transition,offset,ov));filter_parts.push(format!("{}{}acrossfade=d={:.6}:c1=tri:c2=tri{}",audio_label,na,transition,oa));joined_duration+=next_duration-transition;}else{filter_parts.push(format!("{}{}concat=n=2:v=1:a=0{}",video_label,nv,ov));filter_parts.push(format!("{}{}concat=n=2:v=0:a=1{}",audio_label,na,oa));joined_duration+=next_duration;}video_label=ov;audio_label=oa;}
+    let mut filter_parts=Vec::new();
+    for index in 0..items.len(){
+        filter_parts.push(format!("[{}:v:0]fps=30,scale=1280:720,format=yuv420p,settb=AVTB,setpts=PTS-STARTPTS[vin{}]",index,index));
+        filter_parts.push(format!("[{}:a:0]aresample=48000,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,asetpts=PTS-STARTPTS[ain{}]",index,index));
+    }
+    let mut video_label="[vin0]".to_string();let mut audio_label="[ain0]".to_string();let mut joined_duration=segment_duration(&items[0].segments);
+    for index in 1..items.len(){let nv=format!("[vin{}]",index);let na=format!("[ain{}]",index);let ov=format!("[v{}]",index);let oa=format!("[a{}]",index);let kind=items[index].transition_type.to_ascii_lowercase();let effect=match kind.as_str(){"crossfade"=>Some("fade"),"fadeblack"=>Some("fadeblack"),"fadewhite"=>Some("fadewhite"),"wipeleft"=>Some("wipeleft"),"wiperight"=>Some("wiperight"),_=>None};let requested=if effect.is_some(){items[index].transition_duration.max(0.0)}else{0.0};let next_duration=segment_duration(&items[index].segments);let transition=requested.min(joined_duration/2.0).min(next_duration/2.0);if transition>0.0005{let offset=(joined_duration-transition).max(0.0);filter_parts.push(format!("{}{}xfade=transition={}:duration={:.6}:offset={:.6}{}",video_label,nv,effect.unwrap_or("fade"),transition,offset,ov));filter_parts.push(format!("{}{}acrossfade=d={:.6}:c1=tri:c2=tri{}",audio_label,na,transition,oa));joined_duration+=next_duration-transition;}else{filter_parts.push(format!("{}{}concat=n=2:v=1:a=0{}",video_label,nv,ov));filter_parts.push(format!("{}{}concat=n=2:v=0:a=1{}",audio_label,na,oa));joined_duration+=next_duration;}video_label=ov;audio_label=oa;}
     if items.len()==1{filter_parts.push("[0:v:0]null[vjoined]".into());filter_parts.push("[0:a:0]anull[ajoined]".into());}else{filter_parts.push(format!("{}null[vjoined]",video_label));filter_parts.push(format!("{}anull[ajoined]",audio_label));}
     let opening=&items[0];let closing=&items[items.len()-1];
     let opening_duration=opening.opening_effect_duration.max(0.0).min(joined_duration);
@@ -487,7 +492,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     args.extend(standard_video_encoding(base_text.clone()));
     let result = run_ffmpeg(&app, args).await;
     for path in &intermediates { let _ = fs::remove_file(path); }
-    result?;
+    if let Err(error)=result {let message=format!("Joining rendered presentation items failed. {}",error);write_startup_log(&message);return Err(message);}
     let total_duration: f64 = joined_duration;
     let mut active_base=base_path.clone();
     if let Some(music)=background_music {
@@ -600,7 +605,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.33 executable started.");
+    write_startup_log("Build 0.11.34 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

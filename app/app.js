@@ -751,7 +751,7 @@ function applyPresentationEffects(){
   if(openingType!=="none"&&(!Number.isFinite(openingDuration)||openingDuration<.1||openingDuration>10))return announce("Opening effect duration must be between 0.1 and 10 seconds.",true);
   if(closingType!=="none"&&(!Number.isFinite(closingDuration)||closingDuration<.1||closingDuration>10))return announce("Closing effect duration must be between 0.1 and 10 seconds.",true);
   const next=structuredClone(project);next.presentation||={items:[]};next.presentation.openingEffect={type:openingType,duration:openingDuration};next.presentation.closingEffect={type:closingType,duration:closingDuration};next.dirty=true;
-  modifyPresentation(next,el["presentation-items"].value,`Opening effect ${openingType==="none"?"none":el["presentation-opening-effect"].selectedOptions[0].text}. Closing effect ${closingType==="none"?"none":el["presentation-closing-effect"].selectedOptions[0].text}.`);el["presentation-effects-apply"].focus();
+  const first=next.presentation.items[0];modifyPresentation(next,first?.id||null,`Opening effect ${openingType==="none"?"none":el["presentation-opening-effect"].selectedOptions[0].text}. Closing effect ${closingType==="none"?"none":el["presentation-closing-effect"].selectedOptions[0].text}.`);if(first){el["presentation-items"].value=first.id;el["presentation-items"].focus();}
 }
 function addPresentationSource(position){
   const source=sharedPresentationSources().find(item=>item.id===el["presentation-sources"].value);
@@ -1263,7 +1263,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.33. Matched attached audio supplies the visual duration automatically, including repair of missing persistent-library duration metadata.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.34. Presentation streams are normalized before transitions are joined, and opening and closing effect changes return focus to the first timeline item.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
