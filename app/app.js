@@ -665,12 +665,25 @@ function updateAttachedAudioDurationControl(durationField,audioField,matchField)
   el[durationField].setAttribute("aria-disabled",String(matched));
 }
 function presentationTransitionName(type){return ({crossfade:"Crossfade",fadeblack:"Fade through black",fadewhite:"Fade through white",wipeleft:"Wipe left",wiperight:"Wipe right"})[type]||"Transition";}
+function renderPresentationVisualTimeline(items){
+  const current=el["presentation-items"].value;
+  el["presentation-visual-timeline"].replaceChildren(...items.map((item,index)=>{
+    const card=document.createElement("article");card.className=`presentation-visual-card${item.id===current?" current":""}`;card.dataset.itemId=item.id;
+    const heading=document.createElement("h4");heading.textContent=`${index+1}. ${item.label||item.name}`;
+    const kind=document.createElement("p");kind.textContent=`${item.kind}, ${readableTime(itemDuration(item))}`;
+    const transition=document.createElement("p");transition.textContent=index&&item.transition?.type&&item.transition.type!=="none"?`${presentationTransitionName(item.transition.type)}, ${readableTime(presentationTransitionDuration(item,items[index-1]))}`:index?"Direct cut":"First item";
+    const actions=document.createElement("div");actions.className="presentation-card-actions";
+    for(const [action,label] of [["select","Select"],["earlier","Earlier"],["later","Later"],["edit","Edit"],["remove","Remove"]]){const button=document.createElement("button");button.type="button";button.tabIndex=-1;button.dataset.action=action;button.textContent=label;button.disabled=action==="earlier"&&index===0||action==="later"&&index===items.length-1;actions.append(button);}
+    card.append(heading,kind,transition,actions);return card;
+  }));
+}
 function renderPresentation(){
   const items=presentationItems(),sources=sharedPresentationSources();
   const oldSelection=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value)),oldSource=el["presentation-sources"].value;
   el["presentation-items"].replaceChildren(...items.map((item,index)=>{const transition=index&&item.transition?.type!=="none"&&item.transition?.type?` ${presentationTransitionName(item.transition.type)} ${readableTime(presentationTransitionDuration(item,items[index-1]))}.`:"";const audio=item.attachedAudio?.source?` Attached audio ${item.attachedAudio.name||"present"}. ${item.matchAudioDuration?"Duration matched to audio.":""}`:["Video","Audio"].includes(item.kind)?` Foreground audio ${item.audioMuted?"muted":`${Math.round((item.audioVolume??1)*100)} percent`}.`:"";return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${transition}${audio}`,item.id);}));
   el["presentation-sources"].replaceChildren(...sources.map(item=>new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.`,item.id)));
   for(const option of el["presentation-items"].options)option.selected=oldSelection.has(option.value);
+  renderPresentationVisualTimeline(items);
   const musicSources=presentationAudioSources();
   el["presentation-music-source"].replaceChildren(new Option("No background music",""),...musicSources.map(item=>new Option(item.label||item.name,item.source)));
   el["presentation-music-source"].value=project.presentation?.backgroundMusic?.source||"";
@@ -1263,7 +1276,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.34. Presentation streams are normalized before transitions are joined, and opening and closing effect changes return focus to the first timeline item.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.35. Presentation includes a synchronized visual timeline for mouse users while retaining the screen-reader-first timeline.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1300,7 +1313,16 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
   const target=event.key==="Home"?workspaceOrder[0]:event.key==="End"?workspaceOrder[workspaceOrder.length-1]:workspaceOrder[(index+(event.key==="ArrowRight"?1:-1)+workspaceOrder.length)%workspaceOrder.length];
   switchWorkspace(1,target);el[workspaceTabs[target]].focus();
 }));
-el["presentation-items"].addEventListener("change",loadPresentationDescriptions);
+el["presentation-items"].addEventListener("change",()=>{loadPresentationDescriptions();renderPresentationVisualTimeline(presentationItems());});
+el["presentation-visual-timeline"].addEventListener("click",event=>{
+  const button=event.target.closest("button[data-action]"),card=event.target.closest("[data-item-id]");if(!button||!card)return;
+  for(const option of el["presentation-items"].options)option.selected=option.value===card.dataset.itemId;
+  loadPresentationDescriptions();renderPresentationVisualTimeline(presentationItems());
+  if(button.dataset.action==="earlier")movePresentation(-1);
+  else if(button.dataset.action==="later")movePresentation(1);
+  else if(button.dataset.action==="edit")showPresentationItemProperties();
+  else if(button.dataset.action==="remove")removePresentation();
+});
 el["presentation-new"].addEventListener("click",newPresentation);
 el["presentation-open"].addEventListener("click",openProject);
 el["presentation-save"].addEventListener("click",()=>saveProject(false));

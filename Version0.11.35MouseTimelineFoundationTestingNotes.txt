@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.35
+
+This build begins the shared mouse, keyboard, and screen-reader Presentation experience.
+
+The existing Presentation Timeline list remains the authoritative accessible editing interface.
+
+A synchronized visual timeline now appears beneath it for mouse users. Each visual card shows its playback position, item name, media type, duration, and incoming transition. The current card has a stronger visible border.
+
+Mouse controls on each card provide Select, Earlier, Later, Edit, and Remove. They operate on the same project items and use the same editing functions as the accessible timeline controls.
+
+The visual cards are intentionally removed from the accessibility tree so screen-reader users do not encounter a duplicated timeline or duplicated controls. Every card action already has an accessible equivalent in the Presentation Timeline and its adjacent controls.
+
+AudioStudio Pro is not activated prematurely in this build. The roadmap now requires shared project state and synchronized mouse, keyboard, and screen-reader representations before audio handoff controls are introduced.
+
+Test with a mouse by selecting several visual cards, moving one earlier and later, opening its properties, and removing an expendable item. Confirm that the accessible Presentation Timeline reflects every change.
+
+Test with JAWS and NVDA and confirm that the visual cards create no additional reading-order stops or repeated announcements.

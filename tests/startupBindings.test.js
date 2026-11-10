@@ -44,6 +44,13 @@ test("presentation builder places the active timeline before the source library"
   assert.match(html,/id="presentation-go-timeline"/);
   assert.match(app,/el\["presentation-go-timeline"\]\.addEventListener/);
 });
+test("presentation provides a synchronized visual timeline for mouse users",()=>{
+  assert.match(html,/id="presentation-visual-timeline"[^>]*aria-hidden="true"/);
+  assert.match(app,/function renderPresentationVisualTimeline\(items\)/);
+  assert.match(app,/presentation-visual-card/);
+  assert.match(app,/el\["presentation-visual-timeline"\]\.addEventListener\("click"/);
+  for(const action of ["select","earlier","later","edit","remove"])assert.match(app,new RegExp(`\\["${action}"`));
+});
 test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
   assert.match(html,/id="presentation-cut"[^>]*>Cut Current or Selected Items \(Ctrl\+X\)/);
   assert.match(html,/id="presentation-copy"[^>]*>Copy Current or Selected Items \(Ctrl\+C\)/);

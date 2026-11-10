@@ -644,6 +644,17 @@ AudioStudio Pro will provide separate logical tracks for dialogue, narration, au
 
 The accessible track model must never require interpreting a visual waveform or mixer. Waveforms may supplement the interface for sighted users, but every operation must remain available through structured lists, named controls, exact fields, menus, and keyboard commands.
 
+### Shared Mouse, Keyboard, and Screen Reader Interaction
+
+Media Editor, Presentation, and AudioStudio Pro must expose one project state through equivalent visual and structured controls.
+
+- Mouse users receive visible item cards, current-item highlighting, direct editing controls, preview, and drag or button-based reordering.
+- Keyboard and screen-reader users retain the authoritative structured timeline lists, exact controls, menus, and shortcuts.
+- Selecting or changing an item in either representation immediately updates the other representation.
+- A mouse-only operation is not complete until an equivalent keyboard and screen-reader operation exists.
+- Visual timeline controls must not duplicate announcements or add unnecessary stops to the screen-reader reading order.
+- Audio created or edited in AudioStudio Pro remains linked to its Presentation or Media Editor destination, including its role, timing, duration matching, gain, ducking behavior, and nondestructive source information.
+
 ### Echo, Delay, Reverb, and Audio Effects
 
 - Echo and delay with exact delay time, feedback, wet level, dry level, and stereo placement.
