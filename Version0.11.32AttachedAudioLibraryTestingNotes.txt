@@ -1,0 +1,25 @@
+Accessible Media Editor Build 0.11.32 Testing Notes
+
+This build corrects inconsistent audio availability in the Presentation workspace.
+
+Background Music, Create Title Slide, and Presentation Item Properties now use the same complete, deduplicated collection of audio from both the persistent media library and the currently opened project.
+
+An audio file no longer has to appear in the saved project's Source Media Library before it can be attached to a title slide or still image.
+
+When an attachment is saved, the presentation item continues to store the audio source path, display name, and duration. Reopening the project should restore the selected attachment by matching that saved source path against the complete audio library.
+
+Suggested test
+
+Open DogsFirst Test Presentation.
+
+Open the Dogs At Play title slide properties.
+
+Open Attached audio for this image or title slide.
+
+Confirm that both 01 Symphony No. 9 Scherzo and 00000134.mp3 are available.
+
+Select 00000134.mp3, check Match visual duration to attached audio, and save the properties.
+
+Confirm that the timeline announces the attached MP3 and its matched duration.
+
+Save and close the project, reopen it, and confirm that the MP3 remains attached.

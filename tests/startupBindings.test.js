@@ -86,6 +86,14 @@ test("decimal time entry never exposes floating point spin box limits",()=>{
   assert.match(app,/setAttribute\("aria-valuetext",readableTime\(state\.cursor\)\)/);
 });
 
+test("attached audio uses the complete persistent and project audio collection",()=>{
+  assert.match(app,/function presentationAudioSources\(\)/);
+  assert.match(app,/return \[\.\.\.libraryItems,\.\.\.sources\]\.filter/);
+  assert.match(app,/function showCreateTitleSlide\(\)[\s\S]*const sources=presentationAudioSources\(\)/);
+  assert.match(app,/const audioSources=presentationAudioSources\(\)/);
+  assert.match(app,/const audio=presentationAudioSources\(\)\.find\(source=>source\.id===el\["presentation-still-audio"\]\.value\)/);
+});
+
 test("opening item properties reads retained edit segment boundaries",()=>{
   assert.match(app,/function showPresentationItemProperties\(\).*segments=normalizedSegments\(item\),singleSegment=segments\.length===1/);
   assert.match(app,/writeTime\("presentation-start",singleSegment\?segments\[0\]\.start:0\)/);
