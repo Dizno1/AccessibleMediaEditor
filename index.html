@@ -45,6 +45,8 @@
     <div class="workspace">
       <section class="editor-section" id="persistent-library-section" aria-labelledby="persistent-library-heading">
         <h2 id="persistent-library-heading">Persistent Media Library</h2>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Saved Media Library</button>
         <p id="persistent-library-status">Loading saved media library.</p>
         <label for="persistent-library-items">Saved videos, audio, images, and clips</label>
         <select id="persistent-library-items" size="7"><option disabled>Library is empty</option></select>
@@ -53,6 +55,7 @@
           <button type="button" id="persistent-library-remove" disabled>Remove Selected Item from Library</button>
         </div>
         <p>Library entries remain available after closing or updating the application. Open Project separately to resume a saved project.</p>
+        </div>
       </section>
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
@@ -69,6 +72,8 @@
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
           <button type="button" id="remove-item-button" disabled>Remove Item (Delete)</button>
         </div>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Source Media</button>
         <label for="source-items">Source media</label>
         <select id="source-items" size="7">
           <option disabled>No source media</option>
@@ -81,18 +86,24 @@
           <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source (Delete)</button>
         </div>
+        </div>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Track Replacements</button>
         <label for="replacement-items">Track replacements</label>
         <select id="replacement-items" size="5">
           <option disabled>No track replacements</option>
         </select>
         <p id="selected-replacement-summary">No track replacement selected.</p>
         <button type="button" id="remove-replacement-button" disabled>Remove Track Replacement</button>
+        </div>
       </section>
 
       <div id="media-editor-sections"></div>
 
       <section class="editor-section image-library-panel" id="image-library-section" aria-labelledby="image-library-heading" tabindex="-1">
         <h2 id="image-library-heading">Project Image Library</h2>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Reusable Project Images</button>
         <p id="image-library-summary">No project images. Open Media to add images without changing Primary Production.</p>
         <label for="image-items">Reusable project images</label>
         <select id="image-items" size="8"><option disabled>No project images</option></select>
@@ -103,6 +114,7 @@
           <button type="button" id="move-image-earlier-button" disabled>Move Image Earlier</button>
           <button type="button" id="move-image-later-button" disabled>Move Image Later</button>
           <button type="button" id="remove-image-button" disabled>Remove Image from Project (Delete)</button>
+        </div>
         </div>
       </section>
 
@@ -131,10 +143,12 @@
 
         <button type="button" id="presentation-create-title">Create Title Slide</button>
         <h3>Presentation Timeline</h3>
-        <p>The timeline is the active presentation editing area. Press Alt+P to return here.</p>
+        <p class="sr-only">The timeline is the active presentation editing area. Press Alt+P to return here.</p>
         <label for="presentation-items">Presentation Timeline items in playback order</label>
         <select id="presentation-items" size="10" multiple></select>
         <div id="presentation-visual-timeline" class="presentation-visual-timeline" aria-hidden="true"></div>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Transitions</button>
         <fieldset>
           <legend>Apply transition to current or selected timeline items</legend>
           <label for="presentation-bulk-transition-type">Transition type</label>
@@ -144,6 +158,9 @@
           <button type="button" id="presentation-bulk-transition-apply">Apply Transition</button>
           <button type="button" id="presentation-bulk-transition-remove">Remove Transition</button>
         </fieldset>
+        </div>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Opening and Closing Effects</button>
         <fieldset>
           <legend>Opening and closing effects</legend>
           <label for="presentation-opening-effect">Opening effect for the first item</label>
@@ -156,6 +173,7 @@
           <input type="text" inputmode="decimal" id="presentation-closing-duration" value="1">
           <button type="button" id="presentation-effects-apply">Apply Opening and Closing Effects</button>
         </fieldset>
+        </div>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
@@ -168,8 +186,9 @@
         </div>
         <p id="presentation-sequence-summary">No production items.</p>
 
-        <h3>Source Media Library</h3>
-        <p>Reusable source media is not part of the presentation until you add it to the timeline. Press Alt+S to come here.</p>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Source Media Library</button>
+        <p class="sr-only">Reusable source media is not part of the presentation until you add it to the timeline. Press Alt+S to come here.</p>
         <label for="presentation-sources">Images, video clips, and audio in the shared source library</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
@@ -178,14 +197,19 @@
           <button type="button" id="presentation-append">Add to End of Presentation</button>
           <button type="button" id="presentation-go-timeline">Return to Presentation Timeline (Alt+P)</button>
         </div>
+        </div>
 
-        <h3>Create Slides from Images</h3>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Slideshow Creation</button>
         <label for="presentation-slide-duration">Default image duration in seconds, from 0.1 through 3600</label>
         <input id="presentation-slide-duration" type="text" inputmode="decimal" value="5">
         <button type="button" id="presentation-create-slideshow">Add All Images as Slides</button>
+        </div>
       </section>
       <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
         <h2 id="presentation-music-heading">Presentation Background Music Track</h2>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Background Music and Ducking</button>
         <label for="presentation-music-source">Background music audio source</label>
         <select id="presentation-music-source"><option value="">No background music</option></select>
         <label for="presentation-music-volume">Music volume, percent</label>
@@ -195,11 +219,14 @@
         <button type="button" id="presentation-music-apply">Set Background Music</button>
         <button type="button" id="presentation-music-remove">Remove Background Music</button>
         <p id="presentation-music-status">No background music selected.</p>
+        </div>
         <button type="button" id="presentation-preview">Preview Complete Presentation</button>
         <button type="button" id="presentation-export">Export Presentation with Music as MP4</button>
       </section>
       <section class="editor-section" id="presentation-accessibility-section" tabindex="-1" aria-labelledby="presentation-accessibility-heading">
         <h2 id="presentation-accessibility-heading">Item Accessibility</h2>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Descriptions and Future Audio Description</button>
         <p>Descriptions are saved in the project. They are not automatically embedded as accessible tracks in exported MP4 files.</p>
         <label for="presentation-alt">Visual description for identifying this item</label>
         <textarea id="presentation-alt" rows="3"></textarea>
@@ -208,18 +235,22 @@
         <textarea id="presentation-dialogue" rows="4"></textarea>
         <label><input id="presentation-dialogue-ad" type="checkbox"> Use the transcript or dialogue as context for future audio-description narration</label>
         <button type="button" id="presentation-save-accessibility">Save Item Descriptions</button>
+        </div>
       </section>
     </div>
 
     <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
       <section class="editor-section" aria-labelledby="audio-studio-heading">
         <h2 id="audio-studio-heading" tabindex="-1">AudioStudio Pro</h2>
+        <div class="visual-disclosure">
+        <button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show AudioStudio Pro Development Status</button>
         <p>Professional audio recording and editing is an optional workspace. Opening an audio file does not enter this workspace automatically.</p>
         <p>Recording, advanced processing, and Send to Media Editor will be added after the shared media engine is complete.</p>
         <div class="button-row">
           <button type="button" disabled>Record Professional Narration</button>
           <button type="button" disabled>Import Audio for Professional Editing</button>
           <button type="button" disabled>Send to Media Editor</button>
+        </div>
         </div>
       </section>
     </div>

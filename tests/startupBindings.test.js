@@ -51,6 +51,17 @@ test("presentation provides a synchronized visual timeline for mouse users",()=>
   assert.match(app,/el\["presentation-visual-timeline"\]\.addEventListener\("click"/);
   for(const action of ["select","earlier","later","edit","remove"])assert.match(app,new RegExp(`\\["${action}"`));
 });
+test("visual condensation preserves the VC-off tab order and accessibility tree",()=>{
+  assert.match(html,/id="media-editor-workspace"[\s\S]*class="visual-disclosure"/);
+  assert.match(html,/id="presentation-workspace"[\s\S]*class="visual-disclosure-toggle" tabindex="-1"[^>]*>Show Transitions<\/button>/);
+  assert.match(html,/id="presentation-workspace"[\s\S]*>Show Background Music and Ducking<\/button>/);
+  assert.match(html,/id="audio-studio-workspace"[\s\S]*>Show AudioStudio Pro Development Status<\/button>/);
+  assert.doesNotMatch(html,/<details|<summary/);
+  assert.match(app,/document\.addEventListener\("click",event=>[\s\S]*visual-disclosure-toggle/);
+  assert.match(app,/advancedSummary\.tabIndex=-1/);
+  assert.match(app,/advancedSummary\.className="visual-disclosure-toggle"/);
+  assert.match(html,/tabindex="-1" aria-expanded="false">Show Source Media/);
+});
 test("presentation sequence exposes Cut Copy and Paste with keyboard routing",()=>{
   assert.match(html,/id="presentation-cut"[^>]*>Cut Current or Selected Items \(Ctrl\+X\)/);
   assert.match(html,/id="presentation-copy"[^>]*>Copy Current or Selected Items \(Ctrl\+C\)/);

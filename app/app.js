@@ -406,7 +406,7 @@ function createEditor(item,type){
   const replacementAudio=new Audio();replacementAudio.preload="auto";
   const sliderLabel=document.createElement("label");const slider=document.createElement("input");const sliderId=`media-playhead-${++editorCounter}`;
   sliderLabel.htmlFor=sliderId;slider.id=sliderId;slider.type="range";slider.min="0";slider.max="0";slider.step="0.001";slider.value="0";slider.setAttribute("aria-valuetext","0 seconds");section.append(sliderLabel,slider);
-  const position=document.createElement("p"),context=document.createElement("p");section.append(position,context);
+  const position=document.createElement("p"),context=document.createElement("p");context.className="sr-only";section.append(position,context);
   const transport=document.createElement("div");transport.className="button-row";
   const play=document.createElement("button"),audition=document.createElement("button");
   play.type=audition.type="button";play.textContent="Play or Pause (X)";audition.textContent="Audition Selection or From Playhead (Space)";transport.append(play,audition);section.append(transport);
@@ -415,15 +415,16 @@ function createEditor(item,type){
   [inButton,outButton,commitButton,goto,properties,split].forEach(button=>button.type="button");
   inButton.textContent="Set Left Bracket";outButton.textContent="Set Right Bracket";commitButton.textContent="Apply Bracketed Edit (Ctrl+Delete)";goto.textContent="Go to Time (Ctrl+G)";properties.textContent="Properties (Alt+Enter)";split.textContent="Split at Playhead (Ctrl+K)";
   edit.append(inButton,outButton,commitButton,goto,properties,split);section.append(edit);
+  const advanced=document.createElement("div"),advancedSummary=document.createElement("button");advanced.className="visual-disclosure";advancedSummary.type="button";advancedSummary.tabIndex=-1;advancedSummary.className="visual-disclosure-toggle";advancedSummary.setAttribute("aria-expanded","false");advancedSummary.textContent="Show Selection, Source Clip, and Track Controls";advanced.append(advancedSummary);
   const workflow=document.createElement("div");workflow.className="button-row";
   const insertSelection=document.createElement("button"),appendSelection=document.createElement("button"),saveClip=document.createElement("button");
   [insertSelection,appendSelection].forEach(button=>button.type="button");
   insertSelection.textContent="Copy Selection (Ctrl+C)";appendSelection.textContent="Remove Source from Project";
-  saveClip.type="button";saveClip.textContent="Save Selection as Source Clip";workflow.append(insertSelection,saveClip,appendSelection);section.append(workflow);
+  saveClip.type="button";saveClip.textContent="Save Selection as Source Clip";workflow.append(insertSelection,saveClip,appendSelection);advanced.append(workflow);
   const fieldset=document.createElement("fieldset"),legend=document.createElement("legend"),targets=document.createElement("div");legend.textContent="Track target";targets.className="button-row";
   const both=document.createElement("button"),videoOnly=document.createElement("button"),audioOnly=document.createElement("button");
   [both,videoOnly,audioOnly].forEach(button=>button.type="button");both.textContent="Both Audio and Video (B)";videoOnly.textContent="Video Only (V)";audioOnly.textContent="Audio Only (A)";
-  targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);section.append(fieldset);
+  targets.append(both,videoOnly,audioOnly);fieldset.append(legend,targets);advanced.append(fieldset);section.append(advanced);
   el["media-editor-sections"].append(section);
   const state={id:stateId,type,section,heading,video,sequenceImage,replacementVideo,replacementImage,replacementAudio,backgroundAudio:new Audio(),slider,sliderLabel,position,context,play,auditionButton:audition,inButton,outButton,commitButton,goto,properties,split,insertSelection,appendSelection,saveClip,targetFieldset:fieldset,both,videoOnly,audioOnly,cursor:0,markIn:null,markOut:null,markHistory:[],audition:null,unsupported:false,loading:!item.duration,rendering:false,monitoring:false,endReached:false,currentItemId:type==="program"?item.id:null,currentItemOffset:0,pendingSourceTime:0,pendingAutoplay:false,imagePlaying:false,imageTimer:null};
   editorStates.set(stateId,state);editorNodes.set(stateId,section);
@@ -635,6 +636,7 @@ function focusSection(offset){
 }
 function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);}
 function presentationItems(){return project.presentation?.items||[];}
+function revealForFocus(element){return element;}
 function presentationDuration(){return presentationTimelineDuration(presentationItems());}
 function sharedPresentationSources(){
   const seen=new Set();return [...(project.sources||[]),...project.items].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true;});
@@ -827,7 +829,7 @@ function focusPresentationTimeline(){
 }
 function focusPresentationSources(){
   if(activeWorkspace!=="presentation")return announce("The Source Media Library is available in the Presentation workspace.",true);
-  el["presentation-sources"].focus();announce(`${sharedPresentationSources().length} items in the Source Media Library. Adding a source does not remove it from the library.`);
+  revealForFocus(el["presentation-sources"]).focus();announce(`${sharedPresentationSources().length} items in the Source Media Library. Adding a source does not remove it from the library.`);
 }
 function setPresentationMusic(remove=false){
   const source=remove?"":el["presentation-music-source"].value;
@@ -1276,9 +1278,16 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.35. Presentation includes a synchronized visual timeline for mouse users while retaining the screen-reader-first timeline.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.37. Visual condensation preserves the established Virtual Cursor off tab order and complete screen-reader accessibility tree.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
+
+document.addEventListener("click",event=>{
+  const button=event.target.closest?.(".visual-disclosure-toggle");if(!button)return;
+  const group=button.closest(".visual-disclosure"),expanded=!group.classList.contains("visually-expanded");
+  group.classList.toggle("visually-expanded",expanded);button.setAttribute("aria-expanded",String(expanded));
+  const label=button.textContent.replace(/^(Show|Hide) /,"");button.textContent=`${expanded?"Hide":"Show"} ${label}`;
+});
 
 el["project-items"].addEventListener("change",()=>{selectedId=el["project-items"].value||null;});
 el["project-items"].addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();activateMedia(PROGRAM_ID,true);}});

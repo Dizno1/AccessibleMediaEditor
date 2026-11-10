@@ -1,0 +1,19 @@
+Accessible Media Editor Build 0.11.36
+
+This build reduces visual noise across Media Editor, Presentation, and AudioStudio Pro.
+
+Essential workflow controls remain visible. Advanced or less frequently used controls are placed in native disclosure sections that are collapsed by default.
+
+Media Editor disclosures include the saved media library, source media, track replacements, reusable project images, and advanced selection, source clip, and track controls within each media editor.
+
+Presentation disclosures include transitions, opening and closing effects, source media, slideshow creation, background music and ducking, and item accessibility authoring.
+
+AudioStudio Pro development information is collapsed until requested.
+
+The disclosures use native Details and Summary elements. They work with mouse, keyboard, screen readers, magnification, and voice control. No control appears only on hover or focus.
+
+Alt+S automatically expands Source Media Library before moving focus into it.
+
+Long screen-reader instructions remain programmatically available but are visually hidden when they duplicate visible labels and controls.
+
+Testing should confirm that Space or Enter expands each disclosure, Tab reaches its contents only while expanded, and collapsing a section does not remove project data or disable global keyboard shortcuts.

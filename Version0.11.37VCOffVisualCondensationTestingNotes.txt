@@ -1,0 +1,19 @@
+Accessible Media Editor Build 0.11.37
+
+Do not use Build 0.11.36. Its closed native disclosures removed controls from the Virtual Cursor off Tab sequence until expanded.
+
+Build 0.11.37 replaces that design.
+
+Every existing control remains permanently present in the accessibility tree and in its established keyboard Tab order.
+
+The visual interface condenses advanced groups without using display none, hidden, visibility hidden, closed Details elements, or disabled controls.
+
+When keyboard focus moves into a visually condensed group, CSS focus-within immediately reveals the entire group before the user interacts with the focused control.
+
+Mouse users and screen-reader users using the Virtual Cursor can activate the visible Show button to keep a group visually open. These visual Show buttons use tabindex minus one, so they do not add stops to the established Virtual Cursor off Tab sequence.
+
+The complete controls remain exposed to screen readers even while visually condensed. Global shortcuts, direct focus commands, and Ctrl+Page section navigation retain their existing targets.
+
+Test with Virtual Cursor off by tabbing through every workspace without activating a Show button. Confirm that every control is reached in the same logical order and that its complete group becomes visible when focus enters it.
+
+Test the Show and Hide buttons with a mouse and with the Virtual Cursor. Confirm that they affect visual presentation only and never change project data or control availability.
