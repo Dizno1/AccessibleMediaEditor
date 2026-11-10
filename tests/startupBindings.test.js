@@ -91,7 +91,17 @@ test("attached audio uses the complete persistent and project audio collection",
   assert.match(app,/return \[\.\.\.libraryItems,\.\.\.sources\]\.filter/);
   assert.match(app,/function showCreateTitleSlide\(\)[\s\S]*const sources=presentationAudioSources\(\)/);
   assert.match(app,/const audioSources=presentationAudioSources\(\)/);
-  assert.match(app,/const audio=presentationAudioSources\(\)\.find\(source=>source\.id===el\["presentation-still-audio"\]\.value\)/);
+  assert.match(app,/audio=presentationAudioSources\(\)\.find\(source=>source\.id===el\["presentation-still-audio"\]\.value\)/);
+});
+
+test("matched attached audio supplies and controls the visual duration",()=>{
+  assert.match(app,/async function resolveAudioDuration\(audio\)/);
+  assert.match(app,/if\(match\)\{try\{duration=await resolveAudioDuration\(audio\)/);
+  assert.match(app,/if\(!match&&\(!Number\.isFinite\(value\)/);
+  assert.match(app,/visualDuration=await resolveAudioDuration\(audio\)/);
+  assert.match(app,/function updateAttachedAudioDurationControl\(durationField,audioField,matchField\)/);
+  assert.match(app,/el\[durationField\]\.disabled=matched/);
+  assert.match(app,/presentation-still-match-audio"\]\.addEventListener\("change"/);
 });
 
 test("opening item properties reads retained edit segment boundaries",()=>{

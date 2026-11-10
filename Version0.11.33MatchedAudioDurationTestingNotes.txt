@@ -1,0 +1,27 @@
+Accessible Media Editor Build 0.11.33 Testing Notes
+
+This build corrects zero-second title slides and unnecessary manual-duration validation when visual duration is matched to attached audio.
+
+When Match visual duration to attached audio is checked, the manual image-duration field is disabled and its value is ignored.
+
+If the selected persistent-library audio has missing duration metadata, the application reads the audio metadata before saving the presentation item.
+
+The recovered duration is written back to the persistent library so later uses do not repeat the problem.
+
+The application will not save a zero-second matched slide. If the audio duration cannot be determined, the properties dialog remains open and announces the failure.
+
+The persistent library also now updates an existing entry when the corresponding project source later obtains valid duration metadata.
+
+Suggested test
+
+Open DogsFirst Test Presentation and open the Dogs At Play title slide properties.
+
+Confirm that 00000134.mp3 remains selected and Match visual duration to attached audio remains checked.
+
+Confirm that the manual image-duration field is unavailable while matching is active.
+
+Activate Save Presentation Item Properties without entering a manual duration.
+
+Confirm that the timeline announces the real audio duration instead of zero seconds.
+
+Save and reopen the project and confirm that the title slide retains the attached audio and its matched duration.
