@@ -138,8 +138,8 @@
           <legend>Apply transition to current or selected timeline items</legend>
           <label for="presentation-bulk-transition-type">Transition type</label>
           <select id="presentation-bulk-transition-type"><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select>
-          <label for="presentation-bulk-transition-duration">Duration in seconds</label>
-          <input type="number" id="presentation-bulk-transition-duration" min="0.1" max="10" step="0.001" value="1">
+          <label for="presentation-bulk-transition-duration">Duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-bulk-transition-duration" value="1">
           <button type="button" id="presentation-bulk-transition-apply">Apply Transition</button>
           <button type="button" id="presentation-bulk-transition-remove">Remove Transition</button>
         </fieldset>
@@ -147,12 +147,12 @@
           <legend>Opening and closing effects</legend>
           <label for="presentation-opening-effect">Opening effect for the first item</label>
           <select id="presentation-opening-effect"><option value="none">None</option><option value="fadeblack">Fade in from black</option><option value="fadewhite">Fade in from white</option></select>
-          <label for="presentation-opening-duration">Opening effect duration in seconds</label>
-          <input type="number" id="presentation-opening-duration" min="0.1" max="10" step="0.1" value="1">
+          <label for="presentation-opening-duration">Opening effect duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-opening-duration" value="1">
           <label for="presentation-closing-effect">Closing effect for the final item</label>
           <select id="presentation-closing-effect"><option value="none">None</option><option value="fadeblack">Fade out to black</option><option value="fadewhite">Fade out to white</option></select>
-          <label for="presentation-closing-duration">Closing effect duration in seconds</label>
-          <input type="number" id="presentation-closing-duration" min="0.1" max="10" step="0.1" value="1">
+          <label for="presentation-closing-duration">Closing effect duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-closing-duration" value="1">
           <button type="button" id="presentation-effects-apply">Apply Opening and Closing Effects</button>
         </fieldset>
         <div class="button-row">
@@ -179,8 +179,8 @@
         </div>
 
         <h3>Create Slides from Images</h3>
-        <label for="presentation-slide-duration">Default image duration in seconds</label>
-        <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
+        <label for="presentation-slide-duration">Default image duration in seconds, from 0.1 through 3600</label>
+        <input id="presentation-slide-duration" type="text" inputmode="decimal" value="5">
         <button type="button" id="presentation-create-slideshow">Add All Images as Slides</button>
       </section>
       <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
@@ -257,7 +257,7 @@
         <label for="presentation-edit-foreground">Text color</label><select id="presentation-edit-foreground"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="#fff200">Yellow</option><option value="#bde0fe">Light blue</option></select>
       </fieldset>
     </div>
-    <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds</label><input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001"></div>
+    <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds, from 0.1 through 3600</label><input type="text" inputmode="decimal" id="presentation-item-duration"></div>
     <div id="presentation-media-boundary-fields">
       <fieldset class="time-fields"><legend>Start time</legend><label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1"><label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1"><label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1"><label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1"></fieldset>
       <fieldset class="time-fields"><legend>End time</legend><label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1"><label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1"><label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1"><label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1"></fieldset>
@@ -267,7 +267,7 @@
       <label><input id="presentation-still-match-audio" type="checkbox">Match visual duration to attached audio</label>
     </div>
     <div id="presentation-item-audio-fields"><label for="presentation-item-audio-volume">Foreground audio volume, percent</label><input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100"><label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label></div>
-    <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select><label for="presentation-transition-duration">Transition duration in seconds</label><input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1"></fieldset>
+    <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select><label for="presentation-transition-duration">Transition duration in seconds, from 0.1 through 10</label><input type="text" inputmode="decimal" id="presentation-transition-duration" value="1"></fieldset>
     <div class="button-row"><button type="button" id="presentation-item-properties-save">Save Presentation Item Properties</button><button type="button" id="presentation-item-properties-cancel">Cancel</button></div>
   </form></dialog>
 
@@ -277,8 +277,8 @@
       <p id="properties-name"></p>
       <label for="item-label">Item label</label>
       <input type="text" id="item-label">
-      <label for="item-duration">Duration in seconds</label>
-      <input type="number" id="item-duration" min="0.001" step="0.001">
+      <label for="item-duration">Duration in seconds, minimum 1 millisecond</label>
+      <input type="text" inputmode="decimal" id="item-duration">
       <div id="trim-fields">
         <fieldset class="time-fields">
           <legend>Left Bracket time</legend>
@@ -402,8 +402,8 @@
       <h2 id="text-heading">Add Text Item</h2>
       <label for="text-content">Text</label>
       <textarea id="text-content" rows="5"></textarea>
-      <label for="text-duration">Duration in seconds</label>
-      <input type="number" id="text-duration" min="0.1" step="0.1" value="5">
+      <label for="text-duration">Duration in seconds, minimum 0.1</label>
+      <input type="text" inputmode="decimal" id="text-duration" value="5">
       <div class="button-row">
         <button type="button" id="save-text-button">Add Text Item</button>
         <button type="button" id="cancel-text-button">Cancel</button>

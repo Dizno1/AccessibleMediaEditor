@@ -1,0 +1,41 @@
+Accessible Media Editor Build 0.11.31 Testing Notes
+
+This build completes an application-wide audit of time and duration controls.
+
+Human-readable time changes
+
+All controls that accept decimal seconds now use text entry instead of browser number spin boxes. This prevents screen readers from announcing floating-point values such as 0.10000000149011612.
+
+Decimal duration values are rounded to millisecond precision and unnecessary trailing zeros are removed. Examples include 0.1, 1.5, and 5 seconds.
+
+Separate Hours, Minutes, Seconds, and Milliseconds controls remain numeric because they accept whole numbers only.
+
+Percentage controls remain numeric because they are not time values.
+
+The playback position slider now exposes a human-readable spoken value such as 7 seconds, 250 milliseconds.
+
+StartupLog timestamps are now written as readable UTC dates and times instead of Unix epoch numbers.
+
+Presentation preview diagnostics
+
+Rendering progress identifies the presentation item by number and name and states its duration in human-readable form.
+
+StartupLog records the start and completion of each presentation item. If rendering fails, the log identifies the exact item, its source path, and a longer section of the FFmpeg error.
+
+Missing source or attached-audio files are detected before FFmpeg is started and reported with the affected presentation item.
+
+Suggested testing
+
+Open each time or duration field with JAWS or NVDA and confirm that no long floating-point minimum or maximum is announced.
+
+Test opening effect, closing effect, slide duration, item duration, and transition duration entry with values such as 0.1, 0.25, 1.5, and 5.
+
+Play media and confirm that the playback position is announced in ordinary units rather than as a raw decimal.
+
+Preview the presentation that previously stopped while rendering item 5. If it fails, provide StartupLog.txt. The new log should identify the exact presentation item and FFmpeg failure.
+
+Automated verification
+
+All 84 JavaScript tests passed.
+
+The Rust and Tauri portion must still be compiled by GitHub Actions because Rust is not installed in the local development environment.

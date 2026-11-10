@@ -197,6 +197,7 @@ export function removeTrackReplacement(project, replacementId) {
 }
 export function productionRenderItems(project) {
   return project.items.map((item,index) => ({
+    label:item.label||item.name||`Item ${index+1}`,
     source: item.source,
     segments: normalizedSegments(item),
     mediaKind: item.kind,

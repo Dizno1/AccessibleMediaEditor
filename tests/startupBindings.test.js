@@ -78,6 +78,13 @@ test("presentation exposes opening closing and editable title slide controls",()
   assert.match(rust,/fade=t=in/);
   assert.match(rust,/fade=t=out/);
 });
+test("decimal time entry never exposes floating point spin box limits",()=>{
+  for(const id of ["presentation-bulk-transition-duration","presentation-opening-duration","presentation-closing-duration","presentation-slide-duration","presentation-title-duration","presentation-item-duration","presentation-transition-duration","item-duration","text-duration"]){
+    assert.match(html,new RegExp(`<input[^>]*type="text"[^>]*id="${id}"|<input[^>]*id="${id}"[^>]*type="text"`));
+  }
+  assert.match(app,/function editableSeconds\(seconds\)/);
+  assert.match(app,/setAttribute\("aria-valuetext",readableTime\(state\.cursor\)\)/);
+});
 
 test("opening item properties reads retained edit segment boundaries",()=>{
   assert.match(app,/function showPresentationItemProperties\(\).*segments=normalizedSegments\(item\),singleSegment=segments\.length===1/);

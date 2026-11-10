@@ -21,6 +21,7 @@ struct EditSegment { start: f64, end: f64 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ProductionItem {
+    #[serde(default)] label: String,
     source: String,
     segments: Vec<EditSegment>,
     media_kind: String,
@@ -35,6 +36,41 @@ struct ProductionItem {
     #[serde(default)] closing_effect_duration: f64,
 }
 fn default_audio_volume() -> f64 { 1.0 }
+
+fn human_utc_timestamp() -> String {
+    let elapsed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+    let seconds = elapsed.as_secs() as i64;
+    let days = seconds.div_euclid(86_400);
+    let day_seconds = seconds.rem_euclid(86_400);
+    let z = days + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 }.div_euclid(146_097);
+    let day_of_era = z - era * 146_097;
+    let year_of_era = (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096).div_euclid(365);
+    let mut year = year_of_era + era * 400;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_part = (5 * day_of_year + 2).div_euclid(153);
+    let day = day_of_year - (153 * month_part + 2).div_euclid(5) + 1;
+    let month = month_part + if month_part < 10 { 3 } else { -9 };
+    if month <= 2 { year += 1; }
+    let hour = day_seconds / 3_600;
+    let minute = day_seconds % 3_600 / 60;
+    let second = day_seconds % 60;
+    format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03} UTC", year, month, day, hour, minute, second, elapsed.subsec_millis())
+}
+
+fn human_duration(seconds: f64) -> String {
+    let total = (seconds.max(0.0) * 1000.0).round() as u64;
+    let hours = total / 3_600_000;
+    let minutes = total / 60_000 % 60;
+    let whole_seconds = total / 1_000 % 60;
+    let milliseconds = total % 1_000;
+    let mut parts = Vec::new();
+    if hours > 0 { parts.push(format!("{} {}", hours, if hours == 1 { "hour" } else { "hours" })); }
+    if minutes > 0 { parts.push(format!("{} {}", minutes, if minutes == 1 { "minute" } else { "minutes" })); }
+    parts.push(format!("{} {}", whole_seconds, if whole_seconds == 1 { "second" } else { "seconds" }));
+    if milliseconds > 0 { parts.push(format!("{} {}", milliseconds, if milliseconds == 1 { "millisecond" } else { "milliseconds" })); }
+    parts.join(", ")
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -69,12 +105,8 @@ fn app_folder(name: &str) -> Option<std::path::PathBuf> {
 fn write_startup_log(message: &str) {
     let Some(folder) = app_folder("Logs") else { return; };
     let path = folder.join("StartupLog.txt");
-    let milliseconds = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_millis())
-        .unwrap_or_default();
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
-        let _ = writeln!(file, "{} {}", milliseconds, message);
+        let _ = writeln!(file, "{} {}", human_utc_timestamp(), message);
     }
 }
 
@@ -305,7 +337,7 @@ async fn run_ffmpeg(app: &tauri::AppHandle, args: Vec<String>) -> Result<(), Str
     let output = app.shell().sidecar("ffmpeg").map_err(|error| error.to_string())?.args(args).output().await.map_err(|error| error.to_string())?;
     if output.status.success() { Ok(()) } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(stderr.lines().rev().take(4).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" "))
+        Err(stderr.lines().filter(|line| !line.trim().is_empty()).rev().take(12).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" "))
     }
 }
 
@@ -414,15 +446,24 @@ async fn render_production_item(app: &tauri::AppHandle, item: &ProductionItem, o
 #[tauri::command]
 async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, items: Vec<ProductionItem>, replacements: Vec<TrackReplacement>, background_music: Option<BackgroundMusic>, project_id: String) -> Result<String, String> {
     if items.is_empty() { return Err("The production contains no media to render.".into()); }
+    write_startup_log(&format!("Presentation render started for {} with {} items.", project_id, items.len()));
+    for (index,item) in items.iter().enumerate() {
+        let name=if item.label.trim().is_empty(){format!("Item {}",index+1)}else{item.label.clone()};
+        if !std::path::Path::new(&item.source).is_file(){let message=format!("Presentation item {} of {}, {}, cannot be rendered because its source file was not found: {}",index+1,items.len(),name,item.source);write_startup_log(&message);return Err(message);}
+        if !item.attached_audio_source.is_empty()&&!std::path::Path::new(&item.attached_audio_source).is_file(){let message=format!("Presentation item {} of {}, {}, cannot be rendered because its attached audio file was not found: {}",index+1,items.len(),name,item.attached_audio_source);write_startup_log(&message);return Err(message);}
+    }
     let mut intermediates = Vec::new();
     for (index, item) in items.iter().enumerate() {
         let path = safe_working_path(&format!("{}-{}", project_id, index + 1), "mp4", "production-item")?;
-        window.emit("production-render-progress", format!("Rendering production item {} of {}.", index + 1, items.len())).map_err(|error| error.to_string())?;
+        let name=if item.label.trim().is_empty(){format!("Item {}",index+1)}else{item.label.clone()};
+        let progress=format!("Rendering presentation item {} of {}, {}. Duration {}.",index+1,items.len(),name,human_duration(segment_duration(&item.segments)));
+        write_startup_log(&progress);window.emit("production-render-progress",progress).map_err(|error| error.to_string())?;
         if let Err(error) = render_production_item(&app, item, &path).await {
             for previous in &intermediates { let _ = fs::remove_file(previous); }
             let _ = fs::remove_file(&path);
-            return Err(format!("Item {} could not be rendered. {}", index + 1, error));
+            let message=format!("Presentation item {} of {}, {}, could not be rendered. {}",index+1,items.len(),name,error);write_startup_log(&message);return Err(message);
         }
+        write_startup_log(&format!("Presentation item {} of {}, {}, finished rendering.",index+1,items.len(),name));
         intermediates.push(path);
     }
     window.emit("production-render-progress", "Joining rendered production items.").map_err(|error| error.to_string())?;
@@ -465,7 +506,7 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for (index, replacement) in replacements.iter().enumerate() {
         window.emit("production-render-progress", format!("Rendering track replacement {} of {}.", index + 1, replacements.len())).map_err(|error| error.to_string())?;
         let path = safe_working_path(&format!("{}-replacement-{}", project_id, index + 1), "mp4", "track")?;
-        let item = ProductionItem { source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0,attached_audio_source:String::new(),opening_effect_type:"none".into(),opening_effect_duration:0.0,closing_effect_type:"none".into(),closing_effect_duration:0.0 };
+        let item = ProductionItem { label:format!("Track replacement {}",index+1),source: replacement.source.clone(), segments: replacement.segments.clone(), media_kind: replacement.media_kind.clone(), track_target: replacement.track_target.clone(),audio_volume:1.0,transition_type:"none".into(),transition_duration:0.0,attached_audio_source:String::new(),opening_effect_type:"none".into(),opening_effect_duration:0.0,closing_effect_type:"none".into(),closing_effect_duration:0.0 };
         if let Err(error) = render_production_item(&app, &item, &path).await {
             let _ = fs::remove_file(&active_base);
             for previous in &replacement_paths { let _ = fs::remove_file(previous); }
@@ -559,7 +600,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.30 executable started.");
+    write_startup_log("Build 0.11.31 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
