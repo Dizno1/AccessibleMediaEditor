@@ -1,0 +1,17 @@
+Accessible Media Editor Build 0.11.39
+
+Presentation focus shortcuts
+
+Windows could intercept Alt+P and Alt+S at the native application menu before the web interface received them.
+
+Alt+P and Alt+S are now registered as native Windows menu accelerators. The existing web keyboard handling remains available as a fallback.
+
+Alt+P moves focus to the Presentation Timeline.
+
+Alt+S moves focus to the Source Media Library.
+
+The Navigate menu also contains Presentation Timeline Alt+P and Source Media Library Alt+S.
+
+Testing
+
+Open DogsFirst Test Presentation. Confirm that focus begins in the Presentation Timeline. Press Alt+S and confirm that focus moves to Source Media Library. Press Alt+P and confirm that focus returns to Presentation Timeline. Repeat both commands from the background music, transition, and accessibility controls.

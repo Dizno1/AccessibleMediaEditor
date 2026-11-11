@@ -15,6 +15,11 @@ test("transition rendering is not restricted to half of either neighboring item"
   assert.match(rust,/requested\.min\(joined_duration\)\.min\(next_duration\)/);
   assert.match(app,/available transition duration at this position/);
 });
+test("presentation direct-focus commands are native Windows accelerators and web shortcuts",()=>{
+  assert.match(rust,/"Presentation Timeline Alt\+P","focusPresentationTimeline","Alt\+P"/);
+  assert.match(rust,/"Source Media Library Alt\+S","focusPresentationSources","Alt\+S"/);
+  assert.match(app,/focusPresentationTimeline,focusPresentationSources/);
+});
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
   assert.deepEqual([...new Set(referenced.filter(id=>!ids.has(id)))],[]);

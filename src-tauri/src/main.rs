@@ -563,6 +563,10 @@ fn item(app: &tauri::AppHandle, label: &str, id: &str) -> tauri::Result<tauri::m
     MenuItemBuilder::new(label).id(id).build(app)
 }
 
+fn accelerated_item(app: &tauri::AppHandle, label: &str, id: &str, accelerator: &str) -> tauri::Result<tauri::menu::MenuItem<tauri::Wry>> {
+    MenuItemBuilder::new(label).id(id).accelerator(accelerator).build(app)
+}
+
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
         .item(&item(app,"Open Media... Ctrl+O","importMedia")?)
@@ -596,6 +600,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let navigate = SubmenuBuilder::new(app, "Navigate")
         .item(&item(app,"Media Editor Workspace","showMediaWorkspace")?).item(&item(app,"Presentation Workspace","showPresentationWorkspace")?).item(&item(app,"AudioStudio Pro Workspace","showAudioWorkspace")?)
         .item(&item(app,"Next Workspace Ctrl+Tab","nextWorkspace")?).item(&item(app,"Previous Workspace Ctrl+Shift+Tab","previousWorkspace")?).separator()
+        .item(&accelerated_item(app,"Presentation Timeline Alt+P","focusPresentationTimeline","Alt+P")?).item(&accelerated_item(app,"Source Media Library Alt+S","focusPresentationSources","Alt+S")?).separator()
         .item(&item(app,"Previous Section Ctrl+Page Up","previousSection")?).item(&item(app,"Next Section Ctrl+Page Down","nextSection")?)
         .separator().item(&item(app,"Open Media List","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
     let help = SubmenuBuilder::new(app, "Help")
