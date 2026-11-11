@@ -1,0 +1,25 @@
+Accessible Media Editor Build 0.11.40
+
+Opening and closing effect timing
+
+Opening and closing effects now add time to the presentation instead of consuming time from the first and final items.
+
+An opening effect prepends its duration. The first visual frame fades in from the selected color. Attached dialogue, foreground audio, and background music begin after the opening completes.
+
+A closing effect appends its duration. The final visual frame remains visible while it fades to the selected color. Background music continues through the closing and fades to silence. Foreground audio ends with the final presentation item.
+
+Automatic music-ducking ranges are shifted by the added opening duration so they remain synchronized with foreground audio.
+
+The presentation summary includes the added opening and closing durations.
+
+Build identification
+
+The application header and Help menu About command identify Build 0.11.40 as a Development Testing Build and provide Copyright 2026 Open Door Design.
+
+Testing with DogsFirst Test Presentation
+
+The saved project contains a 5-second Fade In From Black, a 10-second Fade Out To White, and a title slide with 4 seconds and 702 milliseconds of attached dialogue.
+
+Confirm that the first 5 seconds contain the visual opening without dialogue or background music. At 5 seconds, the title-slide dialogue and background music should begin. The title slide should then remain for its complete 4 seconds and 702 milliseconds.
+
+Confirm that the final item completes before the 10-second closing begins. The final frame should fade to white while the background music fades to silence.

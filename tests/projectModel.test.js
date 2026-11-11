@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, presentationTransitionDuration, presentationTimelineDuration, maxPresentationTransitionDuration, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
+import { createProject, addItem, moveItem, removeItem, updateItem, addSource, updateSource, moveSource, appendImageSlideshow, createInterleavedPresentation, presentationDuckRanges, presentationTransitionDuration, presentationTimelineDuration, presentationTotalDuration, maxPresentationTransitionDuration, makeSourcePrimary, appendSourceSelection, insertSourceSelection, splitItem, itemDuration, duration, serializable, logicalToSourceTime, sourceToLogicalTime, removeLogicalRange, removeLogicalRanges, bracketSelectionRange, bracketSelectionPlan, logicalSegmentsForRanges, productionRenderItems, addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic } from "../app/projectModel.js";
 import { shortcuts } from "../app/shortcutService.js";
 const item = (id, seconds=1) => ({id, name:id, kind:"Video", source:"C:/"+id+".mp4", duration:seconds});
 test("a presentation interleaves video and ducks continuous music",()=>{const p=createProject(),slides=[1,2,3].map(n=>({image:{id:`i${n}`,name:`Image ${n}`,kind:"Image",source:`C:/i${n}.jpg`},duration:5})),video=item("dogs",2),music={id:"music",name:"Music",kind:"Audio",source:"C:/music.mp3",duration:20};const next=createInterleavedPresentation(p,slides,["a","b","c"],video,["v1","v2"],music,true);assert.deepEqual(next.items.map(x=>x.kind),["Image","Video","Image","Video","Image"]);assert.equal(duration(next),19);assert.equal(productionRenderBackgroundMusic(next).duckRanges.length,2);});
@@ -254,4 +254,9 @@ test("opening and closing effects are assigned only to presentation boundaries",
   const output=productionRenderItems(project);
   assert.equal(output[0].openingEffectType,"fadewhite");assert.equal(output[0].openingEffectDuration,1.5);assert.equal(output[0].closingEffectType,"none");
   assert.equal(output[1].openingEffectType,"none");assert.equal(output[1].closingEffectType,"fadeblack");assert.equal(output[1].closingEffectDuration,2);
+});
+test("opening and closing effects add time without consuming presentation items",()=>{
+  const items=[{...item("first",4.702041)},{...item("last",6),transition:{type:"crossfade",duration:2}}];
+  assert.ok(Math.abs(presentationTimelineDuration(items)-8.702041)<0.000001);
+  assert.ok(Math.abs(presentationTotalDuration(items,{type:"fadeblack",duration:5},{type:"fadewhite",duration:10})-23.702041)<0.000001);
 });

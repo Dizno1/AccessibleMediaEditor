@@ -20,6 +20,18 @@ test("presentation direct-focus commands are native Windows accelerators and web
   assert.match(rust,/"Source Media Library Alt\+S","focusPresentationSources","Alt\+S"/);
   assert.match(app,/focusPresentationTimeline,focusPresentationSources/);
 });
+test("opening and closing effects extend the rendered presentation and delay audio",()=>{
+  assert.match(rust,/opening_duration\+joined_duration\+closing_duration/);
+  assert.match(rust,/tpad=start_mode=clone:start_duration/);
+  assert.match(rust,/adelay=\{\}:all=1\[aopen\]/);
+  assert.match(rust,/tpad=stop_mode=clone:stop_duration/);
+  assert.match(rust,/range\.start\+opening_duration/);
+  assert.match(rust,/afade=t=out:st=/);
+});
+test("the current build and copyright are available inside the interface",()=>{
+  assert.match(html,/Build 0\.11\.40 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Media Editor Build 0\.11\.40 Development Testing Build/);
+});
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
   assert.deepEqual([...new Set(referenced.filter(id=>!ids.has(id)))],[]);

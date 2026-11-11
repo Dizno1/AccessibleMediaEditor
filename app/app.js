@@ -4,7 +4,7 @@ import {
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
   bracketSelectionPlan, logicalSegmentsForRanges, removeLogicalRanges, productionRenderItems,
-  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges,presentationTimelineDuration,presentationTransitionDuration,maxPresentationTransitionDuration
+  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges,presentationTimelineDuration,presentationTransitionDuration,maxPresentationTransitionDuration,presentationTotalDuration
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "./editorState.js";
@@ -635,7 +635,7 @@ function focusSection(offset){
 }
 function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);}
 function presentationItems(){return project.presentation?.items||[];}
-function presentationDuration(){return presentationTimelineDuration(presentationItems());}
+function presentationDuration(){return presentationTotalDuration(presentationItems(),project.presentation?.openingEffect,project.presentation?.closingEffect);}
 function sharedPresentationSources(){
   const seen=new Set();return [...(project.sources||[]),...project.items].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true;});
 }
@@ -1291,7 +1291,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.39. Alt P and Alt S are registered as native Windows accelerators while retaining their web keyboard handling.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.40 Development Testing Build. Copyright 2026 Open Door Design. Opening and closing effects add time without consuming presentation content.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

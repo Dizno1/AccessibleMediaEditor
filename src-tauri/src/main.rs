@@ -480,27 +480,29 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     for index in 1..items.len(){let nv=format!("[vin{}]",index);let na=format!("[ain{}]",index);let ov=format!("[v{}]",index);let oa=format!("[a{}]",index);let kind=items[index].transition_type.to_ascii_lowercase();let effect=match kind.as_str(){"crossfade"=>Some("fade"),"fadeblack"=>Some("fadeblack"),"fadewhite"=>Some("fadewhite"),"wipeleft"=>Some("wipeleft"),"wiperight"=>Some("wiperight"),_=>None};let requested=if effect.is_some(){items[index].transition_duration.max(0.0)}else{0.0};let next_duration=segment_duration(&items[index].segments);let transition=requested.min(joined_duration).min(next_duration);if transition>0.0005{let offset=(joined_duration-transition).max(0.0);filter_parts.push(format!("{}{}xfade=transition={}:duration={:.6}:offset={:.6}{}",video_label,nv,effect.unwrap_or("fade"),transition,offset,ov));filter_parts.push(format!("{}{}acrossfade=d={:.6}:c1=tri:c2=tri{}",audio_label,na,transition,oa));joined_duration+=next_duration-transition;}else{filter_parts.push(format!("{}{}concat=n=2:v=1:a=0{}",video_label,nv,ov));filter_parts.push(format!("{}{}concat=n=2:v=0:a=1{}",audio_label,na,oa));joined_duration+=next_duration;}video_label=ov;audio_label=oa;}
     if items.len()==1{filter_parts.push("[0:v:0]null[vjoined]".into());filter_parts.push("[0:a:0]anull[ajoined]".into());}else{filter_parts.push(format!("{}null[vjoined]",video_label));filter_parts.push(format!("{}anull[ajoined]",audio_label));}
     let opening=&items[0];let closing=&items[items.len()-1];
-    let opening_duration=opening.opening_effect_duration.max(0.0).min(joined_duration);
-    let closing_duration=closing.closing_effect_duration.max(0.0).min(joined_duration);
     let opening_color=match opening.opening_effect_type.to_ascii_lowercase().as_str(){"fadeblack"=>Some("black"),"fadewhite"=>Some("white"),_=>None};
     let closing_color=match closing.closing_effect_type.to_ascii_lowercase().as_str(){"fadeblack"=>Some("black"),"fadewhite"=>Some("white"),_=>None};
+    let opening_duration=if opening_color.is_some(){opening.opening_effect_duration.max(0.0)}else{0.0};
+    let closing_duration=if closing_color.is_some(){closing.closing_effect_duration.max(0.0)}else{0.0};
+    let total_duration=opening_duration+joined_duration+closing_duration;
     let mut effect_video="[vjoined]".to_string();let mut effect_audio="[ajoined]".to_string();
-    if let Some(color)=opening_color {if opening_duration>0.0005{filter_parts.push(format!("{}fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_duration,color));filter_parts.push(format!("{}afade=t=in:st=0:d={:.6}[aopen]",effect_audio,opening_duration));effect_video="[vopen]".into();effect_audio="[aopen]".into();}}
-    if let Some(color)=closing_color {if closing_duration>0.0005{let start=(joined_duration-closing_duration).max(0.0);filter_parts.push(format!("{}fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,start,closing_duration,color));filter_parts.push(format!("{}afade=t=out:st={:.6}:d={:.6}[a]",effect_audio,start,closing_duration));effect_video="[v]".into();effect_audio="[a]".into();}}
+    if let Some(color)=opening_color {if opening_duration>0.0005{let delay_ms=(opening_duration*1000.0).round() as u64;filter_parts.push(format!("{}tpad=start_mode=clone:start_duration={:.6},fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_duration,opening_duration,color));filter_parts.push(format!("{}adelay={}:all=1[aopen]",effect_audio,delay_ms));effect_video="[vopen]".into();effect_audio="[aopen]".into();}}
+    if let Some(color)=closing_color {if closing_duration>0.0005{let start=opening_duration+joined_duration;filter_parts.push(format!("{}tpad=stop_mode=clone:stop_duration={:.6},fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,closing_duration,start,closing_duration,color));filter_parts.push(format!("{}apad=pad_dur={:.6},atrim=duration={:.6}[a]",effect_audio,closing_duration,total_duration));effect_video="[v]".into();effect_audio="[a]".into();}}
     if effect_video!="[v]"{filter_parts.push(format!("{}null[v]",effect_video));}if effect_audio!="[a]"{filter_parts.push(format!("{}anull[a]",effect_audio));}
     args.extend(["-filter_complex".into(),filter_parts.join(";"),"-map".into(),"[v]".into(),"-map".into(),"[a]".into()]);
     args.extend(standard_video_encoding(base_text.clone()));
     let result = run_ffmpeg(&app, args).await;
     for path in &intermediates { let _ = fs::remove_file(path); }
     if let Err(error)=result {let message=format!("Joining rendered presentation items failed. {}",error);write_startup_log(&message);return Err(message);}
-    let total_duration: f64 = joined_duration;
     let mut active_base=base_path.clone();
     if let Some(music)=background_music {
         window.emit("production-render-progress", "Applying continuous background music and automatic ducking.").map_err(|error| error.to_string())?;
         let mixed_path=safe_working_path(&project_id,"mp4","production-music")?;let mixed_text=mixed_path.to_string_lossy().into_owned();
-        let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start,range.end)).collect::<Vec<_>>().join("+");
+        let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start+opening_duration,range.end+opening_duration)).collect::<Vec<_>>().join("+");
         let duck=if ranges.is_empty(){"1".to_string()}else{format!("if(gt({},0),{:.4},1)",ranges,music.duck_factor.clamp(0.0,1.0))};
-        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume={:.4},volume='{}'[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",total_duration,music.volume.clamp(0.0,1.0),duck);
+        let delay_ms=(opening_duration*1000.0).round() as u64;
+        let music_fade=if closing_duration>0.0005{format!(",afade=t=out:st={:.6}:d={:.6}",opening_duration+joined_duration,closing_duration)}else{String::new()};
+        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,adelay={}:all=1,atrim=duration={:.6},volume={:.4},volume='{}'{}[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",joined_duration+closing_duration,delay_ms,total_duration,music.volume.clamp(0.0,1.0),duck,music_fade);
         let mut mix_args=vec!["-y".into(),"-i".into(),base_text.clone(),"-stream_loop".into(),"-1".into(),"-i".into(),music.source,"-filter_complex".into(),filter,"-map".into(),"0:v:0".into(),"-map".into(),"[a]".into()];
         mix_args.extend(standard_video_encoding(mixed_text));run_ffmpeg(&app,mix_args).await?;let _=fs::remove_file(&active_base);active_base=mixed_path;
     }
