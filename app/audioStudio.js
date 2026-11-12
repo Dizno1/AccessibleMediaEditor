@@ -57,7 +57,7 @@ export function createAudioStudio(options){
   }
 
   async function restoreMicrophonePermission(){
-    if(!navigator.mediaDevices?.enumerateDevices||!navigator.permissions?.query)return;
+    if(typeof navigator==="undefined"||!navigator.mediaDevices?.enumerateDevices||!navigator.permissions?.query)return;
     try{const permission=await navigator.permissions.query({name:"microphone"});if(permission.state==="granted")await populateMicrophones();}catch(error){console.debug("Microphone permission state is not available.",error);}
   }
 
