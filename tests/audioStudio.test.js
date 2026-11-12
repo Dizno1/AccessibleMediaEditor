@@ -10,7 +10,7 @@ const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf
 const prepare=readFileSync(new URL("../scripts/prepare-dist.js",import.meta.url),"utf8");
 
 test("AudioStudio Pro exposes keyboard-operable recording, review, and shared-library controls",()=>{
-  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
+  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-export-sources","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
     assert.match(html,new RegExp(`id=["']${id}["']`));
   }
   assert.match(html,/shared Source Media Library/i);
@@ -89,7 +89,7 @@ test("long pauses are analyzed and shortened only in a confirmed new source",()=
   assert.match(studio,/invoke\("analyze_silence"/);
   assert.match(studio,/window\.confirm\(message\)/);
   assert.match(studio,/invoke\("render_working_edit"/);
-  assert.match(studio,/Original source unchanged/);
+  assert.match(studio,/Original sources unchanged/);
   assert.match(rust,/async fn analyze_silence/);
   assert.match(rust,/silencedetect=noise=/);
   assert.match(rust,/analyze_silence,render_working_edit/);
@@ -104,10 +104,23 @@ test("audiobook folders and multiple chapters are managed from Shared Audio Libr
   assert.match(app,/pick_audio_folder_files/);
   assert.match(rust,/fn pick_audio_folder_files/);
   assert.match(rust,/files\.sort_by/);
+  assert.match(rust,/fn export_audio_files_to_folder/);
 });
 
-test("all visible and native build identification is 0.12.4",()=>{
-  assert.match(html,/Build 0\.12\.4 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.4/);
-  assert.match(rust,/Build 0\.12\.4 executable started/);
+test("all visible and native build identification is 0.12.5",()=>{
+  assert.match(html,/Build 0\.12\.5 Development Testing Build/);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.5/);
+  assert.match(rust,/Build 0\.12\.5 executable started/);
+});
+
+test("audio playhead time, preview resume, batch silence processing, and long import progress are accessible",()=>{
+  assert.match(studio,/aria-valuetext.*naturalTime/);
+  assert.match(studio,/Preview resumed at/);
+  assert.match(studio,/Still analyzing chapter/);
+  assert.match(studio,/for\(const \[index,item\] of items\.entries\(\)\)/);
+  assert.match(app,/Still preparing chapter/);
+  assert.match(app,/Completed chapter/);
+  assert.match(app,/function audioCanOpenDirectly/);
+  assert.match(app,/Opening directly from its folder/);
+  assert.match(app,/setInterval.*30000/);
 });

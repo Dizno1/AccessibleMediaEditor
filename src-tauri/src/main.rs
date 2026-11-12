@@ -15,6 +15,10 @@ mod native_media_picker;
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AudioFolderExportItem { source: String, suggested_name: String }
+
 #[derive(Serialize, Deserialize, Clone)]
 struct EditSegment { start: f64, end: f64 }
 
@@ -184,6 +188,28 @@ fn pick_audio_folder_files(window: tauri::WebviewWindow) -> Result<Vec<String>, 
         .collect::<Vec<_>>();
     files.sort_by(|left,right|left.file_name().map(|value|value.to_string_lossy().to_ascii_lowercase()).unwrap_or_default().cmp(&right.file_name().map(|value|value.to_string_lossy().to_ascii_lowercase()).unwrap_or_default()));
     Ok(files.into_iter().map(|path|path.to_string_lossy().into_owned()).collect())
+}
+
+#[tauri::command]
+fn export_audio_files_to_folder(window: tauri::WebviewWindow, items: Vec<AudioFolderExportItem>) -> Result<Vec<String>, String> {
+    let Some(folder)=rfd::FileDialog::new().set_parent(&window).set_title("Export Selected Audio Copies to Folder").pick_folder() else { return Ok(Vec::new()); };
+    let mut exported=Vec::new();
+    for item in items {
+        let source=PathBuf::from(&item.source);
+        if !source.is_file() { return Err(format!("The source file is unavailable: {}",item.suggested_name)); }
+        let extension=source.extension().and_then(|value|value.to_str()).unwrap_or("m4a");
+        let mut name=item.suggested_name.trim().to_string();
+        let suffix=format!(".{}",extension);
+        if name.to_ascii_lowercase().ends_with(&suffix.to_ascii_lowercase()) { name.truncate(name.len()-suffix.len()); }
+        name=name.chars().map(|character|if "<>:\"/\\|?*".contains(character){' '}else{character}).collect::<String>().trim().trim_end_matches('.').to_string();
+        if name.is_empty(){name="Audio".into();}
+        let mut destination=folder.join(format!("{}.{}",name,extension));
+        let mut copy_number=2;
+        while destination.exists(){destination=folder.join(format!("{} ({}).{}",name,copy_number,extension));copy_number+=1;}
+        fs::copy(&source,&destination).map_err(|error|format!("{} could not be copied: {}",item.suggested_name,error))?;
+        exported.push(destination.to_string_lossy().into_owned());
+    }
+    Ok(exported)
 }
 
 #[tauri::command]
@@ -679,7 +705,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.4 executable started.");
+    write_startup_log("Build 0.12.5 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -704,7 +730,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,pick_audio_folder_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,pick_audio_folder_files,export_audio_files_to_folder,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

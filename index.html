@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.4 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.5 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -284,8 +284,24 @@
           <button type="button" id="audio-preview-source">Preview Selected Audio</button>
           <button type="button" id="audio-edit-source">Open Selected Audio in Audio Editor</button>
           <button type="button" id="audio-add-to-project">Add Selected Audio to Media Editor Sources</button>
+          <button type="button" id="audio-export-sources">Export Selected Audio Copies to Folder</button>
           <button type="button" id="audio-remove-sources">Remove Selected Audio from Shared Library</button>
         </div>
+        <fieldset id="audio-silence-controls"><legend>Shorten long pauses in selected chapters</legend>
+          <p>Select one or more chapters. New shortened copies will be created in the Shared Audio Library. Original files will remain unchanged.</p>
+          <label for="audio-silence-minimum">Find pauses lasting at least this many seconds</label>
+          <input type="number" id="audio-silence-minimum" min="0.5" max="30" step="0.1" value="1.5">
+          <label for="audio-silence-retain">Retain this many seconds from each detected pause</label>
+          <input type="number" id="audio-silence-retain" min="0.1" max="10" step="0.1" value="0.5">
+          <label for="audio-silence-threshold">Silence detection sensitivity</label>
+          <select id="audio-silence-threshold">
+            <option value="-45">Conservative, very quiet audio only</option>
+            <option value="-40" selected>Standard speech</option>
+            <option value="-35">More sensitive</option>
+          </select>
+          <button type="button" id="audio-editor-shorten-silence" disabled>Analyze and Create Shortened Copies</button>
+          <p id="audio-silence-status">Select one or more chapters to analyze. Original sources will remain unchanged.</p>
+        </fieldset>
       </section>
 
       <section class="editor-section audio-studio" id="audio-editor-section" aria-labelledby="audio-editor-heading" tabindex="-1">
@@ -322,20 +338,6 @@
         <input type="text" id="audio-edited-copy-name" value="Edited Audio">
         <button type="button" id="audio-editor-save-range" disabled>Keep Bracketed Range as New Audio Source</button>
         <p>The bracketed range is saved nondestructively. The original audio source is not changed or deleted.</p>
-        <fieldset id="audio-silence-controls"><legend>Shorten long pauses</legend>
-          <label for="audio-silence-minimum">Find pauses lasting at least this many seconds</label>
-          <input type="number" id="audio-silence-minimum" min="0.5" max="30" step="0.1" value="1.5">
-          <label for="audio-silence-retain">Retain this many seconds from each detected pause</label>
-          <input type="number" id="audio-silence-retain" min="0.1" max="10" step="0.1" value="0.5">
-          <label for="audio-silence-threshold">Silence detection sensitivity</label>
-          <select id="audio-silence-threshold">
-            <option value="-45">Conservative, very quiet audio only</option>
-            <option value="-40" selected>Standard speech</option>
-            <option value="-35">More sensitive</option>
-          </select>
-          <button type="button" id="audio-editor-shorten-silence" disabled>Analyze and Create Shortened Copy</button>
-          <p id="audio-silence-status">Open an audio source to analyze long pauses. The original source will remain unchanged.</p>
-        </fieldset>
       </section>
     </div>
   </main>

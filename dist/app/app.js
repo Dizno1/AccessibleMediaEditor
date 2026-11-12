@@ -102,11 +102,11 @@ async function loadLibrary(){
 }
 
 function audioLibraryItems(){return libraryItems.filter(item=>item.kind==="Audio"&&item.source);}
-function addAudioLibraryItem(item){
+function addAudioLibraryItem(item,deferUpdate=false){
   const index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source||entry.originalSource&&entry.originalSource===item.originalSource);
   if(index<0)libraryItems.push(structuredClone({...item,role:"source"}));
   else libraryItems[index]=structuredClone({...libraryItems[index],...item,role:"source"});
-  renderLibrary();saveLibrary();
+  if(!deferUpdate){renderLibrary();saveLibrary();}
 }
 function addAudioLibraryItemsToProject(items){
   let next=project;for(const item of items){const copy=structuredClone({...item,id:id(),role:"source"});next=addSource(next,copy);selectedSourceId=copy.id;}
@@ -117,6 +117,15 @@ function removeAudioLibraryItems(items){
   if(!window.confirm(`Remove ${count} selected audio ${count===1?"source":"sources"} from the Shared Audio Library? Original chapter files and media already used in projects will not be deleted.`))return;
   libraryItems=libraryItems.filter(item=>!ids.has(item.id));renderLibrary();saveLibrary();announce(`${count} audio ${count===1?"source":"sources"} removed from the Shared Audio Library. Original files were not deleted.`);
 }
+async function exportAudioLibraryItems(items){
+  if(!invoke)return announce("Audio folder export is available in the installed application.",true);
+  try{
+    announce(`Choose a destination folder for ${items.length} selected audio ${items.length===1?"file":"files"}.`);
+    const exported=await invoke("export_audio_files_to_folder",{items:items.map(item=>({source:item.source,suggestedName:item.label||item.name||"Audio"}))});
+    if(!exported.length)return announce("Export Selected Audio Copies canceled.");
+    announce(`${exported.length} audio ${exported.length===1?"file":"files"} copied to the selected folder in chapter order.`);
+  }catch(error){announce(`Selected audio files could not be exported. ${error}`,true);}
+}
 function probeAudioDuration(path){
   return new Promise((resolve,reject)=>{
     const media=new Audio(),finish=()=>{media.removeAttribute("src");media.load();};
@@ -126,6 +135,10 @@ function probeAudioDuration(path){
     media.preload="metadata";media.src=convertFileSrc?convertFileSrc(path):path;media.load();
   });
 }
+function audioCanOpenDirectly(path){
+  const extension=path.includes(".")?path.split(".").pop().toLowerCase():"";
+  return ["mp3","m4a","aac","wav","ogg","opus","webm"].includes(extension);
+}
 async function importAudioPaths(paths,origin){
   if(!paths.length)return announce("Open Audio canceled. No files selected.");
   let imported=0;const skipped=[];
@@ -133,13 +146,23 @@ async function importAudioPaths(paths,origin){
     const name=baseName(path);
     if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){skipped.push(name);continue;}
     try{
-      announce(`Importing ${origin} item ${index+1} of ${paths.length}. ${name}.`);
-      const itemId=id(),source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId}),length=await probeAudioDuration(source);
+      const itemNumber=index+1,started=Date.now(),progress=(stage)=>announce(`${stage} chapter ${itemNumber} of ${paths.length}. ${name}.`);
+      const itemId=id();let source;
+      if(audioCanOpenDirectly(path)){source=path;progress("Opening directly from its folder");}
+      else{
+        progress("Preparing");
+        let elapsedIntervals=0;const reminder=setInterval(()=>{elapsedIntervals++;announce(`Still preparing chapter ${itemNumber} of ${paths.length}. ${name}. ${elapsedIntervals*30} seconds elapsed.`);},30000);
+        try{source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId});}finally{clearInterval(reminder);}
+      }
+      progress("Measuring duration for");
+      const measureReminder=setInterval(()=>announce(`Still measuring duration for chapter ${itemNumber} of ${paths.length}. ${name}.`),30000);
+      let length;try{length=await probeAudioDuration(source);}finally{clearInterval(measureReminder);}
       const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder";
-      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"});
-      imported++;
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
+      imported++;announce(`Completed chapter ${itemNumber} of ${paths.length}. ${name}. Duration ${readableTime(length)}. Import time ${readableTime((Date.now()-started)/1000)}.`);
     }catch(error){console.error(`Audio import failed for ${name}`,error);skipped.push(name);}
   }
+  if(imported){renderLibrary();saveLibrary();}
   const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import.`:"";
   announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the Shared Audio Library in filename order.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
 }
@@ -1359,7 +1382,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.4 Development Testing Build. Copyright 2026 Open Door Design. Audiobook folder import, multiple chapter selection, and direct Shared Audio Library management are included.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.5 Development Testing Build. Copyright 2026 Open Door Design. Audiobook folder import, multiple chapter selection, and direct Shared Audio Library management are included.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1451,7 +1474,7 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
-audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder});
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,exportAudioFiles:exportAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){

@@ -1,0 +1,41 @@
+Accessible Media Editor
+Build 0.12.5 Testing Notes
+November 12, 2026
+
+This build improves long audiobook workflows in AudioStudio Pro.
+
+The Audio playhead now exposes its current position as human-readable time and no longer exposes a long floating-point duration.
+
+Preview Selected Audio now pauses and resumes at the same position. Choosing a different source starts that source at its beginning. Reaching the end and previewing again also starts at the beginning.
+
+Shorten long pauses now belongs to the Shared Audio Library. Select one chapter or multiple chapters, choose the pause settings, and activate Analyze and Create Shortened Copies. The app analyzes each selected chapter and asks once for confirmation before rendering. It creates new library entries and does not alter the originals.
+
+Analysis and rendering announce the current chapter number and filename. If a chapter takes longer than 30 seconds, the app announces that it is still working.
+
+Export Selected Audio Copies to Folder copies selected library entries to a normal Windows folder. Shortened copies retain the original chapter name first, followed by Shortened Pauses. Existing destination files are not overwritten.
+
+Standard MP3, M4A, AAC, WAV, OGG, Opus, and WebM audio files are opened directly from their original folders instead of being converted during import. This should make audiobook folder import substantially faster. Formats requiring conversion still receive preparation progress every 30 seconds.
+
+Folder import announces preparing or opening, duration measurement, and completion for every chapter. The completion message includes the chapter duration and import time. The library is saved once after the batch rather than once per chapter.
+
+Recommended test
+
+Open AudioStudio Pro and activate Open Audiobook or Audio Folder.
+
+Choose a folder containing numbered chapters.
+
+Confirm that progress identifies each chapter and that ordinary MP3 files import much faster than before.
+
+Pause and resume Preview Selected Audio and confirm that it resumes rather than restarting.
+
+Select several chapters with Ctrl plus Space or Shift plus Arrow.
+
+Use Analyze and Create Shortened Copies.
+
+Confirm that progress identifies every chapter and that new shortened copies appear while the originals remain.
+
+Select the shortened copies and activate Export Selected Audio Copies to Folder.
+
+Play the exported files from that folder and confirm that their chapter order and shortened pauses are correct.
+
+Combining chapters into one file is not included in this build. A future chaptered audiobook export should use embedded chapter markers, such as an M4B audiobook, rather than flattening the chapters into an unmarked audio file.
