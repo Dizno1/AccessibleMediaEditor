@@ -10,7 +10,7 @@ const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf
 const prepare=readFileSync(new URL("../scripts/prepare-dist.js",import.meta.url),"utf8");
 
 test("AudioStudio Pro exposes keyboard-operable recording, review, and shared-library controls",()=>{
-  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-edit-source","audio-add-to-project","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
+  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
     assert.match(html,new RegExp(`id=["']${id}["']`));
   }
   assert.match(html,/shared Source Media Library/i);
@@ -95,8 +95,19 @@ test("long pauses are analyzed and shortened only in a confirmed new source",()=
   assert.match(rust,/analyze_silence,render_working_edit/);
 });
 
-test("all visible and native build identification is 0.12.3",()=>{
-  assert.match(html,/Build 0\.12\.3 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.3/);
-  assert.match(rust,/Build 0\.12\.3 executable started/);
+test("audiobook folders and multiple chapters are managed from Shared Audio Library",()=>{
+  assert.match(html,/id="audio-library-items"[^>]*multiple/);
+  assert.match(html,/Open Audiobook or Audio Folder/);
+  assert.match(studio,/selectedOptions/);
+  assert.match(studio,/importAudioFolder/);
+  assert.match(studio,/removeLibraryAudio/);
+  assert.match(app,/pick_audio_folder_files/);
+  assert.match(rust,/fn pick_audio_folder_files/);
+  assert.match(rust,/files\.sort_by/);
+});
+
+test("all visible and native build identification is 0.12.4",()=>{
+  assert.match(html,/Build 0\.12\.4 Development Testing Build/);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.4/);
+  assert.match(rust,/Build 0\.12\.4 executable started/);
 });

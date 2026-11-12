@@ -1,0 +1,27 @@
+Accessible Media Editor
+Build 0.12.4 Testing Notes
+November 12, 2026
+
+Open AudioStudio Pro and move to Shared Audio Library.
+
+Activate Open Audiobook or Audio Folder.
+Choose a folder containing numbered audiobook chapters.
+Confirm that supported audio files import in filename order.
+Confirm that subfolders and unsupported files are not imported.
+
+In Shared Audio Library, use Ctrl+Space or Shift+Arrow to select multiple chapters.
+Activate Add Selected Audio to Media Editor Sources.
+Confirm the number of chapters added is announced.
+Move to Media Editor and confirm that the selected chapters appear in Media Editor Sources.
+
+Start a clean Media Editor project with no project sources.
+Press Alt+S.
+Confirm that focus moves to Shared Media Library rather than an empty Media Editor Sources list.
+
+Return to Shared Audio Library and select one or more test entries.
+Activate Remove Selected Audio from Shared Library.
+Cancel once and confirm nothing is removed.
+Repeat and confirm removal.
+Confirm that original audiobook chapter files remain unchanged in their original folder.
+
+Removing a shared-library entry does not remove media already referenced by a saved project. It also does not yet remove an unused normalized working copy from local application data.

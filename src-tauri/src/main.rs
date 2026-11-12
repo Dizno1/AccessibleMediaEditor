@@ -174,6 +174,19 @@ fn pick_media_files(app: tauri::AppHandle) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
+fn pick_audio_folder_files(window: tauri::WebviewWindow) -> Result<Vec<String>, String> {
+    let dialog=rfd::FileDialog::new().set_parent(&window).set_title("Open Audiobook or Audio Folder");
+    let Some(folder)=dialog.pick_folder() else { return Ok(Vec::new()); };
+    let supported=["mp3","m4a","aac","wav","flac","ogg","opus","wma","webm"];
+    let mut files=fs::read_dir(&folder).map_err(|error|format!("The selected audio folder could not be read: {}",error))?
+        .filter_map(Result::ok).map(|entry|entry.path()).filter(|path|path.is_file())
+        .filter(|path|path.extension().and_then(|value|value.to_str()).map(|value|supported.contains(&value.to_ascii_lowercase().as_str())).unwrap_or(false))
+        .collect::<Vec<_>>();
+    files.sort_by(|left,right|left.file_name().map(|value|value.to_string_lossy().to_ascii_lowercase()).unwrap_or_default().cmp(&right.file_name().map(|value|value.to_string_lossy().to_ascii_lowercase()).unwrap_or_default()));
+    Ok(files.into_iter().map(|path|path.to_string_lossy().into_owned()).collect())
+}
+
+#[tauri::command]
 fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjectResult>, String> {
     let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Open Project - Select an AMEPROJECT file, not a media file").add_filter("Accessible Media Editor project", &["ameproject"]);
     if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
@@ -666,7 +679,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.3 executable started.");
+    write_startup_log("Build 0.12.4 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -691,7 +704,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,pick_audio_folder_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

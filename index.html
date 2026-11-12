@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.3 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.4 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -274,14 +274,17 @@
       <section class="editor-section audio-studio" id="audio-library-section" aria-labelledby="audio-library-heading" tabindex="-1">
         <h2 id="audio-library-heading">Audio Source Library</h2>
         <p id="audio-library-summary">No saved audio sources.</p>
-        <label for="audio-library-items">Audio available to all workspaces</label>
-        <select id="audio-library-items" size="8"></select>
+        <label for="audio-library-items">Shared Audio Library</label>
+        <p>Select one chapter, or use Ctrl+Space and Shift+Arrow to select multiple chapters.</p>
+        <select id="audio-library-items" size="8" multiple></select>
         <audio id="audio-library-preview" controls preload="metadata" hidden></audio>
         <div class="button-row">
           <button type="button" id="audio-open-files">Open Audio Files</button>
+          <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder</button>
           <button type="button" id="audio-preview-source">Preview Selected Audio</button>
           <button type="button" id="audio-edit-source">Open Selected Audio in Audio Editor</button>
-          <button type="button" id="audio-add-to-project">Add Selected Audio to Current Project</button>
+          <button type="button" id="audio-add-to-project">Add Selected Audio to Media Editor Sources</button>
+          <button type="button" id="audio-remove-sources">Remove Selected Audio from Shared Library</button>
         </div>
       </section>
 
@@ -587,9 +590,11 @@
         <li>Analyze and Create Shortened Copy detects long quiet pauses, reports the proposed reduction, asks for confirmation, and creates a new source. The original is never changed.</li>
         <li>Ctrl+Alt+Space pauses or resumes an active recording.</li>
         <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
-        <li>Kept recordings enter the shared Source Media Library and are available to Media Editor and Presentation.</li>
-        <li>Open Audio Files adds existing audio files to the same shared library.</li>
-        <li>Alt+S moves directly to the Audio Source Library while AudioStudio Pro is active.</li>
+        <li>Kept recordings enter the Shared Audio Library and can be deliberately added to Media Editor or Presentation.</li>
+        <li>Open Audio Files imports selected files. Open Audiobook or Audio Folder imports every supported audio file from one folder in filename order.</li>
+        <li>Use Ctrl+Space or Shift+Arrow in Shared Audio Library to select multiple chapters, then add or remove them together.</li>
+        <li>Remove Selected Audio from Shared Library removes library entries without deleting original chapter files.</li>
+        <li>Alt+S moves directly to Shared Audio Library while AudioStudio Pro is active. In Media Editor, Alt+S moves to Shared Media Library when the current project has no sources.</li>
         <li>Preview Selected Audio is a toggle. Activate it again, or press X, to stop the library preview.</li>
         <li>Ctrl+Page Up or Ctrl+Page Down moves among Recording, Recording Review when available, Audio Source Library, and Audio Editor.</li>
         <li>Open Selected Audio in Audio Editor activates the selected source without changing the original file.</li>

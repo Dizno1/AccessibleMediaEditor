@@ -108,9 +108,14 @@ function addAudioLibraryItem(item){
   else libraryItems[index]=structuredClone({...libraryItems[index],...item,role:"source"});
   renderLibrary();saveLibrary();
 }
-function addAudioLibraryItemToProject(item){
-  const copy=structuredClone({...item,id:id(),role:"source"});
-  rememberChange(addSource(project,copy),`${copy.label||copy.name} added to the current project from AudioStudio Pro.`);
+function addAudioLibraryItemsToProject(items){
+  let next=project;for(const item of items){const copy=structuredClone({...item,id:id(),role:"source"});next=addSource(next,copy);selectedSourceId=copy.id;}
+  rememberChange(next,`${items.length} audio ${items.length===1?"source":"sources"} added to Media Editor Sources.`);
+}
+function removeAudioLibraryItems(items){
+  const ids=new Set(items.map(item=>item.id)),count=ids.size;if(!count)return;
+  if(!window.confirm(`Remove ${count} selected audio ${count===1?"source":"sources"} from the Shared Audio Library? Original chapter files and media already used in projects will not be deleted.`))return;
+  libraryItems=libraryItems.filter(item=>!ids.has(item.id));renderLibrary();saveLibrary();announce(`${count} audio ${count===1?"source":"sources"} removed from the Shared Audio Library. Original files were not deleted.`);
 }
 function probeAudioDuration(path){
   return new Promise((resolve,reject)=>{
@@ -121,22 +126,31 @@ function probeAudioDuration(path){
     media.preload="metadata";media.src=convertFileSrc?convertFileSrc(path):path;media.load();
   });
 }
-async function importAudioStudioFiles(){
-  if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
-  const paths=await invoke("pick_media_files");
+async function importAudioPaths(paths,origin){
   if(!paths.length)return announce("Open Audio canceled. No files selected.");
   let imported=0;const skipped=[];
-  for(const path of paths){
+  for(const [index,path]of paths.entries()){
     const name=baseName(path);
     if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){skipped.push(name);continue;}
     try{
+      announce(`Importing ${origin} item ${index+1} of ${paths.length}. ${name}.`);
       const itemId=id(),source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId}),length=await probeAudioDuration(source);
-      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"});
+      const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder";
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"});
       imported++;
     }catch(error){console.error(`Audio import failed for ${name}`,error);skipped.push(name);}
   }
   const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import.`:"";
-  announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the shared Source Media Library.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
+  announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the Shared Audio Library in filename order.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
+}
+async function importAudioStudioFiles(){
+  if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
+  return importAudioPaths(await invoke("pick_media_files"),"selected audio");
+}
+async function importAudioStudioFolder(){
+  if(!invoke)return announce("The Windows folder picker is available in the installed application.",true);
+  const paths=await invoke("pick_audio_folder_files");if(!paths.length)return announce("Open Audio Folder canceled or the folder contained no supported audio files.");
+  return importAudioPaths(paths,"folder");
 }
 
 let selectedId=null;
@@ -893,8 +907,9 @@ function focusPresentationSources(){
 function focusWorkspaceSources(){
   if(activeWorkspace==="presentation")return focusPresentationSources();
   if(activeWorkspace==="audio")return audioStudio?.focusLibrary();
-  el["source-items"].focus();
-  announce(`${(project.sources||[]).filter(item=>item.kind!=="Image").length} items in Source Media. Adding or editing a source does not change Primary Production until an edit is applied.`);
+  const count=(project.sources||[]).filter(item=>item.kind!=="Image").length;
+  if(!count){el["persistent-library-items"].focus();return announce(`Media Editor Sources is empty. Moved to the Shared Media Library, which contains ${libraryItems.length} reusable items.`);}
+  el["source-items"].focus();announce(`${count} items in Media Editor Sources. Adding or editing a source does not change Primary Production until an edit is applied.`);
 }
 function setPresentationMusic(remove=false){
   const source=remove?"":el["presentation-music-source"].value;
@@ -1344,7 +1359,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.3 Development Testing Build. Copyright 2026 Open Door Design. Adjustable playback speed and nondestructive long-pause shortening are included.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.4 Development Testing Build. Copyright 2026 Open Door Design. Audiobook folder import, multiple chapter selection, and direct Shared Audio Library management are included.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1436,7 +1451,7 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
-audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemToProject,importAudioFiles:importAudioStudioFiles});
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){

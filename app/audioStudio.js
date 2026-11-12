@@ -18,7 +18,7 @@ function supportedType(){return typeof MediaRecorder==="undefined"?"":(["audio/w
 function blobDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error||new Error("The recording could not be read."));reader.readAsDataURL(blob);});}
 
 export function createAudioStudio(options){
-  const {elements,invoke,convertFileSrc,announce,getAudioItems,addLibraryAudio,addAudioToProject,importAudioFiles}=options;
+  const {elements,invoke,convertFileSrc,announce,getAudioItems,addLibraryAudio,addAudioToProject,removeLibraryAudio,importAudioFiles,importAudioFolder}=options;
   let stream=null,recorder=null,chunks=[],startedAt=0,accumulated=0,pending=null,previewUrl=null;
   let editingItem=null,cursor=0,markIn=null,markOut=null,auditionTimer=null,libraryPreviewEnd=null;
   const e=id=>elements[id],editor=e("audio-editor-media");
@@ -26,6 +26,7 @@ export function createAudioStudio(options){
 
   function setStatus(text){e("audio-studio-status").textContent=text;}
   function selectedItem(){return getAudioItems().find(value=>value.id===e("audio-library-items").value);}
+  function selectedItems(){const ids=new Set([...e("audio-library-items").selectedOptions].map(option=>option.value));return getAudioItems().filter(item=>ids.has(item.id));}
   function sourceUrl(item){return convertFileSrc?convertFileSrc(item.source):item.source;}
   function sourceRange(item){
     const segments=Array.isArray(item?.editSegments)&&item.editSegments.length?item.editSegments:null;
@@ -43,12 +44,12 @@ export function createAudioStudio(options){
     e("audio-editor-clear-marks").disabled=!marks.length;e("audio-editor-save-range").disabled=!(markIn!=null&&markOut!=null&&markOut>markIn);
   }
   function renderLibrary(){
-    const items=getAudioItems(),list=e("audio-library-items"),previous=list.value;list.replaceChildren();
+    const items=getAudioItems(),list=e("audio-library-items"),previous=new Set([...list.selectedOptions].map(option=>option.value));list.replaceChildren();
     for(const item of items)list.add(new Option(`${item.label||item.name}. ${naturalTime(item.duration||0)}.`,item.id));
     if(!items.length){const option=new Option("No saved audio sources","");option.disabled=true;list.add(option);}
-    if(items.some(item=>item.id===previous))list.value=previous;
+    for(const option of list.options)option.selected=previous.has(option.value);
     e("audio-library-summary").textContent=`${items.length} saved audio ${items.length===1?"source":"sources"}. These sources are shared with Media Editor and Presentation.`;
-    const available=items.length>0;for(const id of ["audio-preview-source","audio-edit-source","audio-add-to-project"])e(id).disabled=!available;
+    const available=items.length>0;for(const id of ["audio-preview-source","audio-edit-source","audio-add-to-project","audio-remove-sources"])e(id).disabled=!available;
   }
 
   async function populateMicrophones(){
@@ -117,7 +118,9 @@ export function createAudioStudio(options){
     preview.addEventListener("loadedmetadata",()=>{preview.currentTime=range.start;preview.play().catch(error=>announce(`Audio could not be played. ${error}`,true));},{once:true});preview.load();
   }
   async function openAudio(){try{await importAudioFiles();renderLibrary();}catch(error){announce(`Audio import failed. ${error}`,true);}}
-  function addSelected(){const item=selectedItem();if(item)addAudioToProject(item);}
+  async function openFolder(){try{await importAudioFolder();renderLibrary();}catch(error){announce(`Audio folder import failed. ${error}`,true);}}
+  function addSelected(){const items=selectedItems();if(!items.length)return announce("Select one or more entries in the Shared Audio Library first.",true);addAudioToProject(items);e("audio-library-items").focus();}
+  function removeSelected(){const items=selectedItems();if(!items.length)return announce("Select one or more entries in the Shared Audio Library first.",true);removeLibraryAudio(items);e("audio-library-items").focus();}
 
   function openEditor(){
     const item=selectedItem();if(!item)return announce("Choose an audio source first.",true);
@@ -194,7 +197,7 @@ export function createAudioStudio(options){
   editor.addEventListener("ended",()=>{cursor=editorDuration();pauseEditor();updateEditor();});
   e("audio-library-preview").addEventListener("timeupdate",()=>{const preview=e("audio-library-preview");if(libraryPreviewEnd!=null&&preview.currentTime>=libraryPreviewEnd){preview.pause();libraryPreviewEnd=null;e("audio-preview-source").textContent="Preview Selected Audio";}});
   e("audio-library-preview").addEventListener("ended",()=>{e("audio-preview-source").textContent="Preview Selected Audio";});
-  e("audio-enable-microphone").addEventListener("click",enableMicrophone);e("audio-record-toggle").addEventListener("click",toggleRecording);e("audio-record-pause").addEventListener("click",pauseRecording);e("audio-keep-recording").addEventListener("click",keepRecording);e("audio-record-again").addEventListener("click",recordAgain);e("audio-discard-recording").addEventListener("click",discardRecording);e("audio-open-files").addEventListener("click",openAudio);e("audio-preview-source").addEventListener("click",previewSource);e("audio-edit-source").addEventListener("click",openEditor);e("audio-add-to-project").addEventListener("click",addSelected);e("audio-recording-profile").addEventListener("change",()=>{e("audio-profile-description").textContent=profiles[e("audio-recording-profile").value].description;});
+  e("audio-enable-microphone").addEventListener("click",enableMicrophone);e("audio-record-toggle").addEventListener("click",toggleRecording);e("audio-record-pause").addEventListener("click",pauseRecording);e("audio-keep-recording").addEventListener("click",keepRecording);e("audio-record-again").addEventListener("click",recordAgain);e("audio-discard-recording").addEventListener("click",discardRecording);e("audio-open-files").addEventListener("click",openAudio);e("audio-open-folder").addEventListener("click",openFolder);e("audio-preview-source").addEventListener("click",previewSource);e("audio-edit-source").addEventListener("click",openEditor);e("audio-add-to-project").addEventListener("click",addSelected);e("audio-remove-sources").addEventListener("click",removeSelected);e("audio-recording-profile").addEventListener("change",()=>{e("audio-profile-description").textContent=profiles[e("audio-recording-profile").value].description;});
   e("audio-editor-play").addEventListener("click",togglePlayback);e("audio-editor-mark-in").addEventListener("click",()=>setMark("in"));e("audio-editor-mark-out").addEventListener("click",()=>setMark("out"));e("audio-editor-clear-marks").addEventListener("click",clearMarks);e("audio-editor-goto").addEventListener("click",goToTime);e("audio-editor-save-range").addEventListener("click",saveRange);e("audio-editor-shorten-silence").addEventListener("click",shortenSilence);e("audio-editor-speed").addEventListener("change",setPlaybackSpeed);e("audio-editor-playhead").addEventListener("input",()=>{cursor=Number(e("audio-editor-playhead").value)||0;editor.currentTime=sourceTime(cursor);updateEditor();});
   e("audio-editor-speed").value=String(playbackSpeed);editor.playbackRate=playbackSpeed;editor.preservesPitch=true;window.addEventListener("ame-playback-speed-change",event=>{playbackSpeed=Number(event.detail)||1;e("audio-editor-speed").value=String(playbackSpeed);editor.playbackRate=playbackSpeed;editor.preservesPitch=true;});
   renderLibrary();updateEditor();void restoreMicrophonePermission();
