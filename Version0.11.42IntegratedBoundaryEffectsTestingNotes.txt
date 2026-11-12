@@ -1,0 +1,38 @@
+Accessible Media Editor
+Build 0.11.42 Testing Notes
+
+This build changes opening and closing effects so the first and final presentation items count toward the requested effect durations.
+
+Example using the current Dogs presentation
+
+The opening effect is 10 seconds.
+The title slide and its attached audio are 4 seconds, 702 milliseconds.
+The renderer adds only 5 seconds, 298 milliseconds before the title slide.
+The title slide and its audio then fade in during the remaining 4 seconds, 702 milliseconds of the opening.
+Background music remains silent until the complete 10-second opening has finished.
+
+The same rule applies at the end. The final presentation item counts toward the requested closing duration. Only the additional time needed to complete the closing effect is appended.
+
+The final presentation audio mix fades out with the closing effect. This includes background music and foreground sound.
+
+Recommended test
+
+Open DogsFirst Test Presentation.ameproject.
+Confirm that the title slide still has its attached audio and duration matching.
+Set the opening effect to Fade in from black with a duration of 10 seconds.
+Set the closing effect to Fade out to white with a duration of 10 seconds.
+Preview the complete presentation.
+
+Expected opening result
+
+The preview begins in silence.
+The title audio begins about 5 seconds, 298 milliseconds after the preview starts.
+The title audio fades in rather than beginning at full volume.
+The title slide completes at the 10-second point.
+Background music begins at the 10-second point.
+
+Expected closing result
+
+The visual closing effect includes the final item instead of starting after it.
+The final mixed audio fades continuously throughout the closing effect.
+Only the extra time needed beyond the final item duration is added.

@@ -20,17 +20,22 @@ test("presentation direct-focus commands are native Windows accelerators and web
   assert.match(rust,/"Source Media Library Alt\+S","focusPresentationSources","Alt\+S"/);
   assert.match(app,/focusPresentationTimeline,focusPresentationSources/);
 });
-test("opening and closing effects extend the rendered presentation and delay audio",()=>{
-  assert.match(rust,/opening_duration\+joined_duration\+closing_duration/);
+test("opening and closing effects incorporate boundary item durations",()=>{
+  assert.match(rust,/opening_extra=\(opening_duration-first_duration\)\.max\(0\.0\)/);
+  assert.match(rust,/closing_extra=\(closing_duration-last_duration\)\.max\(0\.0\)/);
+  assert.match(rust,/opening_extra\+joined_duration\+closing_extra/);
   assert.match(rust,/tpad=start_mode=clone:start_duration/);
-  assert.match(rust,/adelay=\{\}:all=1\[aopen\]/);
+  assert.match(rust,/\[aopensilence\].*concat=n=2:v=0:a=1\[aopenbase\]/);
+  assert.match(rust,/\[aopenbase\]afade=t=in:st=/);
   assert.match(rust,/tpad=stop_mode=clone:stop_duration/);
-  assert.match(rust,/range\.start\+opening_duration/);
+  assert.match(rust,/\[musicsilence\]\[musicbody\]concat=n=2:v=0:a=1\[musicdelayed\]/);
+  assert.match(rust,/range\.start\+opening_extra/);
+  assert.match(rust,/\[mixed\]afade=t=out:st=/);
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.11\.40 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Media Editor Build 0\.11\.40 Development Testing Build/);
+  assert.match(html,/Build 0\.11\.42 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Media Editor Build 0\.11\.42 Development Testing Build/);
 });
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);

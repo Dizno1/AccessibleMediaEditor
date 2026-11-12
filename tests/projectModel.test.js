@@ -255,8 +255,8 @@ test("opening and closing effects are assigned only to presentation boundaries",
   assert.equal(output[0].openingEffectType,"fadewhite");assert.equal(output[0].openingEffectDuration,1.5);assert.equal(output[0].closingEffectType,"none");
   assert.equal(output[1].openingEffectType,"none");assert.equal(output[1].closingEffectType,"fadeblack");assert.equal(output[1].closingEffectDuration,2);
 });
-test("opening and closing effects add time without consuming presentation items",()=>{
+test("boundary item durations count toward opening and closing effects",()=>{
   const items=[{...item("first",4.702041)},{...item("last",6),transition:{type:"crossfade",duration:2}}];
   assert.ok(Math.abs(presentationTimelineDuration(items)-8.702041)<0.000001);
-  assert.ok(Math.abs(presentationTotalDuration(items,{type:"fadeblack",duration:5},{type:"fadewhite",duration:10})-23.702041)<0.000001);
+  assert.ok(Math.abs(presentationTotalDuration(items,{type:"fadeblack",duration:10},{type:"fadewhite",duration:10})-18)<0.000001);
 });

@@ -484,10 +484,23 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     let closing_color=match closing.closing_effect_type.to_ascii_lowercase().as_str(){"fadeblack"=>Some("black"),"fadewhite"=>Some("white"),_=>None};
     let opening_duration=if opening_color.is_some(){opening.opening_effect_duration.max(0.0)}else{0.0};
     let closing_duration=if closing_color.is_some(){closing.closing_effect_duration.max(0.0)}else{0.0};
-    let total_duration=opening_duration+joined_duration+closing_duration;
+    let first_duration=segment_duration(&opening.segments);
+    let last_duration=segment_duration(&closing.segments);
+    let opening_extra=(opening_duration-first_duration).max(0.0);
+    let closing_extra=(closing_duration-last_duration).max(0.0);
+    let total_duration=opening_extra+joined_duration+closing_extra;
+    let closing_start=(total_duration-closing_duration).max(0.0);
+    let opening_audio_fade=opening_duration.min(first_duration);
+    let has_background_music=background_music.is_some();
     let mut effect_video="[vjoined]".to_string();let mut effect_audio="[ajoined]".to_string();
-    if let Some(color)=opening_color {if opening_duration>0.0005{let delay_ms=(opening_duration*1000.0).round() as u64;filter_parts.push(format!("{}tpad=start_mode=clone:start_duration={:.6},fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_duration,opening_duration,color));filter_parts.push(format!("{}adelay={}:all=1[aopen]",effect_audio,delay_ms));effect_video="[vopen]".into();effect_audio="[aopen]".into();}}
-    if let Some(color)=closing_color {if closing_duration>0.0005{let start=opening_duration+joined_duration;filter_parts.push(format!("{}tpad=stop_mode=clone:stop_duration={:.6},fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,closing_duration,start,closing_duration,color));filter_parts.push(format!("{}apad=pad_dur={:.6},atrim=duration={:.6}[a]",effect_audio,closing_duration,total_duration));effect_video="[v]".into();effect_audio="[a]".into();}}
+    if let Some(color)=opening_color {if opening_duration>0.0005{
+        if opening_extra>0.0005{filter_parts.push(format!("{}tpad=start_mode=clone:start_duration={:.6},fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_extra,opening_duration,color));filter_parts.push(format!("anullsrc=r=48000:cl=stereo:d={:.6},aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[aopensilence]",opening_extra));filter_parts.push(format!("[aopensilence]{}concat=n=2:v=0:a=1[aopenbase]",effect_audio));}else{filter_parts.push(format!("{}fade=t=in:st=0:d={:.6}:color={}[vopen]",effect_video,opening_duration,color));filter_parts.push(format!("{}anull[aopenbase]",effect_audio));}
+        filter_parts.push(format!("[aopenbase]afade=t=in:st={:.6}:d={:.6}[aopen]",opening_extra,opening_audio_fade));effect_video="[vopen]".into();effect_audio="[aopen]".into();
+    }}
+    if let Some(color)=closing_color {if closing_duration>0.0005{
+        if closing_extra>0.0005{filter_parts.push(format!("{}tpad=stop_mode=clone:stop_duration={:.6},fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,closing_extra,closing_start,closing_duration,color));filter_parts.push(format!("anullsrc=r=48000:cl=stereo:d={:.6},aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[aclosesilence]",closing_extra));filter_parts.push(format!("{}[aclosesilence]concat=n=2:v=0:a=1[aclosebase]",effect_audio));}else{filter_parts.push(format!("{}fade=t=out:st={:.6}:d={:.6}:color={}[v]",effect_video,closing_start,closing_duration,color));filter_parts.push(format!("{}anull[aclosebase]",effect_audio));}
+        if has_background_music{filter_parts.push("[aclosebase]anull[a]".into());}else{filter_parts.push(format!("[aclosebase]afade=t=out:st={:.6}:d={:.6}[a]",closing_start,closing_duration));}effect_video="[v]".into();effect_audio="[a]".into();
+    }}
     if effect_video!="[v]"{filter_parts.push(format!("{}null[v]",effect_video));}if effect_audio!="[a]"{filter_parts.push(format!("{}anull[a]",effect_audio));}
     args.extend(["-filter_complex".into(),filter_parts.join(";"),"-map".into(),"[v]".into(),"-map".into(),"[a]".into()]);
     args.extend(standard_video_encoding(base_text.clone()));
@@ -498,11 +511,12 @@ async fn render_production(app: tauri::AppHandle, window: tauri::WebviewWindow, 
     if let Some(music)=background_music {
         window.emit("production-render-progress", "Applying continuous background music and automatic ducking.").map_err(|error| error.to_string())?;
         let mixed_path=safe_working_path(&project_id,"mp4","production-music")?;let mixed_text=mixed_path.to_string_lossy().into_owned();
-        let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start+opening_duration,range.end+opening_duration)).collect::<Vec<_>>().join("+");
+        let ranges=music.duck_ranges.iter().map(|range|format!("between(t,{:.6},{:.6})",range.start+opening_extra,range.end+opening_extra)).collect::<Vec<_>>().join("+");
         let duck=if ranges.is_empty(){"1".to_string()}else{format!("if(gt({},0),{:.4},1)",ranges,music.duck_factor.clamp(0.0,1.0))};
-        let delay_ms=(opening_duration*1000.0).round() as u64;
-        let music_fade=if closing_duration>0.0005{format!(",afade=t=out:st={:.6}:d={:.6}",opening_duration+joined_duration,closing_duration)}else{String::new()};
-        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,adelay={}:all=1,atrim=duration={:.6},volume={:.4},volume='{}'{}[music];[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]",joined_duration+closing_duration,delay_ms,total_duration,music.volume.clamp(0.0,1.0),duck,music_fade);
+        let music_prefix=if opening_duration>0.0005{format!("anullsrc=r=48000:cl=stereo:d={:.6},aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[musicsilence];[musicsilence][musicbody]concat=n=2:v=0:a=1[musicdelayed];",opening_duration)}else{"[musicbody]anull[musicdelayed];".to_string()};
+        let mixed_output=if closing_duration>0.0005{format!("[0:a:0][music]amix=inputs=2:duration=first:normalize=0[mixed];[mixed]afade=t=out:st={:.6}:d={:.6}[a]",closing_start,closing_duration)}else{"[0:a:0][music]amix=inputs=2:duration=first:normalize=0[a]".to_string()};
+        let music_duration=(total_duration-opening_duration).max(0.0);
+        let filter=format!("[1:a:0]atrim=duration={:.6},asetpts=PTS-STARTPTS,volume={:.4}[musicbody];{}[musicdelayed]volume='{}'[music];{}",music_duration,music.volume.clamp(0.0,1.0),music_prefix,duck,mixed_output);
         let mut mix_args=vec!["-y".into(),"-i".into(),base_text.clone(),"-stream_loop".into(),"-1".into(),"-i".into(),music.source,"-filter_complex".into(),filter,"-map".into(),"0:v:0".into(),"-map".into(),"[a]".into()];
         mix_args.extend(standard_video_encoding(mixed_text));run_ffmpeg(&app,mix_args).await?;let _=fs::remove_file(&active_base);active_base=mixed_path;
     }

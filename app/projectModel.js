@@ -13,7 +13,8 @@ export function presentationTransitionDuration(item,previousItem=null){if(!previ
 export function maxPresentationTransitionDuration(items=[],index,limit=10){if(index<=0||index>=items.length)return 0;const previous=items[index-1],current=items[index];const previousIncoming=index>1?presentationTransitionDuration(previous,items[index-2]):0;const currentOutgoing=index+1<items.length?presentationTransitionDuration(items[index+1],current):0;return Math.max(0,Math.min(limit,itemDuration(previous)-previousIncoming,itemDuration(current)-currentOutgoing));}
 export function presentationTimelineDuration(items=[]){return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);}
 export function presentationEffectDuration(effect,allowedTypes=[]){return allowedTypes.includes(effect?.type)?Math.max(0,Number(effect?.duration)||0):0;}
-export function presentationTotalDuration(items=[],openingEffect=null,closingEffect=null){return presentationTimelineDuration(items)+presentationEffectDuration(openingEffect,["fadeblack","fadewhite"])+presentationEffectDuration(closingEffect,["fadeblack","fadewhite"]);}
+export function presentationEffectExtension(effect,item=null){return Math.max(0,presentationEffectDuration(effect,["fadeblack","fadewhite"])-itemDuration(item));}
+export function presentationTotalDuration(items=[],openingEffect=null,closingEffect=null){if(!items.length)return 0;return presentationTimelineDuration(items)+presentationEffectExtension(openingEffect,items[0])+presentationEffectExtension(closingEffect,items[items.length-1]);}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);

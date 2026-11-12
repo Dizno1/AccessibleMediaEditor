@@ -1,0 +1,19 @@
+Accessible Media Editor Build 0.11.41
+
+Explicit opening silence
+
+The Build 0.11.40 Windows preview delayed background music but did not reliably delay the title slide's attached dialogue.
+
+Build 0.11.41 creates a real silent audio segment equal to the opening duration and concatenates it before the complete presentation audio. The same explicit silent segment is concatenated before the background music.
+
+For DogsFirst Test Presentation, the first 10 seconds should contain no title dialogue and no background music. The title dialogue and background music should begin after the 10-second opening completes.
+
+Final mixed-audio fade
+
+Build 0.11.40 did not produce a clearly audible background-music fade during the closing effect.
+
+Build 0.11.41 applies the closing fade to the final mixed audio after background music and presentation audio have been combined. The music should steadily decrease throughout the 10-second closing instead of playing at full volume and stopping abruptly.
+
+Visual behavior
+
+The opening still adds its duration before the title slide. The closing still adds its duration after the final presentation item. The final visual frame remains present during the closing fade.
