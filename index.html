@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.11.42 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.0 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -233,17 +233,54 @@
     </div>
 
     <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
-      <section class="editor-section" aria-labelledby="audio-studio-heading">
+      <section class="editor-section audio-studio" aria-labelledby="audio-studio-heading">
         <h2 id="audio-studio-heading" tabindex="-1">AudioStudio Pro</h2>
-        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show AudioStudio Pro Development Status</button><div class="visual-disclosure-content">
-        <p>Professional audio recording and editing is an optional workspace. Opening an audio file does not enter this workspace automatically.</p>
-        <p>Recording, advanced processing, and Send to Media Editor will be added after the shared media engine is complete.</p>
-        <div class="button-row">
-          <button type="button" disabled>Record Professional Narration</button>
-          <button type="button" disabled>Import Audio for Professional Editing</button>
-          <button type="button" disabled>Send to Media Editor</button>
+        <p id="audio-studio-status">Ready. Enable microphone access to record, or open existing audio.</p>
+
+        <h3>Record Audio</h3>
+        <p id="audio-microphone-status">Microphone access has not been enabled.</p>
+        <button type="button" id="audio-enable-microphone">Enable Microphone Access</button>
+        <div id="audio-recording-setup" hidden>
+          <label for="audio-microphone-select">Microphone</label>
+          <select id="audio-microphone-select"></select>
+          <label for="audio-recording-profile">Recording profile</label>
+          <select id="audio-recording-profile">
+            <option value="spoken">Spoken Word</option>
+            <option value="music">Music</option>
+            <option value="unprocessed">Unprocessed</option>
+          </select>
+          <p id="audio-profile-description">Clear speech recording with echo cancellation and noise suppression.</p>
         </div>
-        </div></div>
+        <div class="button-row">
+          <button type="button" id="audio-record-toggle" disabled>Start Recording (Ctrl+Alt+R)</button>
+          <button type="button" id="audio-record-pause" disabled>Pause Recording (Ctrl+Alt+Space)</button>
+        </div>
+
+        <div id="audio-recording-review" hidden>
+          <h3 id="audio-review-heading" tabindex="-1">Review Recording</h3>
+          <p id="audio-review-duration"></p>
+          <audio id="audio-recording-preview" controls preload="metadata"></audio>
+          <label for="audio-recording-name">Recording name</label>
+          <input type="text" id="audio-recording-name" value="New Recording">
+          <div class="button-row">
+            <button type="button" id="audio-keep-recording">Keep Recording and Add to Library</button>
+            <button type="button" id="audio-record-again">Record Again</button>
+            <button type="button" id="audio-discard-recording">Discard Recording</button>
+          </div>
+        </div>
+
+        <h3>Audio Source Library</h3>
+        <p id="audio-library-summary">No saved audio sources.</p>
+        <label for="audio-library-items">Audio available to all workspaces</label>
+        <select id="audio-library-items" size="8"></select>
+        <audio id="audio-library-preview" controls preload="metadata"></audio>
+        <div class="button-row">
+          <button type="button" id="audio-open-files">Open Audio Files</button>
+          <button type="button" id="audio-preview-source">Preview Selected Audio</button>
+          <button type="button" id="audio-add-to-project">Add Selected Audio to Current Project</button>
+        </div>
+
+        <p>Audio editing with brackets, cut, copy, paste, undo, save, and export will be added incrementally during the 0.12 development cycle.</p>
       </section>
     </div>
   </main>
@@ -490,6 +527,15 @@
         <li>Preview Complete Presentation renders an accurate preview before export. In the preview, X plays or pauses and Left or Right Arrow moves five seconds.</li>
         <li>Background music automatically lowers during video or audio items. The music controls set both its normal level and its reduced level.</li>
       </ul>
+      <h3>AudioStudio Pro commands</h3>
+      <ul>
+        <li>Enable Microphone Access makes Windows request microphone permission and lists the available microphones.</li>
+        <li>Ctrl+Alt+R starts or stops recording while AudioStudio Pro is active.</li>
+        <li>Ctrl+Alt+Space pauses or resumes an active recording.</li>
+        <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
+        <li>Kept recordings enter the shared Source Media Library and are available to Media Editor and Presentation.</li>
+        <li>Open Audio Files adds existing audio files to the same shared library.</li>
+      </ul>
       <button type="submit">Close Instructions and Keyboard Shortcuts</button>
     </form>
   </dialog>
@@ -497,7 +543,7 @@
   <dialog id="testing-guide-dialog" aria-labelledby="testing-guide-heading">
     <form method="dialog">
       <h2 id="testing-guide-heading">Testing Guide</h2>
-      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor, Presentation, and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
+      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor, Presentation, and AudioStudio Pro. AudioStudio Pro supports microphone recording, review, and the shared Source Media Library in this build.</p>
       <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
       <p><strong>Primary and Source Media:</strong> The first file returned by the Windows dialog becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted. Select a Source and use Make Selected Source Primary when Windows returns the files in an unexpected order. The former Primary moves to Source Media.</p>
       <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>

@@ -8,6 +8,7 @@ import {
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "./editorState.js";
+import { createAudioStudio } from "./audioStudio.js";
 
 const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
@@ -20,6 +21,7 @@ let libraryItems=[];
 let libraryReady=false;
 let libraryWrite=Promise.resolve();
 let libraryBlocked=false;
+let audioStudio=null;
 function saveLibrary(){
   if(!invoke||!libraryReady||libraryBlocked)return;
   const content=JSON.stringify({schema:1,items:libraryItems});
@@ -52,6 +54,7 @@ function renderLibrary(){
   el["persistent-library-status"].textContent=`${libraryItems.length} reusable library ${libraryItems.length===1?"item":"items"}. Current project opens separately.`;
   el["persistent-library-add"].disabled=!libraryItems.length;
   el["persistent-library-remove"].disabled=!libraryItems.length;
+  audioStudio?.renderLibrary();
 }
 function addLibrarySelection(){
   const item=libraryItems.find(entry=>entry.id===el["persistent-library-items"].value);
@@ -96,6 +99,44 @@ async function loadLibrary(){
     libraryBlocked=true;renderLibrary();
     announce("Saved library could not be loaded. Its existing data was left unchanged. The empty workspace remains usable.",true);
   }
+}
+
+function audioLibraryItems(){return libraryItems.filter(item=>item.kind==="Audio"&&item.source);}
+function addAudioLibraryItem(item){
+  const index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source||entry.originalSource&&entry.originalSource===item.originalSource);
+  if(index<0)libraryItems.push(structuredClone({...item,role:"source"}));
+  else libraryItems[index]=structuredClone({...libraryItems[index],...item,role:"source"});
+  renderLibrary();saveLibrary();
+}
+function addAudioLibraryItemToProject(item){
+  const copy=structuredClone({...item,id:id(),role:"source"});
+  rememberChange(addSource(project,copy),`${copy.label||copy.name} added to the current project from AudioStudio Pro.`);
+}
+function probeAudioDuration(path){
+  return new Promise((resolve,reject)=>{
+    const media=new Audio(),finish=()=>{media.removeAttribute("src");media.load();};
+    const timer=setTimeout(()=>{finish();reject(new Error("Audio duration could not be determined."));},10000);
+    media.addEventListener("loadedmetadata",()=>{const value=Number(media.duration);clearTimeout(timer);finish();value>0&&Number.isFinite(value)?resolve(value):reject(new Error("Audio duration could not be determined."));},{once:true});
+    media.addEventListener("error",()=>{clearTimeout(timer);finish();reject(new Error("The audio file could not be opened."));},{once:true});
+    media.preload="metadata";media.src=convertFileSrc?convertFileSrc(path):path;media.load();
+  });
+}
+async function importAudioStudioFiles(){
+  if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
+  const paths=await invoke("pick_media_files");
+  if(!paths.length)return announce("Open Audio canceled. No files selected.");
+  let imported=0;const skipped=[];
+  for(const path of paths){
+    const name=baseName(path);
+    if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){skipped.push(name);continue;}
+    try{
+      const itemId=id(),source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId}),length=await probeAudioDuration(source);
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"});
+      imported++;
+    }catch(error){console.error(`Audio import failed for ${name}`,error);skipped.push(name);}
+  }
+  const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import.`:"";
+  announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the shared Source Media Library.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
 }
 
 let selectedId=null;
@@ -624,7 +665,7 @@ const workspacePanels={media:"media-editor-workspace",presentation:"presentation
 const presentationSections=["presentation-builder-section","presentation-music-section","presentation-accessibility-section"];
 let presentationSectionIndex=0;
 function focusSection(offset){
-  if(activeWorkspace==="audio")return announce("AudioStudio Pro does not have editor sections yet.");
+  if(activeWorkspace==="audio"){el["audio-record-toggle"].focus();updateStatus("AudioStudio Pro recording and source library.");return;}
   if(activeWorkspace==="presentation"){
     presentationSectionIndex=(presentationSectionIndex+offset+presentationSections.length)%presentationSections.length;
     const section=el[presentationSections[presentationSectionIndex]];section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);return;
@@ -1285,13 +1326,14 @@ const actions={
   preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
   saveSourceClip,cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:commitPrimaryEdit,
   focusPresentationTimeline,focusPresentationSources,
+  toggleAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.toggleRecording();},pauseAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.pauseRecording();},
   scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
   moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
   jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.42 Development Testing Build. Copyright 2026 Open Door Design. Opening and closing effects incorporate the first and final item durations, with synchronized audio fading.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.0 Development Testing Build. Copyright 2026 Open Door Design. AudioStudio Pro includes microphone recording, review, and the shared Source Media Library.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1383,6 +1425,7 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemToProject,importAudioFiles:importAudioStudioFiles});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){

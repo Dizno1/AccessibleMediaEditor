@@ -1,0 +1,35 @@
+Accessible Media Editor
+Build 0.12.0 Development Testing Build
+AudioStudio Pro Foundation Testing Notes
+
+This build begins the 0.12 development series and replaces the AudioStudio Pro placeholder with a working recording foundation.
+
+What is included
+
+AudioStudio Pro can request Windows microphone permission, list available microphones, and record using Spoken Word, Music, or Unprocessed profiles.
+
+Ctrl Alt R starts or stops recording while AudioStudio Pro is active.
+
+Ctrl Alt Space pauses or resumes an active recording.
+
+After recording, users can play the recording, give it a useful name, keep it, record again, or discard it.
+
+Kept recordings are stored in the Accessible Media Editor Library Recordings folder. They are converted through the same app-owned audio normalization pipeline used elsewhere and added to the shared Source Media Library.
+
+Existing audio files can also be opened from AudioStudio Pro. Successfully imported files remain available even if another selected file cannot be imported.
+
+Audio sources in the shared library can be previewed and added to the current project for use by Media Editor and Presentation.
+
+Screen reader testing
+
+Use Focus Mode in NVDA, turn the Virtual PC Cursor off in JAWS, or turn Scan Mode off in Narrator while operating the workspace.
+
+Verify microphone permission, microphone selection, all three recording profiles, start, pause, resume, stop, review, keep, record again, and discard.
+
+Verify that a kept recording is announced in natural time and appears in AudioStudio Pro, Media Editor, and Presentation without restarting the app.
+
+Verify that Ctrl Alt R and Ctrl Alt Space work only while AudioStudio Pro is active and do not interfere with the other workspaces.
+
+Current scope
+
+This build establishes dependable recording and shared-library behavior. Waveform editing, multitrack arrangement, spatial positioning, effects, reverb, echo, and voice effects are planned AudioStudio Pro work and are not claimed as complete in this build.

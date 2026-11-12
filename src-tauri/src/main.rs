@@ -125,6 +125,25 @@ fn save_title_slide_image(data_url: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn save_audio_recording(data_url: String, suggested_name: String, extension: String) -> Result<String, String> {
+    let extension=extension.to_ascii_lowercase();
+    if !["webm","ogg","m4a","wav"].contains(&extension.as_str()) {return Err("Unsupported recording format.".into());}
+    let encoded=data_url.split_once(',').map(|(_,value)|value).ok_or("Expected an audio recording.")?;
+    if encoded.len()>700_000_000 {return Err("The recording is too large to save.".into());}
+    use base64::Engine;
+    let bytes=base64::engine::general_purpose::STANDARD.decode(encoded).map_err(|error|error.to_string())?;
+    if bytes.is_empty() {return Err("The recording is empty.".into());}
+    let clean: String=suggested_name.chars().filter(|character|character.is_alphanumeric()||*character==' '||*character=='_'||*character=='-').collect();
+    let clean=clean.trim();let clean=if clean.is_empty(){"New Recording"}else{clean};
+    let folder=app_folder("Library").ok_or("Unable to access media library.")?.join("Recordings");
+    fs::create_dir_all(&folder).map_err(|error|error.to_string())?;
+    let stamp=SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error|error.to_string())?.as_nanos();
+    let path=folder.join(format!("{}-{}.{}",clean,stamp,extension));
+    fs::write(&path,bytes).map_err(|error|error.to_string())?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
 fn log_frontend_startup(message: String) {
     write_startup_log(&message);
 }
@@ -626,7 +645,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.11.34 executable started.");
+    write_startup_log("Build 0.12.0 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -651,7 +670,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }
