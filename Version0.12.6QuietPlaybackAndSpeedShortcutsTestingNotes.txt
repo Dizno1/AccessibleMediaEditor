@@ -1,0 +1,29 @@
+Accessible Media Editor
+Build 0.12.6 Testing Notes
+November 12, 2026
+
+This build corrects continuous screen-reader announcements from the playhead during playback.
+
+The visual playhead and position text continue updating while audio or media plays. The focused slider no longer changes its exposed accessible value several times per second. Human-readable time is exposed again when playback pauses, the user seeks or scrubs, the playhead reaches the end, or the user operates the slider.
+
+This correction applies to AudioStudio Pro and Media Editor playback.
+
+Comma decreases playback speed. Period increases playback speed. Shift plus Comma and Shift plus Period also work as Less Than and Greater Than. These commands work with Virtual PC Cursor off without moving focus to the Playback Speed combo box.
+
+The available rates remain 0.75, normal, 1.25, 1.5, 1.75, and 2 times. Speed changes affect listening only. They do not alter saved duration or pitch.
+
+Messages and instructions now clarify that shortened chapters and bracketed audio copies are saved automatically to the Shared Audio Library. Export Selected Audio Copies to Folder creates ordinary files outside the application.
+
+Recommended test
+
+Open a shortened chapter in Audio Editor and leave focus on the Audio playhead.
+
+Press X to play for at least 30 seconds. Confirm that the screen reader does not announce every playhead update.
+
+Press X to pause. Confirm that the current human-readable time is announced.
+
+Resume playback and press Comma and Period several times. Confirm that speed changes immediately and each new rate is announced once.
+
+Repeat the playback and speed test in Media Editor.
+
+Create a bracketed audio copy and confirm that the completion message says it was saved automatically to the Shared Audio Library.

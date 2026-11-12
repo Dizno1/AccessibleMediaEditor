@@ -35,9 +35,9 @@ export function createAudioStudio(options){
   }
   function editorDuration(){if(!editingItem)return 0;const range=sourceRange(editingItem);return Math.max(0,range.end-range.start)||Number(editingItem.duration)||0;}
   function sourceTime(logical){return sourceRange(editingItem).start+logical;}
-  function updateEditor(){
+  function updateEditor(exposePlayheadValue=true){
     const length=editorDuration();cursor=Math.max(0,Math.min(length,cursor));
-    const playhead=e("audio-editor-playhead");playhead.value=String(Number(cursor.toFixed(3)));playhead.setAttribute("aria-valuetext",naturalTime(cursor));
+    const playhead=e("audio-editor-playhead");playhead.value=String(Number(cursor.toFixed(3)));if(exposePlayheadValue)playhead.setAttribute("aria-valuetext",naturalTime(cursor));
     e("audio-editor-position").textContent=editingItem?`Position ${naturalTime(cursor)} of ${naturalTime(length)}.`:"Position 0 seconds. No audio open.";
     const marks=[];if(markIn!=null)marks.push(`Left Bracket ${naturalTime(markIn)}`);if(markOut!=null)marks.push(`Right Bracket ${naturalTime(markOut)}`);
     e("audio-editor-marks").textContent=marks.length?marks.join(". ")+".":"No brackets set.";
@@ -140,10 +140,15 @@ export function createAudioStudio(options){
   }
   function pauseEditor(){clearTimeout(auditionTimer);auditionTimer=null;editor.pause();e("audio-editor-play").textContent="Play or Pause (X)";}
   function setPlaybackSpeed(){playbackSpeed=Number(e("audio-editor-speed").value)||1;editor.playbackRate=playbackSpeed;editor.preservesPitch=true;localStorage.setItem("ame-playback-speed",String(playbackSpeed));window.dispatchEvent(new CustomEvent("ame-playback-speed-change",{detail:playbackSpeed}));announce(`Playback speed ${playbackSpeed===1?"normal":`${playbackSpeed} times`}.`);}
+  function adjustPlaybackSpeed(direction){
+    const rates=[.75,1,1.25,1.5,1.75,2],current=rates.indexOf(playbackSpeed),next=Math.max(0,Math.min(rates.length-1,(current<0?1:current)+direction));
+    if(rates[next]===playbackSpeed)return announce(`Playback speed is already ${direction<0?"at the slowest setting":"at the fastest setting"}.`);
+    e("audio-editor-speed").value=String(rates[next]);setPlaybackSpeed();
+  }
   function togglePlayback(){
     const libraryPreview=e("audio-library-preview");if(!libraryPreview.paused){libraryPreview.pause();e("audio-preview-source").textContent="Preview Selected Audio";announce("Audio Source Library preview stopped.");return;}
     if(!editingItem)return announce("Open an audio source in Audio Editor first.",true);
-    if(!editor.paused){pauseEditor();announce(`Paused at ${naturalTime(cursor)}.`);return;}
+    if(!editor.paused){pauseEditor();updateEditor(true);announce(`Paused at ${naturalTime(cursor)}.`);return;}
     if(cursor>=editorDuration())cursor=0;editor.currentTime=sourceTime(cursor);editor.play().then(()=>{e("audio-editor-play").textContent="Pause (X)";}).catch(error=>announce(`Audio could not be played. ${error}`,true));
   }
   function seek(amount,quiet=false){
@@ -170,7 +175,7 @@ export function createAudioStudio(options){
     if(!editingItem||markIn==null||markOut==null||markOut<=markIn)return announce("Set a Left Bracket before a Right Bracket to keep a range.",true);
     const name=e("audio-edited-copy-name").value.trim()||`Edited - ${editingItem.label||editingItem.name}`,range=sourceRange(editingItem),start=range.start+markIn,end=range.start+markOut,itemId=`audio-edit-${Date.now()}`;
     addLibraryAudio({...editingItem,id:itemId,name,label:name,duration:markOut-markIn,inPoint:0,outPoint:markOut-markIn,editSegments:[{start,end}],role:"source"});
-    renderLibrary();e("audio-library-items").value=itemId;announce(`${name} saved as a new nondestructive audio source. Duration ${naturalTime(markOut-markIn)}.`);e("audio-library-items").focus();
+    renderLibrary();e("audio-library-items").value=itemId;announce(`${name} saved automatically to the Shared Audio Library as a new nondestructive audio source. Duration ${naturalTime(markOut-markIn)}. Use Export Selected Audio Copies to Folder to create an ordinary file.`);e("audio-library-items").focus();
   }
   async function shortenSilence(){
     const items=selectedItems();if(!items.length)return announce("Select one or more chapters in the Shared Audio Library first.",true);
@@ -201,7 +206,7 @@ export function createAudioStudio(options){
         addLibraryAudio({...plan.item,id:itemId,name,label:name,source:path,workingSource:path,originalSource:plan.item.originalSource||plan.item.source,duration:plan.newDuration,inPoint:0,outPoint:plan.newDuration,editSegments:[{start:0,end:plan.newDuration}],silenceShortened:true,sourceItemId:plan.item.id,role:"source"});created.push(itemId);
         announce(`Shortened chapter ${index+1} of ${plans.length} created. ${label}.`);
       }
-      renderLibrary();for(const option of e("audio-library-items").options)option.selected=created.includes(option.value);status.textContent=`${created.length} shortened ${created.length===1?"chapter":"chapters"} created. ${naturalTime(totalRemoved)} removed in total. Original sources unchanged.`;announce(status.textContent);e("audio-library-items").focus();
+      renderLibrary();for(const option of e("audio-library-items").options)option.selected=created.includes(option.value);status.textContent=`${created.length} shortened ${created.length===1?"chapter":"chapters"} created and saved automatically to the Shared Audio Library. ${naturalTime(totalRemoved)} removed in total. Original sources unchanged.`;announce(status.textContent);e("audio-library-items").focus();
     }catch(error){status.textContent="The shortened copies could not all be created.";announce(`Silence analysis or rendering failed. ${error}`,true);}finally{button.disabled=!selectedItems().length;}
   }
   function focusSection(offset){
@@ -210,8 +215,8 @@ export function createAudioStudio(options){
   function focusLibrary(){e("audio-library-items").focus();}
 
   editor.addEventListener("loadedmetadata",()=>{if(!editingItem)return;const range=sourceRange(editingItem);if(!range.end&&Number.isFinite(editor.duration)){editingItem.duration=editor.duration;editingItem.outPoint=editor.duration;editingItem.editSegments=[{start:0,end:editor.duration}];e("audio-editor-playhead").max=String(Number(editor.duration.toFixed(3)));}editor.currentTime=sourceTime(cursor);updateEditor();});
-  editor.addEventListener("timeupdate",()=>{if(!editingItem)return;cursor=Math.max(0,editor.currentTime-sourceRange(editingItem).start);if(cursor>=editorDuration()-0.01){cursor=editorDuration();pauseEditor();}updateEditor();});
-  editor.addEventListener("ended",()=>{cursor=editorDuration();pauseEditor();updateEditor();});
+  editor.addEventListener("timeupdate",()=>{if(!editingItem)return;cursor=Math.max(0,editor.currentTime-sourceRange(editingItem).start);if(cursor>=editorDuration()-0.01){cursor=editorDuration();pauseEditor();updateEditor(true);return;}updateEditor(false);});
+  editor.addEventListener("ended",()=>{cursor=editorDuration();pauseEditor();updateEditor(true);});
   e("audio-library-preview").addEventListener("timeupdate",()=>{const preview=e("audio-library-preview");if(libraryPreviewEnd!=null&&preview.currentTime>=libraryPreviewEnd){preview.pause();libraryPreviewEnd=null;e("audio-preview-source").textContent="Preview Selected Audio";}});
   e("audio-library-preview").addEventListener("ended",()=>{e("audio-preview-source").textContent="Preview Selected Audio";});
   e("audio-library-items").addEventListener("change",()=>{e("audio-editor-shorten-silence").disabled=!selectedItems().length;});
@@ -219,5 +224,5 @@ export function createAudioStudio(options){
   e("audio-editor-play").addEventListener("click",togglePlayback);e("audio-editor-mark-in").addEventListener("click",()=>setMark("in"));e("audio-editor-mark-out").addEventListener("click",()=>setMark("out"));e("audio-editor-clear-marks").addEventListener("click",clearMarks);e("audio-editor-goto").addEventListener("click",goToTime);e("audio-editor-save-range").addEventListener("click",saveRange);e("audio-editor-shorten-silence").addEventListener("click",shortenSilence);e("audio-editor-speed").addEventListener("change",setPlaybackSpeed);e("audio-editor-playhead").addEventListener("input",()=>{cursor=Number(e("audio-editor-playhead").value)||0;editor.currentTime=sourceTime(cursor);updateEditor();});
   e("audio-editor-speed").value=String(playbackSpeed);editor.playbackRate=playbackSpeed;editor.preservesPitch=true;window.addEventListener("ame-playback-speed-change",event=>{playbackSpeed=Number(event.detail)||1;e("audio-editor-speed").value=String(playbackSpeed);editor.playbackRate=playbackSpeed;editor.preservesPitch=true;});
   renderLibrary();updateEditor();void restoreMicrophonePermission();
-  return{renderLibrary,toggleRecording,pauseRecording,focusSection,focusLibrary,togglePlayback,seek,scrub,jump,setMark,goToTime,saveRange,shortenSilence};
+  return{renderLibrary,toggleRecording,pauseRecording,focusSection,focusLibrary,togglePlayback,adjustPlaybackSpeed,seek,scrub,jump,setMark,goToTime,saveRange,shortenSilence};
 }

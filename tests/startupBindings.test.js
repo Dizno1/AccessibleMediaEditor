@@ -34,8 +34,8 @@ test("opening and closing effects incorporate boundary item durations",()=>{
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.12\.5 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.5 Development Testing Build/);
+  assert.match(html,/Build 0\.12\.6 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.6 Development Testing Build/);
 });
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
@@ -133,7 +133,7 @@ test("decimal time entry never exposes floating point spin box limits",()=>{
     assert.match(html,new RegExp(`<input[^>]*type="text"[^>]*id="${id}"|<input[^>]*id="${id}"[^>]*type="text"`));
   }
   assert.match(app,/function editableSeconds\(seconds\)/);
-  assert.match(app,/setAttribute\("aria-valuetext",readableTime\(state\.cursor\)\)/);
+  assert.match(app,/if\(expose\)state\.slider\.setAttribute\("aria-valuetext",readableTime\(next\)\)/);
 });
 
 test("attached audio uses the complete persistent and project audio collection",()=>{

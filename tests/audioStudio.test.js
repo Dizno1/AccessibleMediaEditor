@@ -107,10 +107,20 @@ test("audiobook folders and multiple chapters are managed from Shared Audio Libr
   assert.match(rust,/fn export_audio_files_to_folder/);
 });
 
-test("all visible and native build identification is 0.12.5",()=>{
-  assert.match(html,/Build 0\.12\.5 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.5/);
-  assert.match(rust,/Build 0\.12\.5 executable started/);
+test("all visible and native build identification is 0.12.6",()=>{
+  assert.match(html,/Build 0\.12\.6 Development Testing Build/);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.6/);
+  assert.match(rust,/Build 0\.12\.6 executable started/);
+});
+
+test("playback position is quiet while playing and speed has direct shortcuts",()=>{
+  assert.match(studio,/updateEditor\(false\)/);
+  assert.match(studio,/function adjustPlaybackSpeed/);
+  assert.match(shortcuts,/slowerPlayback.*key:","/);
+  assert.match(shortcuts,/fasterPlayback.*key:"\."/);
+  assert.match(app,/adjustMediaPlaybackSpeed/);
+  assert.match(html,/Press Comma to decrease playback speed or Period to increase playback speed/);
+  assert.match(studio,/saved automatically to the Shared Audio Library/);
 });
 
 test("audio playhead time, preview resume, batch silence processing, and long import progress are accessible",()=>{

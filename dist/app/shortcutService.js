@@ -8,6 +8,8 @@ export const shortcuts = [
   ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],
   ["undo", {ctrl:true,key:"z"}], ["redo", {ctrl:true,key:"y"}],
   ["playPause", {key:"x"}], ["audition", {key:" "}],
+  ["slowerPlayback", {key:","}], ["fasterPlayback", {key:"."}],
+  ["slowerPlaybackShift", {shift:true,key:"<"}], ["fasterPlaybackShift", {shift:true,key:">"}],
   ["cutMedia", {ctrl:true,key:"x"}], ["copyMedia", {ctrl:true,key:"c"}], ["pasteMedia", {ctrl:true,key:"v"}], ["pasteInsert", {ctrl:true,shift:true,key:"v"}],
   ["focusPresentationTimeline", {alt:true,key:"p"}], ["focusPresentationSources", {alt:true,key:"s"}],
   ["targetBoth", {key:"b"}], ["targetVideo", {key:"v"}], ["targetAudio", {key:"a"}],

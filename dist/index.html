@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.5 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.6 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -321,6 +321,7 @@
           <option value="1.75">1.75 times</option>
           <option value="2">2 times</option>
         </select>
+        <p>Press Comma to decrease playback speed or Period to increase playback speed without leaving the editor.</p>
         <div class="button-row">
           <button type="button" id="audio-editor-play" disabled>Play or Pause (X)</button>
           <button type="button" id="audio-editor-mark-in" disabled>Set Left Bracket</button>
@@ -337,7 +338,7 @@
         <label for="audio-edited-copy-name">Edited audio source name</label>
         <input type="text" id="audio-edited-copy-name" value="Edited Audio">
         <button type="button" id="audio-editor-save-range" disabled>Keep Bracketed Range as New Audio Source</button>
-        <p>The bracketed range is saved nondestructively. The original audio source is not changed or deleted.</p>
+        <p>The bracketed range is saved automatically as a new Shared Audio Library entry. The original audio source is not changed or deleted. Use Export Selected Audio Copies to Folder to create ordinary files outside the app.</p>
       </section>
     </div>
   </main>
@@ -588,8 +589,9 @@
       <ul>
         <li>Enable Microphone Access makes Windows request microphone permission and lists the available microphones.</li>
         <li>Ctrl+Alt+R starts or stops recording while AudioStudio Pro is active.</li>
-        <li>Playback speed changes listening speed in Audio Editor without changing the saved source duration or pitch.</li>
-        <li>Analyze and Create Shortened Copy detects long quiet pauses, reports the proposed reduction, asks for confirmation, and creates a new source. The original is never changed.</li>
+        <li>Playback speed changes listening speed without changing the saved source duration or pitch. Press Comma to decrease speed or Period to increase speed in Media Editor or Audio Editor.</li>
+        <li>Analyze and Create Shortened Copies processes one or more selected chapters, reports the proposed reduction, asks for confirmation, and saves new sources automatically to the Shared Audio Library. The originals are never changed.</li>
+        <li>Export Selected Audio Copies to Folder creates ordinary audio files outside the app.</li>
         <li>Ctrl+Alt+Space pauses or resumes an active recording.</li>
         <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
         <li>Kept recordings enter the Shared Audio Library and can be deliberately added to Media Editor or Presentation.</li>
