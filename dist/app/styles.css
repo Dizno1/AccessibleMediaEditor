@@ -21,6 +21,13 @@ main { padding: 1rem 1.5rem; }
 .editor-section { padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; }
 .editor-section h2 { margin-top: 0; }
 .presentation-builder h3 { margin-top: 1.5rem; padding-top: .75rem; border-top: 1px solid var(--border); }
+.presentation-visual-timeline { display: flex; gap: .75rem; margin-top: .75rem; padding: .75rem; overflow-x: auto; background: #eef5f1; border: 1px solid var(--border); border-radius: .4rem; }
+.presentation-visual-card { flex: 0 0 15rem; padding: .75rem; background: var(--surface); border: 2px solid var(--border); border-radius: .4rem; box-shadow: 0 1px 3px rgba(0,0,0,.16); }
+.presentation-visual-card.current { border: 4px solid var(--focus); padding: calc(.75rem - 2px); }
+.presentation-visual-card h4 { margin: 0 0 .35rem; font-size: 1rem; }
+.presentation-visual-card p { margin: .2rem 0; }
+.presentation-card-actions { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+.presentation-card-actions button { min-height: 2.25rem; padding: .3rem .55rem; font-size: .9rem; }
 label { display: block; margin-bottom: .35rem; font-weight: 700; }
 select, input, textarea { width: 100%; min-height: 2.75rem; padding: .5rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: .25rem; font: inherit; }
 #project-items { min-height: 14rem; }
@@ -28,6 +35,11 @@ select, input, textarea { width: 100%; min-height: 2.75rem; padding: .5rem; colo
 input[type="range"] { accent-color: var(--green); }
 .media-preview { display: block; width: 100%; min-height: 11rem; margin-bottom: .75rem; background: #000; }
 #presentation-preview-media { display: block; width: 100%; max-height: 65vh; margin-bottom: .75rem; background: #000; }
+.audio-studio { max-width: 64rem; }
+.audio-studio audio { display: block; width: 100%; margin: .75rem 0; }
+#audio-library-items { min-height: 12rem; }
+.audio-studio-grid { display: grid; grid-template-columns: repeat(2, minmax(18rem, 1fr)); gap: 1rem; }
+#audio-editor-section { grid-column: 1 / -1; }
 #media-editor-sections { display: grid; grid-template-columns: repeat(2, minmax(18rem, 1fr)); gap: 1rem; grid-column: 1 / -1; }
 .media-item-editor.active-editor { border: 3px solid var(--green); }
 .button-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
@@ -42,6 +54,11 @@ dialog::backdrop { background: rgba(0,0,0,.55); }
 .time-fields label { grid-row: 1; }
 .time-fields input { grid-row: 2; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-@media (max-width: 48rem) { .workspace, #media-editor-sections { grid-template-columns: 1fr; } }
+.visual-disclosure { margin: .75rem 0; }
+.visual-disclosure-toggle { width: 100%; text-align: left; }
+.visual-disclosure-content { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); clip-path: inset(50%); white-space: nowrap; }
+.visual-disclosure:focus-within > .visual-disclosure-content,
+.visual-disclosure.visually-expanded > .visual-disclosure-content { position: static; width: auto; height: auto; margin: .75rem 0 0; overflow: visible; clip: auto; clip-path: none; white-space: normal; }
+@media (max-width: 48rem) { .workspace, #media-editor-sections, .audio-studio-grid { grid-template-columns: 1fr; } #audio-editor-section { grid-column: auto; } }
 @media (forced-colors: active) { :focus-visible { outline-color: Highlight; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important; } }

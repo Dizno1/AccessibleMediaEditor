@@ -4,10 +4,11 @@ import {
   insertSourceSelection, itemDuration, duration, serializable, normalizedSegments,
   logicalDuration, logicalToSourceTime, sourceToLogicalTime,
   bracketSelectionPlan, logicalSegmentsForRanges, removeLogicalRanges, productionRenderItems,
-  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges,presentationTimelineDuration,presentationTransitionDuration
+  addTrackReplacement, removeTrackReplacement, productionRenderReplacements, productionRenderBackgroundMusic, presentationDuckRanges,presentationTimelineDuration,presentationTransitionDuration,maxPresentationTransitionDuration,presentationTotalDuration
 } from "./projectModel.js";
 import { initShortcuts, registerAction, triggerAction } from "./shortcutService.js";
 import { clearEditorMarks, preserveMarksWhileChangingTarget, replacementDurationIssue, primaryPasteOperation } from "./editorState.js";
+import { createAudioStudio } from "./audioStudio.js";
 
 const invoke=window.__TAURI__?.core?.invoke;
 const listen=window.__TAURI__?.event?.listen;
@@ -20,6 +21,7 @@ let libraryItems=[];
 let libraryReady=false;
 let libraryWrite=Promise.resolve();
 let libraryBlocked=false;
+let audioStudio=null;
 function saveLibrary(){
   if(!invoke||!libraryReady||libraryBlocked)return;
   const content=JSON.stringify({schema:1,items:libraryItems});
@@ -34,8 +36,10 @@ function collectLibraryItems(){
   let changed=false;
   for(const item of [...(project.sources||[]),...(project.items||[])]){
     if(!["Video","Audio","Image"].includes(item.kind)||!item.source)continue;
-    if(libraryItems.some(entry=>entry.id===item.id))continue;
-    libraryItems.push(structuredClone({...item,role:"source"}));changed=true;
+    const index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source);
+    if(index<0){libraryItems.push(structuredClone({...item,role:"source"}));changed=true;continue;}
+    const existing=libraryItems[index],knownDuration=itemDuration(item);
+    if(knownDuration>0&&itemDuration(existing)<=0){libraryItems[index]=structuredClone({...existing,...item,role:"source"});changed=true;}
   }
   if(changed){renderLibrary();saveLibrary();}
 }
@@ -50,6 +54,7 @@ function renderLibrary(){
   el["persistent-library-status"].textContent=`${libraryItems.length} reusable library ${libraryItems.length===1?"item":"items"}. Current project opens separately.`;
   el["persistent-library-add"].disabled=!libraryItems.length;
   el["persistent-library-remove"].disabled=!libraryItems.length;
+  audioStudio?.renderLibrary();
 }
 function addLibrarySelection(){
   const item=libraryItems.find(entry=>entry.id===el["persistent-library-items"].value);
@@ -96,12 +101,51 @@ async function loadLibrary(){
   }
 }
 
+function audioLibraryItems(){return libraryItems.filter(item=>item.kind==="Audio"&&item.source);}
+function addAudioLibraryItem(item){
+  const index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source||entry.originalSource&&entry.originalSource===item.originalSource);
+  if(index<0)libraryItems.push(structuredClone({...item,role:"source"}));
+  else libraryItems[index]=structuredClone({...libraryItems[index],...item,role:"source"});
+  renderLibrary();saveLibrary();
+}
+function addAudioLibraryItemToProject(item){
+  const copy=structuredClone({...item,id:id(),role:"source"});
+  rememberChange(addSource(project,copy),`${copy.label||copy.name} added to the current project from AudioStudio Pro.`);
+}
+function probeAudioDuration(path){
+  return new Promise((resolve,reject)=>{
+    const media=new Audio(),finish=()=>{media.removeAttribute("src");media.load();};
+    const timer=setTimeout(()=>{finish();reject(new Error("Audio duration could not be determined."));},10000);
+    media.addEventListener("loadedmetadata",()=>{const value=Number(media.duration);clearTimeout(timer);finish();value>0&&Number.isFinite(value)?resolve(value):reject(new Error("Audio duration could not be determined."));},{once:true});
+    media.addEventListener("error",()=>{clearTimeout(timer);finish();reject(new Error("The audio file could not be opened."));},{once:true});
+    media.preload="metadata";media.src=convertFileSrc?convertFileSrc(path):path;media.load();
+  });
+}
+async function importAudioStudioFiles(){
+  if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
+  const paths=await invoke("pick_media_files");
+  if(!paths.length)return announce("Open Audio canceled. No files selected.");
+  let imported=0;const skipped=[];
+  for(const path of paths){
+    const name=baseName(path);
+    if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){skipped.push(name);continue;}
+    try{
+      const itemId=id(),source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId}),length=await probeAudioDuration(source);
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"});
+      imported++;
+    }catch(error){console.error(`Audio import failed for ${name}`,error);skipped.push(name);}
+  }
+  const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import.`:"";
+  announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the shared Source Media Library.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
+}
+
 let selectedId=null;
 let selectedSourceId=null;
 let selectedImageId=null;
 let selectedReplacementId=null;
 let activeMediaId=null;
 let activeWorkspace="media";
+const startupWorkspace=["media","presentation","audio"].includes(localStorage.getItem("ame-active-workspace"))?localStorage.getItem("ame-active-workspace"):"media";
 let activeSectionIndex=0;
 let undoStack=[];
 let redoStack=[];
@@ -227,6 +271,10 @@ function readableTime(seconds){
   parts.push(`${whole} ${whole===1?"second":"seconds"}`);if(milliseconds)parts.push(`${milliseconds} ${milliseconds===1?"millisecond":"milliseconds"}`);
   return parts.join(", ");
 }
+function editableSeconds(seconds){
+  const milliseconds=Math.max(0,Math.round((Number(seconds)||0)*1000));
+  return String(milliseconds/1000);
+}
 function timeParts(seconds){const total=Math.max(0,Math.round((Number(seconds)||0)*1000));return{hours:Math.floor(total/3600000),minutes:Math.floor(total/60000)%60,seconds:Math.floor(total/1000)%60,milliseconds:total%1000};}
 function writeTime(prefix,seconds){Object.entries(timeParts(seconds)).forEach(([name,value])=>{el[`${prefix}-${name}`].value=String(value);});}
 function readTime(prefix){const values=["hours","minutes","seconds","milliseconds"].map(name=>Number(el[`${prefix}-${name}`].value)||0);if(values.some(value=>value<0)||values[1]>59||values[2]>59||values[3]>999)return NaN;return values[0]*3600+values[1]*60+values[2]+values[3]/1000;}
@@ -267,7 +315,7 @@ function itemListLabel(item,index,source=false){
   return`${role}. ${item.kind}. ${item.label||item.name}`;
 }
 function migrateProject(value){
-  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],backgroundMusic:value.backgroundMusic||null,editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:6,presentation:{items:Array.isArray(value.presentation?.items)?value.presentation.items:[],backgroundMusic:value.presentation?.backgroundMusic||null}};
+  const next={...value,items:Array.isArray(value.items)?value.items:[],sources:Array.isArray(value.sources)?value.sources:[],trackReplacements:Array.isArray(value.trackReplacements)?value.trackReplacements:[],backgroundMusic:value.backgroundMusic||null,editTarget:["audio","video","both"].includes(value.editTarget)?value.editTarget:"both",version:7,presentation:{items:Array.isArray(value.presentation?.items)?value.presentation.items:[],backgroundMusic:value.presentation?.backgroundMusic||null,openingEffect:value.presentation?.openingEffect||{type:"none",duration:0},closingEffect:value.presentation?.closingEffect||{type:"none",duration:0}}};
   if(next.items[0]&&!next.items[0].role)next.items[0].role="primary";
   next.items.slice(1).forEach(item=>{if(!item.role)item.role="sequence";});
   next.presentation.items.forEach(item=>{if(item.audioVolume==null)item.audioVolume=1;if(!item.transition)item.transition={type:"none",duration:0};});
@@ -324,7 +372,7 @@ function setProgramMedia(state,point,autoplay=false){
   return true;
 }
 function syncBackgroundMusic(state,point,playing){if(state.type!=="program")return;const music=project.backgroundMusic;if(!music){state.backgroundAudio.pause();return;}const source=sourceForItem({source:music.source});if(state.backgroundAudio.dataset.sourcePath!==music.source){state.backgroundAudio.dataset.sourcePath=music.source;state.backgroundAudio.src=source;state.backgroundAudio.loop=true;}const duck=(music.duckRanges||[]).some(range=>point>=range.start&&point<range.end);state.backgroundAudio.volume=Math.max(0,Math.min(1,(music.volume??.35)*(duck?(music.duckFactor??.25):1)));if(Number.isFinite(state.backgroundAudio.duration)&&state.backgroundAudio.duration>0&&Math.abs(state.backgroundAudio.currentTime-(point%state.backgroundAudio.duration))>.3)state.backgroundAudio.currentTime=point%state.backgroundAudio.duration;if(playing)state.backgroundAudio.play().catch(()=>{});else state.backgroundAudio.pause();}
-function startProgramImagePlayback(state,target){state.imagePlaying=true;state.imageStarted=performance.now()-target.local*1000;const tick=now=>{if(!state.imagePlaying)return;const local=(now-state.imageStarted)/1000,point=target.offset+local;if(local>=itemDuration(target.item)){state.imagePlaying=false;state.cursor=target.offset+itemDuration(target.item);if(target.index<project.items.length-1)setProgramMedia(state,state.cursor,true);else finishAtEnd(state,duration(project));return;}state.cursor=point;state.slider.value=String(point);state.position.textContent=`Position ${readableTime(point)}. Media duration ${readableTime(duration(project))}.`;syncBackgroundMusic(state,point,true);state.imageTimer=requestAnimationFrame(tick);};state.imageTimer=requestAnimationFrame(tick);}
+function startProgramImagePlayback(state,target){state.imagePlaying=true;state.imageStarted=performance.now()-target.local*1000;const tick=now=>{if(!state.imagePlaying)return;const local=(now-state.imageStarted)/1000,point=target.offset+local;if(local>=itemDuration(target.item)){state.imagePlaying=false;state.cursor=target.offset+itemDuration(target.item);if(target.index<project.items.length-1)setProgramMedia(state,state.cursor,true);else finishAtEnd(state,duration(project));return;}state.cursor=point;state.slider.value=String(point);state.slider.setAttribute("aria-valuetext",readableTime(point));state.position.textContent=`Position ${readableTime(point)}. Media duration ${readableTime(duration(project))}.`;syncBackgroundMusic(state,point,true);state.imageTimer=requestAnimationFrame(tick);};state.imageTimer=requestAnimationFrame(tick);}
 function activeReplacement(point,target){return[...(project.trackReplacements||[])].reverse().find(edit=>(edit.target===target||edit.target==="both")&&point>=edit.timelineStart-0.0005&&point<edit.timelineEnd-0.0005)||null;}
 function replacementSourceTime(edit,point){const pseudo={duration:(edit.segments||[]).reduce((sum,segment)=>Math.max(sum,Number(segment.end)||0),0),editSegments:edit.segments||[]};return logicalToSourceTime(pseudo,Math.max(0,point-edit.timelineStart));}
 function syncTrackPreview(state,point,autoplay=!state.video.paused){
@@ -399,7 +447,7 @@ function createEditor(item,type){
   const replacementImage=document.createElement("img");replacementImage.className="media-preview replacement-preview";replacementImage.hidden=true;replacementImage.alt="";replacementImage.setAttribute("aria-hidden","true");section.append(replacementImage);
   const replacementAudio=new Audio();replacementAudio.preload="auto";
   const sliderLabel=document.createElement("label");const slider=document.createElement("input");const sliderId=`media-playhead-${++editorCounter}`;
-  sliderLabel.htmlFor=sliderId;slider.id=sliderId;slider.type="range";slider.min="0";slider.max="0";slider.step="0.001";slider.value="0";section.append(sliderLabel,slider);
+  sliderLabel.htmlFor=sliderId;slider.id=sliderId;slider.type="range";slider.min="0";slider.max="0";slider.step="0.001";slider.value="0";slider.setAttribute("aria-valuetext","0 seconds");section.append(sliderLabel,slider);
   const position=document.createElement("p"),context=document.createElement("p");section.append(position,context);
   const transport=document.createElement("div");transport.className="button-row";
   const play=document.createElement("button"),audition=document.createElement("button");
@@ -511,7 +559,7 @@ function handleTimeUpdate(idValue){
     const end=location.item.outPoint==null?Number(location.item.duration):Number(location.item.outPoint);
     if(state.video.currentTime>=end&&!state.video.paused){finishAtEnd(state,end);return;}
   }
-  state.cursor=logicalNow;state.slider.value=String(state.cursor);state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
+  state.cursor=logicalNow;state.slider.value=String(state.cursor);state.slider.setAttribute("aria-valuetext",readableTime(state.cursor));state.position.textContent=`Position ${readableTime(state.cursor)}. Media duration ${readableTime(location.type==="program"?duration(project):itemDuration(location.item))}.`;
 }
 function renderEditors(){
   const primary=project.items[0];const playable=[...(primary?[{item:primary,type:"program",stateId:PROGRAM_ID}]:[]),...(project.sources||[]).filter(item=>item.kind!=="Image").map(item=>({item,type:"source",stateId:item.id}))].filter(({item,type})=>(type==="program"?["Video","Audio","Image"]:["Video","Audio"]).includes(item.kind)&&item.source);
@@ -618,7 +666,7 @@ const workspacePanels={media:"media-editor-workspace",presentation:"presentation
 const presentationSections=["presentation-builder-section","presentation-music-section","presentation-accessibility-section"];
 let presentationSectionIndex=0;
 function focusSection(offset){
-  if(activeWorkspace==="audio")return announce("AudioStudio Pro does not have editor sections yet.");
+  if(activeWorkspace==="audio"){audioStudio?.focusSection(offset);return;}
   if(activeWorkspace==="presentation"){
     presentationSectionIndex=(presentationSectionIndex+offset+presentationSections.length)%presentationSections.length;
     const section=el[presentationSections[presentationSectionIndex]];section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);return;
@@ -629,22 +677,64 @@ function focusSection(offset){
 }
 function activateSection(sectionId){const section=el[sectionId];activeSectionIndex=sectionElements().indexOf(section);section.focus();updateStatus(`${section.querySelector("h2").textContent} section.`);}
 function presentationItems(){return project.presentation?.items||[];}
-function presentationDuration(){return presentationTimelineDuration(presentationItems());}
+function presentationDuration(){return presentationTotalDuration(presentationItems(),project.presentation?.openingEffect,project.presentation?.closingEffect);}
 function sharedPresentationSources(){
   const seen=new Set();return [...(project.sources||[]),...project.items].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true;});
 }
+function presentationAudioSources(){
+  const sources=sharedPresentationSources();
+  return [...libraryItems,...sources].filter((item,index,array)=>item.kind==="Audio"&&array.findIndex(other=>other.source===item.source)===index);
+}
+async function resolveAudioDuration(audio){
+  const known=itemDuration(audio);
+  if(known>0)return known;
+  const media=new Audio();
+  const seconds=await new Promise((resolve,reject)=>{
+    const finish=()=>{media.removeAttribute("src");media.load();};
+    const timer=setTimeout(()=>{finish();reject(new Error("Audio duration could not be determined."));},10000);
+    media.addEventListener("loadedmetadata",()=>{const value=Number(media.duration);clearTimeout(timer);finish();value>0&&Number.isFinite(value)?resolve(value):reject(new Error("Audio duration could not be determined."));},{once:true});
+    media.addEventListener("error",()=>{clearTimeout(timer);finish();reject(new Error("The selected audio could not be opened."));},{once:true});
+    media.preload="metadata";media.src=sourceForItem(audio);media.load();
+  });
+  audio.duration=seconds;audio.inPoint=0;audio.outPoint=seconds;
+  const library=libraryItems.find(item=>item.source===audio.source);
+  if(library){library.duration=seconds;library.inPoint=0;library.outPoint=seconds;saveLibrary();}
+  return seconds;
+}
+function updateAttachedAudioDurationControl(durationField,audioField,matchField){
+  const matched=Boolean(el[audioField].value&&el[matchField].checked);
+  el[durationField].disabled=matched;
+  el[durationField].setAttribute("aria-disabled",String(matched));
+}
 function presentationTransitionName(type){return ({crossfade:"Crossfade",fadeblack:"Fade through black",fadewhite:"Fade through white",wipeleft:"Wipe left",wiperight:"Wipe right"})[type]||"Transition";}
+function renderPresentationVisualTimeline(items){
+  const current=el["presentation-items"].value;
+  el["presentation-visual-timeline"].replaceChildren(...items.map((item,index)=>{
+    const card=document.createElement("article");card.className=`presentation-visual-card${item.id===current?" current":""}`;card.dataset.itemId=item.id;
+    const heading=document.createElement("h4");heading.textContent=`${index+1}. ${item.label||item.name}`;
+    const kind=document.createElement("p");kind.textContent=`${item.kind}, ${readableTime(itemDuration(item))}`;
+    const transition=document.createElement("p");transition.textContent=index&&item.transition?.type&&item.transition.type!=="none"?`${presentationTransitionName(item.transition.type)}, ${readableTime(presentationTransitionDuration(item,items[index-1]))}`:index?"Direct cut":"First item";
+    const actions=document.createElement("div");actions.className="presentation-card-actions";
+    for(const [action,label] of [["select","Select"],["earlier","Earlier"],["later","Later"],["edit","Edit"],["remove","Remove"]]){const button=document.createElement("button");button.type="button";button.tabIndex=-1;button.dataset.action=action;button.textContent=label;button.disabled=action==="earlier"&&index===0||action==="later"&&index===items.length-1;actions.append(button);}
+    card.append(heading,kind,transition,actions);return card;
+  }));
+}
 function renderPresentation(){
   const items=presentationItems(),sources=sharedPresentationSources();
   const oldSelection=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value)),oldSource=el["presentation-sources"].value;
-  el["presentation-items"].replaceChildren(...items.map((item,index)=>{const transition=index&&item.transition?.type!=="none"&&item.transition?.type?` ${presentationTransitionName(item.transition.type)} ${readableTime(presentationTransitionDuration(item,items[index-1]))}.`:"";const audio=["Video","Audio"].includes(item.kind)?` Foreground audio ${item.audioMuted?"muted":`${Math.round((item.audioVolume??1)*100)} percent`}.`:"";return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${transition}${audio}`,item.id);}));
+  el["presentation-items"].replaceChildren(...items.map((item,index)=>{const transition=index&&item.transition?.type!=="none"&&item.transition?.type?` ${presentationTransitionName(item.transition.type)} ${readableTime(presentationTransitionDuration(item,items[index-1]))}.`:"";const audio=item.attachedAudio?.source?` Attached audio ${item.attachedAudio.name||"present"}. ${item.matchAudioDuration?"Duration matched to audio.":""}`:["Video","Audio"].includes(item.kind)?` Foreground audio ${item.audioMuted?"muted":`${Math.round((item.audioVolume??1)*100)} percent`}.`:"";return new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.${transition}${audio}`,item.id);}));
   el["presentation-sources"].replaceChildren(...sources.map(item=>new Option(`${item.kind}. ${item.label||item.name}. ${readableTime(itemDuration(item))}.`,item.id)));
   for(const option of el["presentation-items"].options)option.selected=oldSelection.has(option.value);
-  const musicSources=[...libraryItems,...sources].filter((item,index,array)=>item.kind==="Audio"&&array.findIndex(other=>other.source===item.source)===index);
+  renderPresentationVisualTimeline(items);
+  const musicSources=presentationAudioSources();
   el["presentation-music-source"].replaceChildren(new Option("No background music",""),...musicSources.map(item=>new Option(item.label||item.name,item.source)));
   el["presentation-music-source"].value=project.presentation?.backgroundMusic?.source||"";
   el["presentation-music-volume"].value=Math.round((project.presentation?.backgroundMusic?.volume??0.35)*100);
   el["presentation-music-duck"].value=Math.round((project.presentation?.backgroundMusic?.duckFactor??0.25)*100);
+  el["presentation-opening-effect"].value=project.presentation?.openingEffect?.type||"none";
+  el["presentation-opening-duration"].value=editableSeconds(Number(project.presentation?.openingEffect?.duration)||1);
+  el["presentation-closing-effect"].value=project.presentation?.closingEffect?.type||"none";
+  el["presentation-closing-duration"].value=editableSeconds(Number(project.presentation?.closingEffect?.duration)||1);
   el["presentation-music-status"].textContent=project.presentation?.backgroundMusic?`Background music: ${musicSources.find(item=>item.source===project.presentation.backgroundMusic.source)?.name||"Selected audio"}. Normal volume ${el["presentation-music-volume"].value} percent. During video or audio ${el["presentation-music-duck"].value} percent of normal.`:"No background music selected.";
   el["presentation-project-status"].textContent=project.path?`Presentation project: ${project.name}. ${project.dirty?"Unsaved changes.":"Saved."}`:`Presentation project has not been saved.${project.dirty?" Unsaved changes are present.":""}`;
   if(sources.some(item=>item.id===oldSource))el["presentation-sources"].value=oldSource;
@@ -666,7 +756,7 @@ function modifyPresentation(next,selected,description){
 }
 function newPresentation(){
   if(presentationItems().length&&!window.confirm("Clear the current presentation sequence? Shared media and Media Editor edits will be kept."))return;
-  const next=structuredClone(project);next.presentation={items:[]};next.dirty=true;
+  const next=structuredClone(project);next.presentation={items:[],openingEffect:{type:"none",duration:0},closingEffect:{type:"none",duration:0}};next.dirty=true;
   modifyPresentation(next,null,"New empty presentation. Presentation Timeline ready. Shared media remains available.");el["presentation-items"].focus();
 }
 function createSlideshow(){
@@ -679,6 +769,44 @@ function createSlideshow(){
   next.presentation.items.push(...newSlides);next.dirty=true;
   modifyPresentation(next,newSlides[0].id,`${newSlides.length} images added to the presentation at ${readableTime(seconds)} each. ${next.presentation.items.length} total items. Existing items preserved.`);
   el["presentation-items"].focus();
+}
+function showCreateTitleSlide(){
+  const sources=presentationAudioSources();
+  el["presentation-title-audio"].replaceChildren(new Option("No attached audio",""),...sources.map(source=>new Option(source.label||source.name,source.id)));
+  el["presentation-title-match-audio"].checked=false;
+  updateAttachedAudioDurationControl("presentation-title-duration","presentation-title-audio","presentation-title-match-audio");
+  el["presentation-title-dialog"].showModal();el["presentation-title-text"].focus();
+}
+async function renderTitleSlideImage(title,subtitle,credit,background,foreground){
+  const canvas=document.createElement("canvas");canvas.width=1280;canvas.height=720;const ctx=canvas.getContext("2d");
+  ctx.fillStyle=background;ctx.fillRect(0,0,1280,720);ctx.fillStyle=foreground;ctx.textAlign="center";ctx.textBaseline="middle";
+  function drawWrapped(text,y,size,maxLines){if(!text)return;ctx.font=`bold ${size}px Arial, sans-serif`;const words=text.split(/\s+/),lines=[];let line="";for(const word of words){const trial=line?`${line} ${word}`:word;if(ctx.measureText(trial).width>1080&&line){lines.push(line);line=word;}else line=trial;}if(line)lines.push(line);for(const [i,value] of lines.slice(0,maxLines).entries())ctx.fillText(value,640,y+(i-(Math.min(lines.length,maxLines)-1)/2)*size*1.25,1080);}
+  drawWrapped(title,275,68,3);drawWrapped(subtitle,455,40,2);drawWrapped(credit,600,28,2);
+  return invoke("save_title_slide_image",{dataUrl:canvas.toDataURL("image/png")});
+}
+async function createTitleSlide(){
+  const title=el["presentation-title-text"].value.trim(),seconds=Number(el["presentation-title-duration"].value);
+  if(!title)return announce("Enter a title for the slide.",true);
+  const audio=presentationAudioSources().find(source=>source.id===el["presentation-title-audio"].value);
+  const match=Boolean(audio&&el["presentation-title-match-audio"].checked);
+  if(!match&&(!Number.isFinite(seconds)||seconds<.1||seconds>3600))return announce("Title slide duration must be between 0.1 and 3600 seconds.",true);
+  let duration=seconds;
+  if(match){try{duration=await resolveAudioDuration(audio);}catch(error){return announce(`The title slide duration could not be matched. ${error}`,true);}}
+  if(!invoke)return announce("Title-slide creation requires the installed Windows application.",true);
+  let source;try{source=await renderTitleSlideImage(title,el["presentation-title-subtitle"].value.trim(),el["presentation-title-credit"].value.trim(),el["presentation-title-background"].value,el["presentation-title-foreground"].value);}catch(error){return announce(`Title image could not be saved. ${error}`,true);}
+  const next=structuredClone(project);next.presentation||={items:[]};
+  const item={id:id(),kind:"Image",name:title,label:`Title Slide - ${title}`,source,titleText:title,titleSubtitle:el["presentation-title-subtitle"].value.trim(),titleCredit:el["presentation-title-credit"].value.trim(),titleBackground:el["presentation-title-background"].value,titleForeground:el["presentation-title-foreground"].value,duration,inPoint:0,outPoint:duration,editSegments:[{start:0,end:duration}],attachedAudio:audio?{source:audio.source,name:audio.label||audio.name,duration}:null,matchAudioDuration:match,transition:{type:"none",duration:0},role:"presentation"};
+  const target=next.presentation.items.findIndex(value=>value.id===el["presentation-items"].value);
+  const insertAt=target<0?0:target;next.presentation.items.splice(insertAt,0,item);next.dirty=true;el["presentation-title-dialog"].close();clearAnnouncements();
+  modifyPresentation(next,item.id,`Title slide ${title} created at position ${insertAt+1} of ${next.presentation.items.length}. Duration ${readableTime(duration)}. ${audio?`Attached audio ${audio.label||audio.name}.${match?" Duration matched to attached audio.":""}`:"No attached audio."}`);el["presentation-items"].focus();
+}
+function applyPresentationEffects(){
+  const openingType=el["presentation-opening-effect"].value,closingType=el["presentation-closing-effect"].value;
+  const openingDuration=openingType==="none"?0:Number(el["presentation-opening-duration"].value),closingDuration=closingType==="none"?0:Number(el["presentation-closing-duration"].value);
+  if(openingType!=="none"&&(!Number.isFinite(openingDuration)||openingDuration<.1||openingDuration>10))return announce("Opening effect duration must be between 0.1 and 10 seconds.",true);
+  if(closingType!=="none"&&(!Number.isFinite(closingDuration)||closingDuration<.1||closingDuration>10))return announce("Closing effect duration must be between 0.1 and 10 seconds.",true);
+  const next=structuredClone(project);next.presentation||={items:[]};next.presentation.openingEffect={type:openingType,duration:openingDuration};next.presentation.closingEffect={type:closingType,duration:closingDuration};next.dirty=true;
+  const first=next.presentation.items[0];modifyPresentation(next,first?.id||null,`Opening effect ${openingType==="none"?"none":el["presentation-opening-effect"].selectedOptions[0].text}. Closing effect ${closingType==="none"?"none":el["presentation-closing-effect"].selectedOptions[0].text}.`);if(first){el["presentation-items"].value=first.id;el["presentation-items"].focus();}
 }
 function addPresentationSource(position){
   const source=sharedPresentationSources().find(item=>item.id===el["presentation-sources"].value);
@@ -699,8 +827,23 @@ function movePresentation(direction){
   next.presentation.items.splice(target,0,item);next.dirty=true;
   modifyPresentation(next,selected,`${item.label||item.name} moved to presentation position ${target+1}.`);
 }
-function addPresentationCrossfade(){const selected=el["presentation-items"].value,items=presentationItems(),index=items.findIndex(item=>item.id===selected);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);if(index===0)return announce("The first presentation item cannot have an incoming transition. Choose the second item or a later item.",true);const next=structuredClone(project),item=next.presentation.items[index];item.transition={type:"crossfade",duration:1};next.dirty=true;modifyPresentation(next,selected,`Crossfade 1 second added into ${item.label||item.name}, presentation item ${index+1} of ${items.length}.`);el["presentation-items"].focus();}
-function applyPresentationTransition(remove=false){const selected=selectedPresentationItems();if(!selected.length)return announce("Choose one or more Presentation Timeline items first.",true);const selectedIds=new Set(selected.map(item=>item.id)),seconds=Number(el["presentation-bulk-transition-duration"].value);if(!remove&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Transition duration must be between 0.1 and 10 seconds.",true);const next=structuredClone(project),changed=[];next.presentation.items.forEach((item,index)=>{if(!selectedIds.has(item.id)||index===0)return;item.transition=remove?{type:"none",duration:0}:{type:el["presentation-bulk-transition-type"].value,duration:seconds};changed.push(item.id);});if(!changed.length)return announce("The first presentation item cannot have an incoming transition. Choose the second item or a later item.",true);next.dirty=true;undoStack.push(project);redoStack=[];project=next;renderPresentation();for(const option of el["presentation-items"].options)option.selected=changed.includes(option.value);el["presentation-items"].focus();announce(remove?`${changed.length} presentation ${changed.length===1?"transition":"transitions"} removed.`:`${presentationTransitionName(el["presentation-bulk-transition-type"].value)} ${readableTime(seconds)} applied to ${changed.length} presentation ${changed.length===1?"item":"items"}.`);}
+function addPresentationCrossfade(){const selected=el["presentation-items"].value,items=presentationItems(),index=items.findIndex(item=>item.id===selected);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);if(index===0)return announce("The first timeline item has no preceding item. Use the Opening Effect controls to animate its appearance.",true);const next=structuredClone(project),item=next.presentation.items[index];item.transition={type:"crossfade",duration:1};next.dirty=true;modifyPresentation(next,selected,`Crossfade 1 second added into ${item.label||item.name}, presentation item ${index+1} of ${items.length}.`);el["presentation-items"].focus();}
+function applyPresentationTransition(remove=false){
+  const selected=selectedPresentationItems();
+  if(!selected.length)return announce("Choose one or more Presentation Timeline items first.",true);
+  const selectedIds=new Set(selected.map(item=>item.id)),seconds=Number(el["presentation-bulk-transition-duration"].value);
+  if(!remove&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Transition duration must be between 0.1 and 10 seconds.",true);
+  const next=structuredClone(project),changed=[],skippedFirst=Boolean(next.presentation.items[0]&&selectedIds.has(next.presentation.items[0].id));
+  next.presentation.items.forEach((item,index)=>{if(!selectedIds.has(item.id)||index===0)return;item.transition=remove?{type:"none",duration:0}:{type:el["presentation-bulk-transition-type"].value,duration:seconds};changed.push(item.id);});
+  if(!changed.length)return announce("The first timeline item has no preceding item. Use the Opening Effect controls to animate its appearance.",true);
+  if(!remove){
+    for(const id of changed){const index=next.presentation.items.findIndex(item=>item.id===id),available=maxPresentationTransitionDuration(next.presentation.items,index);if(seconds>available+.0005)return announce(`The transition into item ${index+1} is too long. The available duration at this position is ${readableTime(available)}.`,true);}
+  }
+  next.dirty=true;undoStack.push(project);redoStack=[];project=next;renderPresentation();
+  for(const option of el["presentation-items"].options)option.selected=changed.includes(option.value);
+  el["presentation-items"].focus();
+  announce(`${remove?`${changed.length} presentation ${changed.length===1?"transition":"transitions"} removed`:`${presentationTransitionName(el["presentation-bulk-transition-type"].value)} ${readableTime(seconds)} applied to ${changed.length} presentation ${changed.length===1?"item":"items"}`}.${skippedFirst?" The first timeline item was skipped. Use Opening Effect to animate it.":""}`);
+}
 function removePresentation(){
   const selected=new Set([...el["presentation-items"].selectedOptions].map(option=>option.value));
   if(!selected.size&&el["presentation-items"].value)selected.add(el["presentation-items"].value);
@@ -743,6 +886,12 @@ function focusPresentationSources(){
   if(activeWorkspace!=="presentation")return announce("The Source Media Library is available in the Presentation workspace.",true);
   el["presentation-sources"].focus();announce(`${sharedPresentationSources().length} items in the Source Media Library. Adding a source does not remove it from the library.`);
 }
+function focusWorkspaceSources(){
+  if(activeWorkspace==="presentation")return focusPresentationSources();
+  if(activeWorkspace==="audio")return audioStudio?.focusLibrary();
+  el["source-items"].focus();
+  announce(`${(project.sources||[]).filter(item=>item.kind!=="Image").length} items in Source Media. Adding or editing a source does not change Primary Production until an edit is applied.`);
+}
 function setPresentationMusic(remove=false){
   const source=remove?"":el["presentation-music-source"].value;
   if(!remove&&!source)return announce("Choose an audio file from the music source list first.",true);
@@ -762,8 +911,8 @@ function presentationBackgroundMusic(){
 async function renderCompletePresentation(purpose){
   if(!invoke)throw new Error(`Presentation ${purpose} requires the installed Windows application.`);
   if(!presentationItems().length)throw new Error("Add items to the presentation first.");
-  if(presentationItems().some(item=>!["Video","Image","Audio"].includes(item.kind)))throw new Error("This presentation contains an unsupported item type.");
-  const renderProject={items:presentationItems(),trackReplacements:[],backgroundMusic:presentationBackgroundMusic()};
+  if(presentationItems().some(item=>!["Video","Image","Audio","Title"].includes(item.kind)))throw new Error("This presentation contains an unsupported item type.");
+  const renderProject={items:presentationItems(),trackReplacements:[],backgroundMusic:presentationBackgroundMusic(),openingEffect:project.presentation?.openingEffect,closingEffect:project.presentation?.closingEffect};
   return invoke("render_production",{items:productionRenderItems(renderProject),replacements:[],backgroundMusic:productionRenderBackgroundMusic(renderProject),projectId:`${project.name||"Presentation"}-presentation`});
 }
 async function previewPresentation(){
@@ -799,16 +948,16 @@ function savePresentationDescriptions(){
   modifyPresentation(next,selected,"Presentation item descriptions saved in project metadata.");
 }
 function closePresentationItemProperties(){if(el["presentation-item-properties-dialog"].open)el["presentation-item-properties-dialog"].close();el["presentation-items"].focus();}
-function showPresentationItemProperties(){const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image",segments=normalizedSegments(item),singleSegment=segments.length===1;el["presentation-item-properties-name"].textContent=`Item ${index+1} of ${items.length}. ${item.kind}. ${item.label||item.name}.`;el["presentation-item-label"].value=item.label||item.name;el["presentation-image-duration-fields"].hidden=!image;el["presentation-item-duration"].value=itemDuration(item);el["presentation-media-boundary-fields"].hidden=!media||!singleSegment;writeTime("presentation-start",singleSegment?segments[0].start:0);writeTime("presentation-end",singleSegment?segments[0].end:0);el["presentation-item-audio-fields"].hidden=!media;el["presentation-item-audio-volume"].value=Math.round((item.audioVolume??1)*100);el["presentation-item-audio-muted"].checked=Boolean(item.audioMuted);el["presentation-transition-type"].value=index?item.transition?.type||"none":"none";el["presentation-transition-duration"].value=index?Number(item.transition?.duration)||1:1;el["presentation-transition-type"].disabled=index===0;el["presentation-transition-duration"].disabled=index===0;el["presentation-transition-help"].textContent=index===0?"The first timeline item cannot have an incoming transition.":"The transition overlaps the end of the previous item and the beginning of this item.";el["presentation-item-properties-dialog"].showModal();el["presentation-item-label"].focus();}
-function savePresentationItemProperties(){const selected=el["presentation-items"].value,next=structuredClone(project),items=next.presentation.items,index=items.findIndex(item=>item.id===selected);if(index<0)return closePresentationItemProperties();const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image";item.label=el["presentation-item-label"].value.trim()||item.name;if(image){const value=Number(el["presentation-item-duration"].value);if(!Number.isFinite(value)||value<.001||value>3600)return announce("Enter an image duration between 0.001 and 3600 seconds.",true);item.duration=value;item.inPoint=0;item.outPoint=value;item.editSegments=[{start:0,end:value}];}if(media&&!(item.editSegments?.length>1)){const start=readTime("presentation-start"),end=readTime("presentation-end"),limit=Number(item.duration)||0;if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>limit)return announce("Enter valid start and end times within the source duration.",true);item.inPoint=start;item.outPoint=end;item.editSegments=[{start,end}];}if(media){const volume=Number(el["presentation-item-audio-volume"].value);if(!Number.isFinite(volume)||volume<0||volume>100)return announce("Foreground audio volume must be between 0 and 100 percent.",true);item.audioVolume=volume/100;item.audioMuted=el["presentation-item-audio-muted"].checked;}const type=index?el["presentation-transition-type"].value:"none",seconds=type!=="none"?Number(el["presentation-transition-duration"].value):0;if(type!=="none"&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Crossfade duration must be between 0.1 and 10 seconds.",true);item.transition={type,duration:seconds};if(index&&type!=="none"&&presentationTransitionDuration(item,items[index-1])<seconds-.0005)return announce("The crossfade is too long for one of the neighboring items. Shorten the transition or lengthen the item.",true);next.dirty=true;undoStack.push(project);redoStack=[];project=next;closePresentationItemProperties();renderPresentation();el["presentation-items"].value=selected;el["presentation-items"].focus();announce(`${item.label||item.name} properties saved. ${type==="crossfade"?`Crossfade ${readableTime(seconds)}.`:"No incoming transition."}`);}
+function showPresentationItemProperties(){const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);if(index<0)return announce("Choose an item in the Presentation Timeline first.",true);const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image",title=Boolean(item.titleText),segments=normalizedSegments(item),singleSegment=segments.length===1;el["presentation-item-properties-name"].textContent=`Item ${index+1} of ${items.length}. ${item.kind}. ${item.label||item.name}.`;el["presentation-item-label"].value=item.label||item.name;el["presentation-title-property-fields"].hidden=!title;if(title){el["presentation-edit-title"].value=item.titleText||"";el["presentation-edit-subtitle"].value=item.titleSubtitle||"";el["presentation-edit-credit"].value=item.titleCredit||"";el["presentation-edit-background"].value=item.titleBackground||"#14213d";el["presentation-edit-foreground"].value=item.titleForeground||"#ffffff";}el["presentation-image-duration-fields"].hidden=!image;el["presentation-item-duration"].value=editableSeconds(itemDuration(item));el["presentation-media-boundary-fields"].hidden=!media||!singleSegment;writeTime("presentation-start",singleSegment?segments[0].start:0);writeTime("presentation-end",singleSegment?segments[0].end:0);el["presentation-item-audio-fields"].hidden=!media;el["presentation-item-audio-volume"].value=Math.round((item.audioVolume??1)*100);el["presentation-item-audio-muted"].checked=Boolean(item.audioMuted);el["presentation-transition-type"].value=index?item.transition?.type||"none":"none";el["presentation-transition-duration"].value=editableSeconds(index?Number(item.transition?.duration)||1:1);el["presentation-transition-type"].disabled=index===0;el["presentation-transition-duration"].disabled=index===0;el["presentation-transition-help"].textContent=index===0?"The first item has no preceding item. Use Opening Effect in the Presentation Builder to animate its appearance.":"The transition overlaps the end of the previous item and the beginning of this item.";const audioSources=presentationAudioSources();el["presentation-still-audio-fields"].hidden=!image;el["presentation-still-audio"].replaceChildren(new Option("No attached audio",""),...audioSources.map(source=>new Option(source.label||source.name,source.id)));el["presentation-still-audio"].value=audioSources.find(source=>source.source===item.attachedAudio?.source)?.id||"";el["presentation-still-match-audio"].checked=Boolean(item.matchAudioDuration);updateAttachedAudioDurationControl("presentation-item-duration","presentation-still-audio","presentation-still-match-audio");el["presentation-item-properties-dialog"].showModal();el["presentation-item-label"].focus();}
+async function savePresentationItemProperties(){const selected=el["presentation-items"].value,next=structuredClone(project),items=next.presentation.items,index=items.findIndex(item=>item.id===selected);if(index<0)return closePresentationItemProperties();const item=items[index],media=["Video","Audio"].includes(item.kind),image=item.kind==="Image",title=Boolean(item.titleText);item.label=el["presentation-item-label"].value.trim()||item.name;if(title){const newTitle=el["presentation-edit-title"].value.trim();if(!newTitle)return announce("Enter a title for the title slide.",true);try{item.source=await renderTitleSlideImage(newTitle,el["presentation-edit-subtitle"].value.trim(),el["presentation-edit-credit"].value.trim(),el["presentation-edit-background"].value,el["presentation-edit-foreground"].value);}catch(error){return announce(`Updated title image could not be saved. ${error}`,true);}item.titleText=newTitle;item.titleSubtitle=el["presentation-edit-subtitle"].value.trim();item.titleCredit=el["presentation-edit-credit"].value.trim();item.titleBackground=el["presentation-edit-background"].value;item.titleForeground=el["presentation-edit-foreground"].value;item.name=newTitle;if(!el["presentation-item-label"].value.trim()||item.label.startsWith("Title Slide -"))item.label=`Title Slide - ${newTitle}`;}if(image){const value=Number(el["presentation-item-duration"].value),audio=presentationAudioSources().find(source=>source.id===el["presentation-still-audio"].value),match=Boolean(audio&&el["presentation-still-match-audio"].checked);if(!match&&(!Number.isFinite(value)||value<.1||value>3600))return announce("Enter an image duration between 0.1 and 3600 seconds.",true);let visualDuration=value;if(match){try{visualDuration=await resolveAudioDuration(audio);}catch(error){return announce(`The visual duration could not be matched. ${error}`,true);}}item.duration=visualDuration;item.inPoint=0;item.outPoint=visualDuration;item.editSegments=[{start:0,end:visualDuration}];item.attachedAudio=audio?{source:audio.source,name:audio.label||audio.name,duration:match?visualDuration:itemDuration(audio)}:null;item.matchAudioDuration=match;}if(media&&!(item.editSegments?.length>1)){const start=readTime("presentation-start"),end=readTime("presentation-end"),limit=Number(item.duration)||0;if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start||end>limit)return announce("Enter valid start and end times within the source duration.",true);item.inPoint=start;item.outPoint=end;item.editSegments=[{start,end}];}if(media){const volume=Number(el["presentation-item-audio-volume"].value);if(!Number.isFinite(volume)||volume<0||volume>100)return announce("Foreground audio volume must be between 0 and 100 percent.",true);item.audioVolume=volume/100;item.audioMuted=el["presentation-item-audio-muted"].checked;}const type=index?el["presentation-transition-type"].value:"none",seconds=type!=="none"?Number(el["presentation-transition-duration"].value):0;if(type!=="none"&&(!Number.isFinite(seconds)||seconds<.1||seconds>10))return announce("Transition duration must be between 0.1 and 10 seconds.",true);item.transition={type,duration:seconds};if(index&&type!=="none"&&maxPresentationTransitionDuration(items,index)<seconds-.0005)return announce("The transition is too long for one of the neighboring items. Shorten the transition or lengthen the item.",true);next.dirty=true;undoStack.push(project);redoStack=[];project=next;closePresentationItemProperties();renderPresentation();el["presentation-items"].value=selected;el["presentation-items"].focus();announce(`${item.label||item.name} properties saved. ${type!=="none"?`${presentationTransitionName(type)} ${readableTime(seconds)}.`:"No incoming transition."}${item.attachedAudio?.source?` Attached audio ${item.attachedAudio.name}.${item.matchAudioDuration?" Duration matched to attached audio.":""}`:""}`);}
 function switchWorkspace(direction=1,target=null){
   const next=target||workspaceOrder[(workspaceOrder.indexOf(activeWorkspace)+direction+workspaceOrder.length)%workspaceOrder.length];
   if(!workspaceTabs[next]||!workspacePanels[next])return;
   // The selected tab is the single accessible announcement source. Focusing the
   // entire tab panel made JAWS repeatedly announce the document/window title.
   // Do not also announce the workspace through a live region.
-  if(next===activeWorkspace)return;
   activeWorkspace=next;
+  localStorage.setItem("ame-active-workspace",next);
   for(const name of workspaceOrder){
     const selected=name===next;
     el[workspaceTabs[name]].setAttribute("aria-selected",String(selected));
@@ -1055,7 +1204,7 @@ function applyTrackReplacement(clip,target,start,limit,looped=false){
   rememberChange(next,target==="audio"?`Audio replaced${looped?" by repeating the Source":""} from ${readableTime(edit.timelineStart)} through ${readableTime(edit.timelineEnd)}. Range retained for an optional image.`:`Replaced ${targetText(target).toLowerCase()}${looped?" by repeating the Source":""} from ${readableTime(edit.timelineStart)} through ${readableTime(edit.timelineEnd)}. Production duration unchanged.`);
   const program=editorStates.get(PROGRAM_ID);if(program){setEditorPosition(program,edit.timelineStart,true);program.section.focus();}cue("add");
 }
-function showProperties(){const location=activeLocation(),item=location?.item;if(!item)return announce("No media editor active.",true);el["properties-name"].textContent=editorTitle(item,location.type);el["item-label"].value=item.label||item.name;el["item-duration"].value=item.duration??"";const media=["Video","Audio"].includes(item.kind),edited=["sequence","source"].includes(location.type)&&Array.isArray(item.editSegments);el["item-duration"].readOnly=media;el["trim-fields"].hidden=!media||edited;writeTime("item-in",Number(item.inPoint)||0);writeTime("item-out",item.outPoint==null?Number(item.duration)||0:Number(item.outPoint));el["properties-dialog"].showModal();el["item-label"].focus();}
+function showProperties(){const location=activeLocation(),item=location?.item;if(!item)return announce("No media editor active.",true);el["properties-name"].textContent=editorTitle(item,location.type);el["item-label"].value=item.label||item.name;el["item-duration"].value=item.duration==null?"":editableSeconds(item.duration);const media=["Video","Audio"].includes(item.kind),edited=["sequence","source"].includes(location.type)&&Array.isArray(item.editSegments);el["item-duration"].readOnly=media;el["trim-fields"].hidden=!media||edited;writeTime("item-in",Number(item.inPoint)||0);writeTime("item-out",item.outPoint==null?Number(item.duration)||0:Number(item.outPoint));el["properties-dialog"].showModal();el["item-label"].focus();}
 function saveProperties(){const location=activeLocation(),item=location?.item;if(!item)return;const value=Number(el["item-duration"].value),media=["Video","Audio"].includes(item.kind),edited=["sequence","source"].includes(location.type)&&Array.isArray(item.editSegments),start=readTime("item-in"),end=readTime("item-out");if(!media&&(!Number.isFinite(value)||value<0.001))return announce("Enter a valid duration.",true);if(media&&!edited&&(!Number.isFinite(start)||!Number.isFinite(end)||end<=start||end>value))return announce("Enter valid Left and Right Bracket times.",true);const patch={label:el["item-label"].value.trim()||item.name,duration:value};if(media&&!edited){patch.inPoint=start;patch.outPoint=end;}el["properties-dialog"].close();rememberChange(updateLocated(item.id,patch),"Media properties saved.");}
 function showTextDialog(){el["text-content"].value="";el["text-duration"].value="5";el["text-dialog"].showModal();el["text-content"].focus();}
 function saveText(){const text=el["text-content"].value.trim(),seconds=Number(el["text-duration"].value);if(!text||!Number.isFinite(seconds)||seconds<0.1)return announce("Enter text and a valid duration.",true);const after=selectedId,item={id:id(),source:null,name:text.slice(0,40),label:text.slice(0,40),kind:"Text",text,duration:seconds,role:"sequence"};selectedId=item.id;el["text-dialog"].close();clearProgramMarks();rememberChange(addItem(project,item,after),"Text item added.",true);}
@@ -1181,16 +1330,17 @@ const actions={
   previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showPresentationWorkspace:()=>switchWorkspace(1,"presentation"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition:()=>activeWorkspace==="presentation"?addPresentationCrossfade():addTransition(),moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationItemProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
-  preview:togglePlayback,playPause:togglePlayback,audition:auditionSelection,setIn:()=>setPoint("in"),setOut:()=>setPoint("out"),goToTime:showGoToTime,
-  saveSourceClip,cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:commitPrimaryEdit,
-  focusPresentationTimeline,focusPresentationSources,
-  scrubBack1:()=>scrub(-1),scrubForward1:()=>scrub(1),scrubBack100ms:()=>scrub(-0.1),scrubForward100ms:()=>scrub(0.1),scrubBack10ms:()=>scrub(-0.01),scrubForward10ms:()=>scrub(0.01),
-  moveBack5:()=>movePlayhead(-5),moveForward5:()=>movePlayhead(5),moveBack30:()=>movePlayhead(-30),moveForward30:()=>movePlayhead(30),moveBack300:()=>movePlayhead(-300),moveForward300:()=>movePlayhead(300),nudgeBack:()=>movePlayhead(-0.001),nudgeForward:()=>movePlayhead(0.001),
-  jumpBeginning:()=>jumpPlayhead(false),jumpEnd:()=>jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
+  preview:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():togglePlayback(),playPause:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():togglePlayback(),audition:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():auditionSelection(),setIn:()=>activeWorkspace==="audio"?audioStudio?.setMark("in"):setPoint("in"),setOut:()=>activeWorkspace==="audio"?audioStudio?.setMark("out"):setPoint("out"),goToTime:()=>activeWorkspace==="audio"?audioStudio?.goToTime():showGoToTime(),
+  saveSourceClip,cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:()=>activeWorkspace==="audio"?audioStudio?.saveRange():commitPrimaryEdit(),
+  focusPresentationTimeline,focusPresentationSources:focusWorkspaceSources,
+  toggleAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.toggleRecording();},pauseAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.pauseRecording();},
+  scrubBack1:()=>activeWorkspace==="audio"?audioStudio?.scrub(-1):scrub(-1),scrubForward1:()=>activeWorkspace==="audio"?audioStudio?.scrub(1):scrub(1),scrubBack100ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(-0.1):scrub(-0.1),scrubForward100ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(0.1):scrub(0.1),scrubBack10ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(-0.01):scrub(-0.01),scrubForward10ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(0.01):scrub(0.01),
+  moveBack5:()=>activeWorkspace==="audio"?audioStudio?.seek(-5):movePlayhead(-5),moveForward5:()=>activeWorkspace==="audio"?audioStudio?.seek(5):movePlayhead(5),moveBack30:()=>activeWorkspace==="audio"?audioStudio?.seek(-30):movePlayhead(-30),moveForward30:()=>activeWorkspace==="audio"?audioStudio?.seek(30):movePlayhead(30),moveBack300:()=>activeWorkspace==="audio"?audioStudio?.seek(-300):movePlayhead(-300),moveForward300:()=>activeWorkspace==="audio"?audioStudio?.seek(300):movePlayhead(300),nudgeBack:()=>activeWorkspace==="audio"?audioStudio?.seek(-0.001):movePlayhead(-0.001),nudgeForward:()=>activeWorkspace==="audio"?audioStudio?.seek(0.001):movePlayhead(0.001),
+  jumpBeginning:()=>activeWorkspace==="audio"?audioStudio?.jump(false):jumpPlayhead(false),jumpEnd:()=>activeWorkspace==="audio"?audioStudio?.jump(true):jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.11.28. Reliable project workspace focus, transition editing, bulk crossfades, precise item properties, preview, and automatic music ducking.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.2 Development Testing Build. Copyright 2026 Open Door Design. Source navigation, workspace restoration, preview control, and retained microphone permission are included.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1227,7 +1377,16 @@ document.querySelectorAll('[role="tab"]').forEach(tab=>tab.addEventListener("key
   const target=event.key==="Home"?workspaceOrder[0]:event.key==="End"?workspaceOrder[workspaceOrder.length-1]:workspaceOrder[(index+(event.key==="ArrowRight"?1:-1)+workspaceOrder.length)%workspaceOrder.length];
   switchWorkspace(1,target);el[workspaceTabs[target]].focus();
 }));
-el["presentation-items"].addEventListener("change",loadPresentationDescriptions);
+el["presentation-items"].addEventListener("change",()=>{loadPresentationDescriptions();renderPresentationVisualTimeline(presentationItems());});
+el["presentation-visual-timeline"].addEventListener("click",event=>{
+  const button=event.target.closest("button[data-action]"),card=event.target.closest("[data-item-id]");if(!button||!card)return;
+  for(const option of el["presentation-items"].options)option.selected=option.value===card.dataset.itemId;
+  loadPresentationDescriptions();renderPresentationVisualTimeline(presentationItems());
+  if(button.dataset.action==="earlier")movePresentation(-1);
+  else if(button.dataset.action==="later")movePresentation(1);
+  else if(button.dataset.action==="edit")showPresentationItemProperties();
+  else if(button.dataset.action==="remove")removePresentation();
+});
 el["presentation-new"].addEventListener("click",newPresentation);
 el["presentation-open"].addEventListener("click",openProject);
 el["presentation-save"].addEventListener("click",()=>saveProject(false));
@@ -1241,6 +1400,7 @@ el["presentation-paste"].addEventListener("click",pastePresentation);
 el["presentation-remove"].addEventListener("click",removePresentation);
 el["presentation-properties"].addEventListener("click",showPresentationItemProperties);
 el["presentation-bulk-transition-apply"].addEventListener("click",()=>applyPresentationTransition(false));el["presentation-bulk-transition-remove"].addEventListener("click",()=>applyPresentationTransition(true));
+el["presentation-effects-apply"].addEventListener("click",applyPresentationEffects);
 el["presentation-choose-source"].addEventListener("click",focusPresentationSources);
 el["presentation-go-timeline"].addEventListener("click",focusPresentationTimeline);
 el["presentation-items"].addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){event.preventDefault();for(const option of el["presentation-items"].options)option.selected=true;announce(`${el["presentation-items"].options.length} presentation items selected.`);}});
@@ -1250,11 +1410,20 @@ el["presentation-preview"].addEventListener("click",previewPresentation);
 el["presentation-preview-close"].addEventListener("click",closePresentationPreview);
 el["presentation-preview-dialog"].addEventListener("cancel",event=>{event.preventDefault();closePresentationPreview();});
 el["presentation-export"].addEventListener("click",exportPresentation);
+el["presentation-create-title"].addEventListener("click",showCreateTitleSlide);
+el["presentation-title-confirm"].addEventListener("click",createTitleSlide);
+el["presentation-title-audio"].addEventListener("change",()=>updateAttachedAudioDurationControl("presentation-title-duration","presentation-title-audio","presentation-title-match-audio"));
+el["presentation-title-match-audio"].addEventListener("change",()=>updateAttachedAudioDurationControl("presentation-title-duration","presentation-title-audio","presentation-title-match-audio"));
+el["presentation-title-cancel"].addEventListener("click",()=>{el["presentation-title-dialog"].close();el["presentation-create-title"].focus();});
 el["presentation-insert-before"].addEventListener("click",()=>addPresentationSource("before"));
 el["presentation-insert-after"].addEventListener("click",()=>addPresentationSource("after"));
 el["presentation-append"].addEventListener("click",()=>addPresentationSource("end"));
 el["presentation-save-accessibility"].addEventListener("click",savePresentationDescriptions);
 el["presentation-item-properties-save"].addEventListener("click",savePresentationItemProperties);el["presentation-item-properties-cancel"].addEventListener("click",closePresentationItemProperties);el["presentation-item-properties-dialog"].addEventListener("cancel",event=>{event.preventDefault();closePresentationItemProperties();});
+el["presentation-still-audio"].addEventListener("change",()=>updateAttachedAudioDurationControl("presentation-item-duration","presentation-still-audio","presentation-still-match-audio"));
+el["presentation-still-match-audio"].addEventListener("change",()=>updateAttachedAudioDurationControl("presentation-item-duration","presentation-still-audio","presentation-still-match-audio"));
+el["presentation-transition-duration"].addEventListener("focus",()=>{const items=presentationItems(),index=items.findIndex(item=>item.id===el["presentation-items"].value);if(index>0)el["presentation-transition-help"].textContent=`The available transition duration at this position is ${readableTime(maxPresentationTransitionDuration(items,index))}.`;});
+document.addEventListener("click",event=>{const button=event.target.closest?.(".visual-disclosure-toggle");if(!button)return;const group=button.closest(".visual-disclosure"),expanded=!group.classList.contains("visually-expanded");group.classList.toggle("visually-expanded",expanded);button.setAttribute("aria-expanded",String(expanded));button.textContent=button.textContent.replace(expanded?/^Show /:/^Hide /,expanded?"Hide ":"Show ");});
 el["save-properties-button"].addEventListener("click",saveProperties);el["cancel-properties-button"].addEventListener("click",()=>el["properties-dialog"].close());el["save-text-button"].addEventListener("click",saveText);el["cancel-text-button"].addEventListener("click",()=>el["text-dialog"].close());
 el["go-to-time-confirm"].addEventListener("click",confirmGoToTime);el["go-to-time-cancel"].addEventListener("click",()=>el["go-to-time-dialog"].close());
 el["insert-image-confirm"].addEventListener("click",confirmImagePlacement);el["insert-image-cancel"].addEventListener("click",()=>finishImagePlacement(null));
@@ -1263,17 +1432,18 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemToProject,importAudioFiles:importAudioStudioFiles});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){
   invoke("frontend_ready").then(()=>{
-    el["import-media-button"].focus();
+    switchWorkspace(1,startupWorkspace);
     return invoke("log_frontend_startup",{message:"Frontend ready; clean workspace shown; loading reusable library."});
   }).catch(error=>{
     console.error("Frontend ready handoff failed",error);
     return invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{});
   }).finally(()=>{void loadLibrary();});
 }else{
-  el["import-media-button"].focus();
+  switchWorkspace(1,startupWorkspace);
   void loadLibrary();
 }

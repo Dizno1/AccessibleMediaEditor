@@ -22,7 +22,8 @@ export const shortcuts = [
   ["jumpBeginning", {key:"home"}], ["jumpEnd", {key:"end"}],
   ["goToTime", {ctrl:true,key:"g"}], ["split", {ctrl:true,key:"k"}],
   ["previousSection", {ctrl:true,key:"pageup"}], ["nextSection", {ctrl:true,key:"pagedown"}],
-  ["previousWorkspace", {ctrl:true,shift:true,key:"tab"}], ["nextWorkspace", {ctrl:true,key:"tab"}]
+  ["previousWorkspace", {ctrl:true,shift:true,key:"tab"}], ["nextWorkspace", {ctrl:true,key:"tab"}],
+  ["toggleAudioRecording", {ctrl:true,alt:true,key:"r"}], ["pauseAudioRecording", {ctrl:true,alt:true,key:" "}]
 ];
 export function registerAction(name, handler) { handlers.set(name, handler); }
 export function triggerAction(name) { const handler = handlers.get(name); return handler ? handler() : undefined; }

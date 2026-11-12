@@ -1,0 +1,31 @@
+Accessible Media Editor
+Build 0.12.2 Development Testing Build
+Workspace and Audio Preview Testing Notes
+
+Alt S now means go to the source library in the active workspace.
+
+In Media Editor, Alt S focuses Source Media.
+
+In Presentation, Alt S focuses the Source Media Library.
+
+In AudioStudio Pro, Alt S focuses the Audio Source Library.
+
+The selected workspace is remembered. Refreshing or reopening the frontend should return to Media Editor, Presentation, or AudioStudio Pro according to the workspace that was active before the refresh.
+
+Preview Selected Audio is now a toggle. Activate it again to stop. X also stops an active Audio Source Library preview before controlling the Audio Editor.
+
+AudioStudio Pro checks the browser engine's saved microphone permission when it starts. When permission remains granted, the microphone list and recording controls are restored without asking the user to activate Enable Microphone Access again.
+
+A permission prompt can still return after a complete uninstall, cleared WebView2 application data, changed application identity, or a Windows microphone privacy reset.
+
+Testing priorities
+
+Test Alt S separately from all three workspaces.
+
+Leave AudioStudio Pro active and press F5. Confirm that AudioStudio Pro remains selected after refresh.
+
+Repeat the refresh test from Presentation and Media Editor.
+
+Start Preview Selected Audio. Activate the same button again and verify that playback stops. Repeat using X to stop.
+
+Grant microphone permission, restart the application without uninstalling it, and confirm that microphone access is restored without another permission prompt.

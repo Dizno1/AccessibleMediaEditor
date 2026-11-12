@@ -25,6 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
+    <p class="build-information">Build 0.12.2 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -43,6 +44,7 @@
     </nav>
 
     <div class="workspace">
+      <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Saved Media Library</button><div class="visual-disclosure-content">
       <section class="editor-section" id="persistent-library-section" aria-labelledby="persistent-library-heading">
         <h2 id="persistent-library-heading">Persistent Media Library</h2>
         <p id="persistent-library-status">Loading saved media library.</p>
@@ -54,6 +56,7 @@
         </div>
         <p>Library entries remain available after closing or updating the application. Open Project separately to resume a saved project.</p>
       </section>
+      </div></div>
       <section class="editor-section sequence-panel" id="media-section" aria-labelledby="media-section-heading" tabindex="-1">
         <h2 id="media-section-heading">Media</h2>
         <label for="project-items">Primary Production contents</label>
@@ -69,6 +72,7 @@
           <button type="button" id="move-later-button" disabled>Move Later (Ctrl+Down)</button>
           <button type="button" id="remove-item-button" disabled>Remove Item (Delete)</button>
         </div>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Source Media</button><div class="visual-disclosure-content">
         <label for="source-items">Source media</label>
         <select id="source-items" size="7">
           <option disabled>No source media</option>
@@ -81,16 +85,20 @@
           <button type="button" id="append-source-button" hidden disabled>Add Selection to End</button>
           <button type="button" id="remove-source-button" disabled>Remove Source (Delete)</button>
         </div>
+        </div></div>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Track Replacements</button><div class="visual-disclosure-content">
         <label for="replacement-items">Track replacements</label>
         <select id="replacement-items" size="5">
           <option disabled>No track replacements</option>
         </select>
         <p id="selected-replacement-summary">No track replacement selected.</p>
         <button type="button" id="remove-replacement-button" disabled>Remove Track Replacement</button>
+        </div></div>
       </section>
 
       <div id="media-editor-sections"></div>
 
+      <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Reusable Project Images</button><div class="visual-disclosure-content">
       <section class="editor-section image-library-panel" id="image-library-section" aria-labelledby="image-library-heading" tabindex="-1">
         <h2 id="image-library-heading">Project Image Library</h2>
         <p id="image-library-summary">No project images. Open Media to add images without changing Primary Production.</p>
@@ -105,6 +113,7 @@
           <button type="button" id="remove-image-button" disabled>Remove Image from Project (Delete)</button>
         </div>
       </section>
+      </div></div>
 
       <section class="editor-section output-panel" id="output-section" aria-labelledby="output-section-heading" tabindex="-1">
         <h2 id="output-section-heading">Output</h2>
@@ -129,19 +138,37 @@
         <button type="button" id="presentation-save-as">Save Presentation Project As (Ctrl+Shift+S)</button>
         <p id="presentation-project-status">Presentation project has not been saved.</p>
 
+        <button type="button" id="presentation-create-title">Create Title Slide</button>
         <h3>Presentation Timeline</h3>
-        <p>The timeline is the active presentation editing area. Press Alt+P to return here.</p>
+        <p class="sr-only">The timeline is the active presentation editing area. Press Alt+P to return here.</p>
         <label for="presentation-items">Presentation Timeline items in playback order</label>
         <select id="presentation-items" size="10" multiple></select>
+        <div id="presentation-visual-timeline" class="presentation-visual-timeline" aria-hidden="true"></div>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Transitions</button><div class="visual-disclosure-content">
         <fieldset>
           <legend>Apply transition to current or selected timeline items</legend>
           <label for="presentation-bulk-transition-type">Transition type</label>
           <select id="presentation-bulk-transition-type"><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select>
-          <label for="presentation-bulk-transition-duration">Duration in seconds</label>
-          <input type="number" id="presentation-bulk-transition-duration" min="0.1" max="10" step="0.001" value="1">
+          <label for="presentation-bulk-transition-duration">Duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-bulk-transition-duration" value="1">
           <button type="button" id="presentation-bulk-transition-apply">Apply Transition</button>
           <button type="button" id="presentation-bulk-transition-remove">Remove Transition</button>
         </fieldset>
+        </div></div>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Opening and Closing Effects</button><div class="visual-disclosure-content">
+        <fieldset>
+          <legend>Opening and closing effects</legend>
+          <label for="presentation-opening-effect">Opening effect for the first item</label>
+          <select id="presentation-opening-effect"><option value="none">None</option><option value="fadeblack">Fade in from black</option><option value="fadewhite">Fade in from white</option></select>
+          <label for="presentation-opening-duration">Opening effect duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-opening-duration" value="1">
+          <label for="presentation-closing-effect">Closing effect for the final item</label>
+          <select id="presentation-closing-effect"><option value="none">None</option><option value="fadeblack">Fade out to black</option><option value="fadewhite">Fade out to white</option></select>
+          <label for="presentation-closing-duration">Closing effect duration in seconds, from 0.1 through 10</label>
+          <input type="text" inputmode="decimal" id="presentation-closing-duration" value="1">
+          <button type="button" id="presentation-effects-apply">Apply Opening and Closing Effects</button>
+        </fieldset>
+        </div></div>
         <div class="button-row">
           <button type="button" id="presentation-earlier">Move Earlier</button>
           <button type="button" id="presentation-later">Move Later</button>
@@ -154,8 +181,9 @@
         </div>
         <p id="presentation-sequence-summary">No production items.</p>
 
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Source Media Library</button><div class="visual-disclosure-content">
         <h3>Source Media Library</h3>
-        <p>Reusable source media is not part of the presentation until you add it to the timeline. Press Alt+S to come here.</p>
+        <p class="sr-only">Reusable source media is not part of the presentation until you add it to the timeline. Press Alt+S to come here.</p>
         <label for="presentation-sources">Images, video clips, and audio in the shared source library</label>
         <select id="presentation-sources" size="10"></select>
         <div class="button-row">
@@ -164,14 +192,18 @@
           <button type="button" id="presentation-append">Add to End of Presentation</button>
           <button type="button" id="presentation-go-timeline">Return to Presentation Timeline (Alt+P)</button>
         </div>
+        </div></div>
 
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Slideshow Creation</button><div class="visual-disclosure-content">
         <h3>Create Slides from Images</h3>
-        <label for="presentation-slide-duration">Default image duration in seconds</label>
-        <input id="presentation-slide-duration" type="number" min="0.1" max="3600" step="0.1" value="5">
+        <label for="presentation-slide-duration">Default image duration in seconds, from 0.1 through 3600</label>
+        <input id="presentation-slide-duration" type="text" inputmode="decimal" value="5">
         <button type="button" id="presentation-create-slideshow">Add All Images as Slides</button>
+        </div></div>
       </section>
       <section class="editor-section" id="presentation-music-section" tabindex="-1" aria-labelledby="presentation-music-heading">
         <h2 id="presentation-music-heading">Presentation Background Music Track</h2>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Background Music and Ducking</button><div class="visual-disclosure-content">
         <label for="presentation-music-source">Background music audio source</label>
         <select id="presentation-music-source"><option value="">No background music</option></select>
         <label for="presentation-music-volume">Music volume, percent</label>
@@ -180,12 +212,14 @@
         <input id="presentation-music-duck" type="number" min="0" max="100" step="1" value="25">
         <button type="button" id="presentation-music-apply">Set Background Music</button>
         <button type="button" id="presentation-music-remove">Remove Background Music</button>
+        </div></div>
         <p id="presentation-music-status">No background music selected.</p>
         <button type="button" id="presentation-preview">Preview Complete Presentation</button>
         <button type="button" id="presentation-export">Export Presentation with Music as MP4</button>
       </section>
       <section class="editor-section" id="presentation-accessibility-section" tabindex="-1" aria-labelledby="presentation-accessibility-heading">
         <h2 id="presentation-accessibility-heading">Item Accessibility</h2>
+        <div class="visual-disclosure"><button type="button" class="visual-disclosure-toggle" tabindex="-1" aria-expanded="false">Show Descriptions and Future Audio Description</button><div class="visual-disclosure-content">
         <p>Descriptions are saved in the project. They are not automatically embedded as accessible tracks in exported MP4 files.</p>
         <label for="presentation-alt">Visual description for identifying this item</label>
         <textarea id="presentation-alt" rows="3"></textarea>
@@ -194,19 +228,88 @@
         <textarea id="presentation-dialogue" rows="4"></textarea>
         <label><input id="presentation-dialogue-ad" type="checkbox"> Use the transcript or dialogue as context for future audio-description narration</label>
         <button type="button" id="presentation-save-accessibility">Save Item Descriptions</button>
+        </div></div>
       </section>
     </div>
 
-    <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
-      <section class="editor-section" aria-labelledby="audio-studio-heading">
+    <div id="audio-studio-workspace" class="audio-studio-grid" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
+      <section class="editor-section audio-studio" id="audio-recording-section" aria-labelledby="audio-studio-heading" tabindex="-1">
         <h2 id="audio-studio-heading" tabindex="-1">AudioStudio Pro</h2>
-        <p>Professional audio recording and editing is an optional workspace. Opening an audio file does not enter this workspace automatically.</p>
-        <p>Recording, advanced processing, and Send to Media Editor will be added after the shared media engine is complete.</p>
-        <div class="button-row">
-          <button type="button" disabled>Record Professional Narration</button>
-          <button type="button" disabled>Import Audio for Professional Editing</button>
-          <button type="button" disabled>Send to Media Editor</button>
+        <p id="audio-studio-status">Ready. Enable microphone access to record, or open existing audio.</p>
+
+        <h3>Record Audio</h3>
+        <p id="audio-microphone-status">Microphone access has not been enabled.</p>
+        <button type="button" id="audio-enable-microphone">Enable Microphone Access</button>
+        <div id="audio-recording-setup" hidden>
+          <label for="audio-microphone-select">Microphone</label>
+          <select id="audio-microphone-select"></select>
+          <label for="audio-recording-profile">Recording profile</label>
+          <select id="audio-recording-profile">
+            <option value="spoken">Spoken Word</option>
+            <option value="music">Music</option>
+            <option value="unprocessed">Unprocessed</option>
+          </select>
+          <p id="audio-profile-description">Clear speech recording with echo cancellation and noise suppression.</p>
         </div>
+        <div class="button-row">
+          <button type="button" id="audio-record-toggle" disabled>Start Recording (Ctrl+Alt+R)</button>
+          <button type="button" id="audio-record-pause" disabled>Pause Recording (Ctrl+Alt+Space)</button>
+        </div>
+
+      </section>
+
+      <section class="editor-section audio-studio" id="audio-recording-review" aria-labelledby="audio-review-heading" tabindex="-1" hidden>
+          <h2 id="audio-review-heading" tabindex="-1">Review Recording</h2>
+          <p id="audio-review-duration"></p>
+          <audio id="audio-recording-preview" controls preload="metadata"></audio>
+          <label for="audio-recording-name">Recording name</label>
+          <input type="text" id="audio-recording-name" value="New Recording">
+          <div class="button-row">
+            <button type="button" id="audio-keep-recording">Keep Recording and Add to Library</button>
+            <button type="button" id="audio-record-again">Record Again</button>
+            <button type="button" id="audio-discard-recording">Discard Recording</button>
+          </div>
+      </section>
+
+      <section class="editor-section audio-studio" id="audio-library-section" aria-labelledby="audio-library-heading" tabindex="-1">
+        <h2 id="audio-library-heading">Audio Source Library</h2>
+        <p id="audio-library-summary">No saved audio sources.</p>
+        <label for="audio-library-items">Audio available to all workspaces</label>
+        <select id="audio-library-items" size="8"></select>
+        <audio id="audio-library-preview" controls preload="metadata" hidden></audio>
+        <div class="button-row">
+          <button type="button" id="audio-open-files">Open Audio Files</button>
+          <button type="button" id="audio-preview-source">Preview Selected Audio</button>
+          <button type="button" id="audio-edit-source">Open Selected Audio in Audio Editor</button>
+          <button type="button" id="audio-add-to-project">Add Selected Audio to Current Project</button>
+        </div>
+      </section>
+
+      <section class="editor-section audio-studio" id="audio-editor-section" aria-labelledby="audio-editor-heading" tabindex="-1">
+        <h2 id="audio-editor-heading">Audio Editor</h2>
+        <p id="audio-editor-summary">Choose an audio source and activate Open Selected Audio in Audio Editor.</p>
+        <audio id="audio-editor-media" preload="metadata"></audio>
+        <label for="audio-editor-playhead">Audio playhead</label>
+        <input id="audio-editor-playhead" type="range" min="0" max="0" step="0.001" value="0" disabled>
+        <p id="audio-editor-position">Position 0 seconds. No audio open.</p>
+        <p id="audio-editor-marks">No brackets set.</p>
+        <div class="button-row">
+          <button type="button" id="audio-editor-play" disabled>Play or Pause (X)</button>
+          <button type="button" id="audio-editor-mark-in" disabled>Set Left Bracket</button>
+          <button type="button" id="audio-editor-mark-out" disabled>Set Right Bracket</button>
+          <button type="button" id="audio-editor-clear-marks" disabled>Clear Brackets</button>
+        </div>
+        <fieldset class="time-fields"><legend>Go to exact audio time</legend>
+          <label for="audio-goto-hours">Hours</label><input type="number" id="audio-goto-hours" min="0" step="1" value="0">
+          <label for="audio-goto-minutes">Minutes</label><input type="number" id="audio-goto-minutes" min="0" max="59" step="1" value="0">
+          <label for="audio-goto-seconds">Seconds</label><input type="number" id="audio-goto-seconds" min="0" max="59" step="1" value="0">
+          <label for="audio-goto-milliseconds">Milliseconds</label><input type="number" id="audio-goto-milliseconds" min="0" max="999" step="1" value="0">
+        </fieldset>
+        <button type="button" id="audio-editor-goto" disabled>Move to Entered Time (Ctrl+G)</button>
+        <label for="audio-edited-copy-name">Edited audio source name</label>
+        <input type="text" id="audio-edited-copy-name" value="Edited Audio">
+        <button type="button" id="audio-editor-save-range" disabled>Keep Bracketed Range as New Audio Source</button>
+        <p>The bracketed range is saved nondestructively. The original audio source is not changed or deleted.</p>
       </section>
     </div>
   </main>
@@ -220,16 +323,41 @@
     </div>
   </dialog>
 
+  <dialog id="presentation-title-dialog" aria-labelledby="presentation-title-heading"><form method="dialog">
+    <h2 id="presentation-title-heading">Create Title Slide</h2>
+    <label for="presentation-title-text">Title</label><input id="presentation-title-text" type="text" required>
+    <label for="presentation-title-subtitle">Subtitle (optional)</label><input id="presentation-title-subtitle" type="text">
+    <label for="presentation-title-credit">Presenter or organization (optional)</label><input id="presentation-title-credit" type="text">
+    <label for="presentation-title-background">Background color</label><select id="presentation-title-background"><option value="#14213d">Dark blue</option><option value="#000000">Black</option><option value="#ffffff">White</option><option value="#e5e7eb">Light gray</option></select>
+    <label for="presentation-title-foreground">Text color</label><select id="presentation-title-foreground"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="#fff200">Yellow</option><option value="#bde0fe">Light blue</option></select>
+    <label for="presentation-title-duration">Duration in seconds, minimum 0.1</label><input id="presentation-title-duration" type="text" inputmode="decimal" value="5">
+    <label for="presentation-title-audio">Attach audio from Source Media Library</label><select id="presentation-title-audio"><option value="">No attached audio</option></select>
+    <label><input id="presentation-title-match-audio" type="checkbox">Match slide duration to attached audio</label>
+    <div class="button-row"><button type="button" id="presentation-title-confirm">Create Title Slide</button><button type="button" id="presentation-title-cancel">Cancel</button></div>
+  </form></dialog>
   <dialog id="presentation-item-properties-dialog" aria-labelledby="presentation-item-properties-heading"><form method="dialog">
     <h2 id="presentation-item-properties-heading">Presentation Item Properties</h2><p id="presentation-item-properties-name"></p>
     <label for="presentation-item-label">Item label</label><input type="text" id="presentation-item-label">
-    <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds</label><input type="number" id="presentation-item-duration" min="0.001" max="3600" step="0.001"></div>
+    <div id="presentation-title-property-fields" hidden>
+      <fieldset><legend>Title slide text and colors</legend>
+        <label for="presentation-edit-title">Title</label><input type="text" id="presentation-edit-title">
+        <label for="presentation-edit-subtitle">Subtitle</label><input type="text" id="presentation-edit-subtitle">
+        <label for="presentation-edit-credit">Presenter or organization</label><input type="text" id="presentation-edit-credit">
+        <label for="presentation-edit-background">Background color</label><select id="presentation-edit-background"><option value="#14213d">Dark blue</option><option value="#000000">Black</option><option value="#ffffff">White</option><option value="#e5e7eb">Light gray</option></select>
+        <label for="presentation-edit-foreground">Text color</label><select id="presentation-edit-foreground"><option value="#ffffff">White</option><option value="#000000">Black</option><option value="#fff200">Yellow</option><option value="#bde0fe">Light blue</option></select>
+      </fieldset>
+    </div>
+    <div id="presentation-image-duration-fields"><label for="presentation-item-duration">Image duration in seconds, from 0.1 through 3600</label><input type="text" inputmode="decimal" id="presentation-item-duration"></div>
     <div id="presentation-media-boundary-fields">
       <fieldset class="time-fields"><legend>Start time</legend><label for="presentation-start-hours">Hours</label><input type="number" id="presentation-start-hours" min="0" step="1"><label for="presentation-start-minutes">Minutes</label><input type="number" id="presentation-start-minutes" min="0" max="59" step="1"><label for="presentation-start-seconds">Seconds</label><input type="number" id="presentation-start-seconds" min="0" max="59" step="1"><label for="presentation-start-milliseconds">Milliseconds</label><input type="number" id="presentation-start-milliseconds" min="0" max="999" step="1"></fieldset>
       <fieldset class="time-fields"><legend>End time</legend><label for="presentation-end-hours">Hours</label><input type="number" id="presentation-end-hours" min="0" step="1"><label for="presentation-end-minutes">Minutes</label><input type="number" id="presentation-end-minutes" min="0" max="59" step="1"><label for="presentation-end-seconds">Seconds</label><input type="number" id="presentation-end-seconds" min="0" max="59" step="1"><label for="presentation-end-milliseconds">Milliseconds</label><input type="number" id="presentation-end-milliseconds" min="0" max="999" step="1"></fieldset>
     </div>
+    <div id="presentation-still-audio-fields">
+      <label for="presentation-still-audio">Attached audio for this image or title slide</label><select id="presentation-still-audio"><option value="">No attached audio</option></select>
+      <label><input id="presentation-still-match-audio" type="checkbox">Match visual duration to attached audio</label>
+    </div>
     <div id="presentation-item-audio-fields"><label for="presentation-item-audio-volume">Foreground audio volume, percent</label><input type="number" id="presentation-item-audio-volume" min="0" max="100" step="1" value="100"><label><input id="presentation-item-audio-muted" type="checkbox"> Mute foreground audio for this item</label></div>
-    <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select><label for="presentation-transition-duration">Transition duration in seconds</label><input type="number" id="presentation-transition-duration" min="0.1" max="10" step="0.001" value="1"></fieldset>
+    <fieldset><legend>Transition into this item</legend><p id="presentation-transition-help"></p><label for="presentation-transition-type">Transition type</label><select id="presentation-transition-type"><option value="none">None</option><option value="crossfade">Crossfade</option><option value="fadeblack">Fade through black</option><option value="fadewhite">Fade through white</option><option value="wipeleft">Wipe left</option><option value="wiperight">Wipe right</option></select><label for="presentation-transition-duration">Transition duration in seconds, from 0.1 through 10</label><input type="text" inputmode="decimal" id="presentation-transition-duration" value="1"></fieldset>
     <div class="button-row"><button type="button" id="presentation-item-properties-save">Save Presentation Item Properties</button><button type="button" id="presentation-item-properties-cancel">Cancel</button></div>
   </form></dialog>
 
@@ -239,8 +367,8 @@
       <p id="properties-name"></p>
       <label for="item-label">Item label</label>
       <input type="text" id="item-label">
-      <label for="item-duration">Duration in seconds</label>
-      <input type="number" id="item-duration" min="0.001" step="0.001">
+      <label for="item-duration">Duration in seconds, minimum 1 millisecond</label>
+      <input type="text" inputmode="decimal" id="item-duration">
       <div id="trim-fields">
         <fieldset class="time-fields">
           <legend>Left Bracket time</legend>
@@ -364,8 +492,8 @@
       <h2 id="text-heading">Add Text Item</h2>
       <label for="text-content">Text</label>
       <textarea id="text-content" rows="5"></textarea>
-      <label for="text-duration">Duration in seconds</label>
-      <input type="number" id="text-duration" min="0.1" step="0.1" value="5">
+      <label for="text-duration">Duration in seconds, minimum 0.1</label>
+      <input type="text" inputmode="decimal" id="text-duration" value="5">
       <div class="button-row">
         <button type="button" id="save-text-button">Add Text Item</button>
         <button type="button" id="cancel-text-button">Cancel</button>
@@ -422,11 +550,26 @@
         <li>In the Production items list, Ctrl+Space selects or deselects one item.</li>
         <li>Shift+Arrow extends a selection, and Ctrl+A selects every presentation item.</li>
         <li>The Presentation Timeline is the active editing area and appears before the Source Media Library.</li>
-        <li>Alt+P moves to the Presentation Timeline. Alt+S moves to the Source Media Library.</li>
+        <li>Alt+P moves to the Presentation Timeline. Alt+S moves to the source library in the active workspace.</li>
         <li>Ctrl+X cuts the current or selected presentation items. Ctrl+C copies them. Ctrl+V pastes them before the current timeline item while preserving their order.</li>
         <li>Delete removes selected sequence items without deleting shared library media.</li>
         <li>Preview Complete Presentation renders an accurate preview before export. In the preview, X plays or pauses and Left or Right Arrow moves five seconds.</li>
         <li>Background music automatically lowers during video or audio items. The music controls set both its normal level and its reduced level.</li>
+      </ul>
+      <h3>AudioStudio Pro commands</h3>
+      <ul>
+        <li>Enable Microphone Access makes Windows request microphone permission and lists the available microphones.</li>
+        <li>Ctrl+Alt+R starts or stops recording while AudioStudio Pro is active.</li>
+        <li>Ctrl+Alt+Space pauses or resumes an active recording.</li>
+        <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
+        <li>Kept recordings enter the shared Source Media Library and are available to Media Editor and Presentation.</li>
+        <li>Open Audio Files adds existing audio files to the same shared library.</li>
+        <li>Alt+S moves directly to the Audio Source Library while AudioStudio Pro is active.</li>
+        <li>Preview Selected Audio is a toggle. Activate it again, or press X, to stop the library preview.</li>
+        <li>Ctrl+Page Up or Ctrl+Page Down moves among Recording, Recording Review when available, Audio Source Library, and Audio Editor.</li>
+        <li>Open Selected Audio in Audio Editor activates the selected source without changing the original file.</li>
+        <li>In Audio Editor, X plays or pauses. Arrow keys, U and I, Home and End, Alt+Arrow, and Ctrl+G use the same timing model as Media Editor.</li>
+        <li>Left and Right Brackets select a range. Ctrl+Delete or Keep Bracketed Range as New Audio Source saves that range as a new nondestructive source.</li>
       </ul>
       <button type="submit">Close Instructions and Keyboard Shortcuts</button>
     </form>
@@ -435,7 +578,7 @@
   <dialog id="testing-guide-dialog" aria-labelledby="testing-guide-heading">
     <form method="dialog">
       <h2 id="testing-guide-heading">Testing Guide</h2>
-      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor, Presentation, and AudioStudio Pro. AudioStudio Pro is intentionally a placeholder in this build.</p>
+      <p><strong>Workspaces:</strong> Ctrl+Tab and Ctrl+Shift+Tab switch between Media Editor, Presentation, and AudioStudio Pro. AudioStudio Pro supports microphone recording, review, and the shared Source Media Library in this build.</p>
       <p><strong>Moving through Media Editor:</strong> With the JAWS Virtual Cursor off, press Ctrl+Page Up or Ctrl+Page Down to move among Media Library, every named media editor, and Output. Tab moves within the active section.</p>
       <p><strong>Primary and Source Media:</strong> The first file returned by the Windows dialog becomes Primary Media. Additional files enter Source Media and are excluded from output until inserted. Select a Source and use Make Selected Source Primary when Windows returns the files in an unexpected order. The former Primary moves to Source Media.</p>
       <p><strong>Import conversion:</strong> Video and audio are converted locally to a consistent app-owned working format before editing. The original file is preserved. Large files may take time; wait for the loaded-duration announcement.</p>

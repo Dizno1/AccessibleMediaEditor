@@ -1,16 +1,20 @@
-export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 6, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: []}, editTarget: "both" }; }
+export function createProject(name = "Untitled Project") { return { format: "Open Door Design Accessible Media Editor Project", version: 7, name, path: null, dirty: false, items: [], sources: [], trackReplacements: [], backgroundMusic: null, presentation: {items: [],openingEffect:{type:"none",duration:0},closingEffect:{type:"none",duration:0}}, editTarget: "both" }; }
 export function presentationDuckRanges(items = []) {
   let cursor=0;const ranges=[];
   for(const [index,item] of items.entries()){
     const overlap=index?presentationTransitionDuration(item,items[index-1]):0;cursor=Math.max(0,cursor-overlap);
     const length=itemDuration(item);
-    if(length>0&&["Video","Audio"].includes(item.kind))ranges.push({start:cursor,end:cursor+length});
+    if(length>0&&(["Video","Audio"].includes(item.kind)||Boolean(item.attachedAudio?.source)) )ranges.push({start:cursor,end:cursor+length});
     cursor+=length;
   }
   return ranges;
 }
-export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||!["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item?.transition?.type))return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem)/2,itemDuration(item)/2);}
+export function presentationTransitionDuration(item,previousItem=null){if(!previousItem||!["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item?.transition?.type))return 0;const requested=Math.max(0,Number(item.transition.duration)||0);return Math.min(requested,itemDuration(previousItem),itemDuration(item));}
+export function maxPresentationTransitionDuration(items=[],index,limit=10){if(index<=0||index>=items.length)return 0;const previous=items[index-1],current=items[index];const previousIncoming=index>1?presentationTransitionDuration(previous,items[index-2]):0;const currentOutgoing=index+1<items.length?presentationTransitionDuration(items[index+1],current):0;return Math.max(0,Math.min(limit,itemDuration(previous)-previousIncoming,itemDuration(current)-currentOutgoing));}
 export function presentationTimelineDuration(items=[]){return items.reduce((total,item,index)=>total+itemDuration(item)-(index?presentationTransitionDuration(item,items[index-1]):0),0);}
+export function presentationEffectDuration(effect,allowedTypes=[]){return allowedTypes.includes(effect?.type)?Math.max(0,Number(effect?.duration)||0):0;}
+export function presentationEffectExtension(effect,item=null){return Math.max(0,presentationEffectDuration(effect,["fadeblack","fadewhite"])-itemDuration(item));}
+export function presentationTotalDuration(items=[],openingEffect=null,closingEffect=null){if(!items.length)return 0;return presentationTimelineDuration(items)+presentationEffectExtension(openingEffect,items[0])+presentationEffectExtension(closingEffect,items[items.length-1]);}
 export function addItem(project, item, afterId = null) {
   const next = structuredClone(project); const index = afterId ? next.items.findIndex(i => i.id === afterId) : -1;
   if (index >= 0) next.items.splice(index + 1, 0, item); else next.items.push(item);
@@ -197,11 +201,19 @@ export function removeTrackReplacement(project, replacementId) {
 }
 export function productionRenderItems(project) {
   return project.items.map((item,index) => ({
+    label:item.label||item.name||`Item ${index+1}`,
     source: item.source,
     segments: normalizedSegments(item),
     mediaKind: item.kind,
-    trackTarget: item.kind === "Audio" ? "audio" : item.kind === "Image" ? "video" : (item.trackTarget || "both"),
-    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0
+    trackTarget: item.kind === "Audio" ? "audio" : ["Image","Title"].includes(item.kind) ? "video" : (item.trackTarget || "both"),
+    attachedAudioSource:item.attachedAudio?.source||"",
+    audioVolume:item.audioMuted?0:Math.max(0,Math.min(1,Number(item.audioVolume??1))),
+    transitionType:index&&["crossfade","fadeblack","fadewhite","wipeleft","wiperight"].includes(item.transition?.type)?item.transition.type:"none",
+    transitionDuration:index?presentationTransitionDuration(item,project.items[index-1]):0,
+    openingEffectType:index===0&&["fadeblack","fadewhite"].includes(project.openingEffect?.type)?project.openingEffect.type:"none",
+    openingEffectDuration:index===0?Math.max(0,Number(project.openingEffect?.duration)||0):0,
+    closingEffectType:index===project.items.length-1&&["fadeblack","fadewhite"].includes(project.closingEffect?.type)?project.closingEffect.type:"none",
+    closingEffectDuration:index===project.items.length-1?Math.max(0,Number(project.closingEffect?.duration)||0):0
   }));
 }
 export function productionRenderReplacements(project) {

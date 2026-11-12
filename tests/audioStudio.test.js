@@ -63,8 +63,22 @@ test("bracketed audio ranges are saved nondestructively",()=>{
   assert.match(studio,/original audio source is not changed|nondestructive/i);
 });
 
-test("all visible and native build identification is 0.12.1",()=>{
-  assert.match(html,/Build 0\.12\.1 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.1/);
-  assert.match(rust,/Build 0\.12\.1 executable started/);
+test("Alt S is contextual and the active workspace survives refresh",()=>{
+  assert.match(app,/function focusWorkspaceSources\(\)/);
+  assert.match(app,/activeWorkspace==="audio".*focusLibrary/s);
+  assert.match(app,/ame-active-workspace/);
+  assert.match(app,/switchWorkspace\(1,startupWorkspace\)/);
+});
+
+test("audio preview toggles and retained microphone permission is reused",()=>{
+  assert.match(studio,/Stop Selected Audio Preview/);
+  assert.match(studio,/Audio Source Library preview stopped/);
+  assert.match(studio,/navigator\.permissions\.query\(\{name:"microphone"\}\)/);
+  assert.match(studio,/permission\.state==="granted"/);
+});
+
+test("all visible and native build identification is 0.12.2",()=>{
+  assert.match(html,/Build 0\.12\.2 Development Testing Build/);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.2/);
+  assert.match(rust,/Build 0\.12\.2 executable started/);
 });

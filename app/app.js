@@ -145,6 +145,7 @@ let selectedImageId=null;
 let selectedReplacementId=null;
 let activeMediaId=null;
 let activeWorkspace="media";
+const startupWorkspace=["media","presentation","audio"].includes(localStorage.getItem("ame-active-workspace"))?localStorage.getItem("ame-active-workspace"):"media";
 let activeSectionIndex=0;
 let undoStack=[];
 let redoStack=[];
@@ -885,6 +886,12 @@ function focusPresentationSources(){
   if(activeWorkspace!=="presentation")return announce("The Source Media Library is available in the Presentation workspace.",true);
   el["presentation-sources"].focus();announce(`${sharedPresentationSources().length} items in the Source Media Library. Adding a source does not remove it from the library.`);
 }
+function focusWorkspaceSources(){
+  if(activeWorkspace==="presentation")return focusPresentationSources();
+  if(activeWorkspace==="audio")return audioStudio?.focusLibrary();
+  el["source-items"].focus();
+  announce(`${(project.sources||[]).filter(item=>item.kind!=="Image").length} items in Source Media. Adding or editing a source does not change Primary Production until an edit is applied.`);
+}
 function setPresentationMusic(remove=false){
   const source=remove?"":el["presentation-music-source"].value;
   if(!remove&&!source)return announce("Choose an audio file from the music source list first.",true);
@@ -949,8 +956,8 @@ function switchWorkspace(direction=1,target=null){
   // The selected tab is the single accessible announcement source. Focusing the
   // entire tab panel made JAWS repeatedly announce the document/window title.
   // Do not also announce the workspace through a live region.
-  if(next===activeWorkspace)return;
   activeWorkspace=next;
+  localStorage.setItem("ame-active-workspace",next);
   for(const name of workspaceOrder){
     const selected=name===next;
     el[workspaceTabs[name]].setAttribute("aria-selected",String(selected));
@@ -1325,7 +1332,7 @@ const actions={
   addText:showTextDialog,addTransition:()=>activeWorkspace==="presentation"?addPresentationCrossfade():addTransition(),moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationItemProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
   preview:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():togglePlayback(),playPause:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():togglePlayback(),audition:()=>activeWorkspace==="audio"?audioStudio?.togglePlayback():auditionSelection(),setIn:()=>activeWorkspace==="audio"?audioStudio?.setMark("in"):setPoint("in"),setOut:()=>activeWorkspace==="audio"?audioStudio?.setMark("out"):setPoint("out"),goToTime:()=>activeWorkspace==="audio"?audioStudio?.goToTime():showGoToTime(),
   saveSourceClip,cutMedia:cutMediaAction,copyMedia:copyMediaAction,pasteMedia:pasteMediaAction,pasteInsert:pasteMediaInsert,insertSource:copySourceSelection,appendSource:pasteMediaInsert,trimPrimary:()=>activeWorkspace==="audio"?audioStudio?.saveRange():commitPrimaryEdit(),
-  focusPresentationTimeline,focusPresentationSources,
+  focusPresentationTimeline,focusPresentationSources:focusWorkspaceSources,
   toggleAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.toggleRecording();},pauseAudioRecording:()=>{if(activeWorkspace==="audio")audioStudio?.pauseRecording();},
   scrubBack1:()=>activeWorkspace==="audio"?audioStudio?.scrub(-1):scrub(-1),scrubForward1:()=>activeWorkspace==="audio"?audioStudio?.scrub(1):scrub(1),scrubBack100ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(-0.1):scrub(-0.1),scrubForward100ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(0.1):scrub(0.1),scrubBack10ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(-0.01):scrub(-0.01),scrubForward10ms:()=>activeWorkspace==="audio"?audioStudio?.scrub(0.01):scrub(0.01),
   moveBack5:()=>activeWorkspace==="audio"?audioStudio?.seek(-5):movePlayhead(-5),moveForward5:()=>activeWorkspace==="audio"?audioStudio?.seek(5):movePlayhead(5),moveBack30:()=>activeWorkspace==="audio"?audioStudio?.seek(-30):movePlayhead(-30),moveForward30:()=>activeWorkspace==="audio"?audioStudio?.seek(30):movePlayhead(30),moveBack300:()=>activeWorkspace==="audio"?audioStudio?.seek(-300):movePlayhead(-300),moveForward300:()=>activeWorkspace==="audio"?audioStudio?.seek(300):movePlayhead(300),nudgeBack:()=>activeWorkspace==="audio"?audioStudio?.seek(-0.001):movePlayhead(-0.001),nudgeForward:()=>activeWorkspace==="audio"?audioStudio?.seek(0.001):movePlayhead(0.001),
@@ -1333,7 +1340,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.1 Development Testing Build. Copyright 2026 Open Door Design. AudioStudio Pro includes section navigation and nondestructive bracketed audio editing.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.2 Development Testing Build. Copyright 2026 Open Door Design. Source navigation, workspace restoration, preview control, and retained microphone permission are included.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1430,13 +1437,13 @@ audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAud
 render();
 if(invoke){
   invoke("frontend_ready").then(()=>{
-    el["import-media-button"].focus();
+    switchWorkspace(1,startupWorkspace);
     return invoke("log_frontend_startup",{message:"Frontend ready; clean workspace shown; loading reusable library."});
   }).catch(error=>{
     console.error("Frontend ready handoff failed",error);
     return invoke("log_frontend_startup",{message:`Frontend ready handoff failed: ${error}`}).catch(()=>{});
   }).finally(()=>{void loadLibrary();});
 }else{
-  el["import-media-button"].focus();
+  switchWorkspace(1,startupWorkspace);
   void loadLibrary();
 }
