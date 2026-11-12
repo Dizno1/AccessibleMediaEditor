@@ -10,7 +10,7 @@ const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf
 const prepare=readFileSync(new URL("../scripts/prepare-dist.js",import.meta.url),"utf8");
 
 test("AudioStudio Pro exposes keyboard-operable recording, review, and shared-library controls",()=>{
-  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-edit-source","audio-add-to-project","audio-editor-playhead","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range"]){
+  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-edit-source","audio-add-to-project","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
     assert.match(html,new RegExp(`id=["']${id}["']`));
   }
   assert.match(html,/shared Source Media Library/i);
@@ -77,8 +77,26 @@ test("audio preview toggles and retained microphone permission is reused",()=>{
   assert.match(studio,/permission\.state==="granted"/);
 });
 
-test("all visible and native build identification is 0.12.2",()=>{
-  assert.match(html,/Build 0\.12\.2 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.2/);
-  assert.match(rust,/Build 0\.12\.2 executable started/);
+test("playback speed is available in AudioStudio and every Media Editor",()=>{
+  assert.match(html,/id="audio-editor-speed"/);
+  assert.match(studio,/editor\.playbackRate=playbackSpeed/);
+  assert.match(app,/Playback speed/);
+  assert.match(app,/media\.playbackRate=rate/);
+  assert.match(app,/ame-playback-speed/);
+});
+
+test("long pauses are analyzed and shortened only in a confirmed new source",()=>{
+  assert.match(studio,/invoke\("analyze_silence"/);
+  assert.match(studio,/window\.confirm\(message\)/);
+  assert.match(studio,/invoke\("render_working_edit"/);
+  assert.match(studio,/Original source unchanged/);
+  assert.match(rust,/async fn analyze_silence/);
+  assert.match(rust,/silencedetect=noise=/);
+  assert.match(rust,/analyze_silence,render_working_edit/);
+});
+
+test("all visible and native build identification is 0.12.3",()=>{
+  assert.match(html,/Build 0\.12\.3 Development Testing Build/);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.3/);
+  assert.match(rust,/Build 0\.12\.3 executable started/);
 });

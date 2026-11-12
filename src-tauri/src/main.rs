@@ -15,7 +15,7 @@ mod native_media_picker;
 #[derive(Serialize)]
 struct OpenProjectResult { path: String, content: String }
 
-#[derive(Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 struct EditSegment { start: f64, end: f64 }
 
 #[derive(Deserialize)]
@@ -360,6 +360,27 @@ async fn run_ffmpeg(app: &tauri::AppHandle, args: Vec<String>) -> Result<(), Str
     }
 }
 
+#[tauri::command]
+async fn analyze_silence(app: tauri::AppHandle, source: String, start: f64, end: f64, minimum_duration: f64, threshold_db: f64) -> Result<Vec<EditSegment>, String> {
+    if !std::path::Path::new(&source).is_file() { return Err("The audio source file could not be found.".into()); }
+    if !start.is_finite() || !end.is_finite() || end <= start { return Err("The audio analysis range is invalid.".into()); }
+    if !minimum_duration.is_finite() || minimum_duration < 0.5 || minimum_duration > 30.0 { return Err("The minimum pause must be between 0.5 and 30 seconds.".into()); }
+    if !threshold_db.is_finite() || threshold_db < -80.0 || threshold_db > -10.0 { return Err("The silence threshold is invalid.".into()); }
+    let length=end-start;
+    let args=vec!["-hide_banner".into(),"-ss".into(),format!("{:.6}",start),"-t".into(),format!("{:.6}",length),"-i".into(),source,"-af".into(),format!("silencedetect=noise={:.1}dB:d={:.6}",threshold_db,minimum_duration),"-f".into(),"null".into(),"-".into()];
+    let output=app.shell().sidecar("ffmpeg").map_err(|error|error.to_string())?.args(args).output().await.map_err(|error|error.to_string())?;
+    if !output.status.success() { return Err(String::from_utf8_lossy(&output.stderr).lines().rev().take(20).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" ")); }
+    let text=String::from_utf8_lossy(&output.stderr);let mut pending=None;let mut ranges=Vec::new();
+    for line in text.lines() {
+        if let Some(value)=line.split("silence_start:").nth(1).and_then(|part|part.split_whitespace().next()).and_then(|value|value.parse::<f64>().ok()) { pending=Some((start+value).clamp(start,end)); }
+        if let Some(value)=line.split("silence_end:").nth(1).and_then(|part|part.split_whitespace().next()).and_then(|value|value.parse::<f64>().ok()) {
+            if let Some(begin)=pending.take(){let finish=(start+value).clamp(start,end);if finish-begin>=minimum_duration-0.001{ranges.push(EditSegment{start:begin,end:finish});}}
+        }
+    }
+    if let Some(begin)=pending { if end-begin>=minimum_duration-0.001 { ranges.push(EditSegment{start:begin,end}); } }
+    Ok(ranges)
+}
+
 fn safe_working_path(item_id: &str, extension: &str, purpose: &str) -> Result<std::path::PathBuf, String> {
     let folder = dirs::data_local_dir().ok_or("The local application data folder is unavailable.")?.join("Accessible Media Editor").join("Working");
     fs::create_dir_all(&folder).map_err(|error| error.to_string())?;
@@ -645,7 +666,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.2 executable started.");
+    write_startup_log("Build 0.12.3 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -670,7 +691,7 @@ fn main() {
             write_startup_log("Tauri setup completed.");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,render_working_edit,render_production])
+        .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
         .run(tauri::generate_context!())
         .expect("error while running Accessible Media Editor");
 }

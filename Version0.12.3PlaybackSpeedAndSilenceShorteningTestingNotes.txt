@@ -1,0 +1,29 @@
+Accessible Media Editor
+Build 0.12.3 Testing Notes
+November 12, 2026
+
+Playback speed
+
+Open audio in AudioStudio Pro Audio Editor or open media in Media Editor.
+Choose a Playback speed from 0.75 through 2 times.
+Confirm that playback changes speed without changing pitch.
+Confirm that the selected speed is shared between AudioStudio Pro and Media Editor.
+Confirm that playback speed does not change saved or exported duration.
+
+Shorten long pauses
+
+Open an audio source in AudioStudio Pro Audio Editor.
+The default settings detect quiet pauses lasting at least 1.5 seconds and retain 0.5 seconds from each pause.
+Activate Analyze and Create Shortened Copy.
+Confirm that analysis begins immediately and reports how many pauses were found, how much time will be removed, and the proposed new duration.
+Cancel once and confirm that no new source is created.
+Run the operation again and confirm creation.
+Confirm that the new source begins with Shortened Pauses followed by the original descriptive name.
+Preview the new source and compare it with the original.
+Confirm that the original remains available and unchanged.
+Test long pauses at the beginning, middle, and end of a source.
+
+Safety
+
+Silence shortening creates a new rendered audio source only after confirmation.
+It does not alter or delete the original source.
