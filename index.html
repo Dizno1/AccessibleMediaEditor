@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Media Editor</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.0 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.1 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -232,8 +232,8 @@
       </section>
     </div>
 
-    <div id="audio-studio-workspace" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
-      <section class="editor-section audio-studio" aria-labelledby="audio-studio-heading">
+    <div id="audio-studio-workspace" class="audio-studio-grid" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
+      <section class="editor-section audio-studio" id="audio-recording-section" aria-labelledby="audio-studio-heading" tabindex="-1">
         <h2 id="audio-studio-heading" tabindex="-1">AudioStudio Pro</h2>
         <p id="audio-studio-status">Ready. Enable microphone access to record, or open existing audio.</p>
 
@@ -256,8 +256,10 @@
           <button type="button" id="audio-record-pause" disabled>Pause Recording (Ctrl+Alt+Space)</button>
         </div>
 
-        <div id="audio-recording-review" hidden>
-          <h3 id="audio-review-heading" tabindex="-1">Review Recording</h3>
+      </section>
+
+      <section class="editor-section audio-studio" id="audio-recording-review" aria-labelledby="audio-review-heading" tabindex="-1" hidden>
+          <h2 id="audio-review-heading" tabindex="-1">Review Recording</h2>
           <p id="audio-review-duration"></p>
           <audio id="audio-recording-preview" controls preload="metadata"></audio>
           <label for="audio-recording-name">Recording name</label>
@@ -267,20 +269,47 @@
             <button type="button" id="audio-record-again">Record Again</button>
             <button type="button" id="audio-discard-recording">Discard Recording</button>
           </div>
-        </div>
+      </section>
 
-        <h3>Audio Source Library</h3>
+      <section class="editor-section audio-studio" id="audio-library-section" aria-labelledby="audio-library-heading" tabindex="-1">
+        <h2 id="audio-library-heading">Audio Source Library</h2>
         <p id="audio-library-summary">No saved audio sources.</p>
         <label for="audio-library-items">Audio available to all workspaces</label>
         <select id="audio-library-items" size="8"></select>
-        <audio id="audio-library-preview" controls preload="metadata"></audio>
+        <audio id="audio-library-preview" controls preload="metadata" hidden></audio>
         <div class="button-row">
           <button type="button" id="audio-open-files">Open Audio Files</button>
           <button type="button" id="audio-preview-source">Preview Selected Audio</button>
+          <button type="button" id="audio-edit-source">Open Selected Audio in Audio Editor</button>
           <button type="button" id="audio-add-to-project">Add Selected Audio to Current Project</button>
         </div>
+      </section>
 
-        <p>Audio editing with brackets, cut, copy, paste, undo, save, and export will be added incrementally during the 0.12 development cycle.</p>
+      <section class="editor-section audio-studio" id="audio-editor-section" aria-labelledby="audio-editor-heading" tabindex="-1">
+        <h2 id="audio-editor-heading">Audio Editor</h2>
+        <p id="audio-editor-summary">Choose an audio source and activate Open Selected Audio in Audio Editor.</p>
+        <audio id="audio-editor-media" preload="metadata"></audio>
+        <label for="audio-editor-playhead">Audio playhead</label>
+        <input id="audio-editor-playhead" type="range" min="0" max="0" step="0.001" value="0" disabled>
+        <p id="audio-editor-position">Position 0 seconds. No audio open.</p>
+        <p id="audio-editor-marks">No brackets set.</p>
+        <div class="button-row">
+          <button type="button" id="audio-editor-play" disabled>Play or Pause (X)</button>
+          <button type="button" id="audio-editor-mark-in" disabled>Set Left Bracket</button>
+          <button type="button" id="audio-editor-mark-out" disabled>Set Right Bracket</button>
+          <button type="button" id="audio-editor-clear-marks" disabled>Clear Brackets</button>
+        </div>
+        <fieldset class="time-fields"><legend>Go to exact audio time</legend>
+          <label for="audio-goto-hours">Hours</label><input type="number" id="audio-goto-hours" min="0" step="1" value="0">
+          <label for="audio-goto-minutes">Minutes</label><input type="number" id="audio-goto-minutes" min="0" max="59" step="1" value="0">
+          <label for="audio-goto-seconds">Seconds</label><input type="number" id="audio-goto-seconds" min="0" max="59" step="1" value="0">
+          <label for="audio-goto-milliseconds">Milliseconds</label><input type="number" id="audio-goto-milliseconds" min="0" max="999" step="1" value="0">
+        </fieldset>
+        <button type="button" id="audio-editor-goto" disabled>Move to Entered Time (Ctrl+G)</button>
+        <label for="audio-edited-copy-name">Edited audio source name</label>
+        <input type="text" id="audio-edited-copy-name" value="Edited Audio">
+        <button type="button" id="audio-editor-save-range" disabled>Keep Bracketed Range as New Audio Source</button>
+        <p>The bracketed range is saved nondestructively. The original audio source is not changed or deleted.</p>
       </section>
     </div>
   </main>
@@ -535,6 +564,10 @@
         <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
         <li>Kept recordings enter the shared Source Media Library and are available to Media Editor and Presentation.</li>
         <li>Open Audio Files adds existing audio files to the same shared library.</li>
+        <li>Ctrl+Page Up or Ctrl+Page Down moves among Recording, Recording Review when available, Audio Source Library, and Audio Editor.</li>
+        <li>Open Selected Audio in Audio Editor activates the selected source without changing the original file.</li>
+        <li>In Audio Editor, X plays or pauses. Arrow keys, U and I, Home and End, Alt+Arrow, and Ctrl+G use the same timing model as Media Editor.</li>
+        <li>Left and Right Brackets select a range. Ctrl+Delete or Keep Bracketed Range as New Audio Source saves that range as a new nondestructive source.</li>
       </ul>
       <button type="submit">Close Instructions and Keyboard Shortcuts</button>
     </form>

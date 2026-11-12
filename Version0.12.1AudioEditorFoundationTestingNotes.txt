@@ -1,0 +1,31 @@
+Accessible Media Editor
+Build 0.12.1 Development Testing Build
+Audio Editor Foundation Testing Notes
+
+This build gives AudioStudio Pro its first editing workflow and corrects the keyboard navigation gap found in Build 0.12.0.
+
+Ctrl Page Up and Ctrl Page Down now move among Recording, Recording Review when a recording is waiting for a decision, Audio Source Library, and Audio Editor.
+
+Choose an item in Audio Source Library and activate Open Selected Audio in Audio Editor.
+
+The Audio Editor provides a playhead, human-readable position, X playback, the standard Arrow key movements, U and I scrubbing, Home and End, millisecond movement, exact time entry, and Left and Right Brackets.
+
+Keep Bracketed Range as New Audio Source saves the selected range as a new reusable source. Ctrl Delete performs the same operation while AudioStudio Pro is active.
+
+The saved range is nondestructive. It references the selected portion of the existing working audio and does not change or delete the original source.
+
+The edited source remains available in the shared Source Media Library for Media Editor and Presentation.
+
+Testing priorities
+
+Verify Ctrl Page Up and Ctrl Page Down in both directions with the Virtual PC Cursor off.
+
+Verify that Recording Review is included only while a stopped recording is waiting to be kept or discarded.
+
+Open an audio source in Audio Editor. Test X, Arrow keys, Shift Arrow, J and L, Alt Arrow, U and I, Shift U and Shift I, Ctrl Alt U and Ctrl Alt I, Home, End, and Ctrl G.
+
+Set a Left Bracket and a later Right Bracket. Save the range with the button and separately with Ctrl Delete.
+
+Verify that the new edited source has the expected human-readable duration and that the original source remains unchanged.
+
+Verify that X and the transport keys no longer announce Activate a media editor first while AudioStudio Pro is active.

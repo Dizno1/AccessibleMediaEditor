@@ -712,3 +712,11 @@ This roadmap was informed by the official documentation for Adobe Premiere, Appl
 - Avid Media Composer: https://www.avid.com/media-composer
 - Blackmagic Design DaVinci Resolve: https://www.blackmagicdesign.com/products/davinciresolve
 
+# Build 0.12 AudioStudio Pro Development
+
+Build 0.12.0 established microphone recording, recording review, and shared Source Media Library integration.
+
+Build 0.12.1 establishes consistent section navigation and the first nondestructive Audio Editor. Recording, Recording Review, Audio Source Library, and Audio Editor use the same Ctrl+Page Up and Ctrl+Page Down navigation model as Media Editor. The Audio Editor shares the app-wide transport, scrubbing, exact-time, and bracket commands. A bracketed range can be saved as a new reusable audio source without changing the original.
+
+The next AudioStudio Pro stages will add complete nondestructive cut, copy, paste, undo, fades, gain, cleanup, effects, multitrack arrangement, stereo and spatial positioning, and direct placement into Media Editor and Presentation.
+

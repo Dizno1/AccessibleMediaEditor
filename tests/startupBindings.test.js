@@ -34,8 +34,8 @@ test("opening and closing effects incorporate boundary item durations",()=>{
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.12\.0 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.0 Development Testing Build/);
+  assert.match(html,/Build 0\.12\.1 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Media Editor Build 0\.12\.1 Development Testing Build/);
 });
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);
