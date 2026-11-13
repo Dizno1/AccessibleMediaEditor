@@ -7,4 +7,4 @@ fs.mkdirSync(path.join(dist,"app"),{recursive:true});
 fs.copyFileSync(path.join(root,"index.html"),path.join(dist,"index.html"));
 const frontendFiles=["app.js","audioStudio.js","editorState.js","projectModel.js","shortcutService.js","styles.css"];
 for(const name of frontendFiles) fs.copyFileSync(path.join(root,"app",name),path.join(dist,"app",name));
-console.log("Prepared Accessible Media Editor frontend.");
+console.log("Prepared Accessible Production Studio frontend.");

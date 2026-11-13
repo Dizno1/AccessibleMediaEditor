@@ -1,0 +1,32 @@
+Accessible Production Studio
+Build 0.12.7 Testing Notes
+
+Purpose
+
+This build changes the visible product name from Accessible Media Editor to Accessible Production Studio. The repository and local development folder use the shorter ProductionStudio name.
+
+Compatibility protection
+
+The internal application identifier remains org.opendoordesign.accessiblemediaeditor.
+
+The AMEPROJECT format marker remains Open Door Design Accessible Media Editor Project so existing projects continue to open.
+
+Existing Documents and local application-data folders retain the Accessible Media Editor folder name. This prevents saved projects, sessions, recordings, exports, logs, working files, and shared-library data from appearing missing after the upgrade.
+
+Required testing
+
+Install the build over the previous version.
+
+Confirm that the installer, desktop shortcut, Start menu entry, application window, main heading, workspace label, Help menu, About announcement, and Windows application listing use Accessible Production Studio.
+
+Open an existing AMEPROJECT created by an earlier build.
+
+Confirm that the shared media and audio libraries still contain their existing items.
+
+Confirm that a previous presentation can be opened, previewed, saved, and exported.
+
+Confirm that a previous AudioStudio Pro edited item remains available.
+
+Confirm that Help, About Accessible Production Studio announces Build 0.12.7 Development Testing Build and Copyright 2026 Open Door Design.
+
+Confirm that the Windows build artifact is named AccessibleProductionStudioWindowsInstallers.

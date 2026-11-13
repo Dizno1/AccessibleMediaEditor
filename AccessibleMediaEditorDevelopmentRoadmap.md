@@ -1,4 +1,4 @@
-# Accessible Media Editor Development Roadmap
+# Accessible Production Studio Development Roadmap
 
 ## Implemented through Build 0.10.20
 
@@ -44,13 +44,13 @@ Build 0.10.20 creates an image presentation with a selected video clip between i
 
 ## Purpose
 
-Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, accessible multimedia authoring, and professional audio work. It must be useful for a person making one simple edit without requiring a project, while also growing into a structured professional production environment.
+Accessible Production Studio is a screen-reader-first Windows application for direct media editing, nondestructive composition, accessible multimedia authoring, presentation creation, and professional audio work. It must be useful for a person making one simple edit without requiring a project, while also growing into a structured professional production environment.
 
 This roadmap is the governing build specification for future development, including work performed with CCC or another coding assistant. Conversation history is not a substitute for this document.
 
 ## Product Boundary
 
-AccessibleScreenCapture Pro remains focused on capture, review, simple trimming, and saving. Accessible Media Editor owns multi-file composition, timeline editing, narration, text, images, transitions, captions, effects, and complete production export.
+AccessibleScreenCapture Pro remains focused on capture, review, simple trimming, and saving. Accessible Production Studio owns multi-file composition, timeline editing, narration, text, images, transitions, captions, effects, and complete production export.
 
 Opening an audio file in Media Editor must not automatically open AudioStudio Pro. Straightforward audio trimming, copying, insertion, gain adjustment, and fading belong in Media Editor. AudioStudio Pro is an explicitly selected workspace for professional recording, restoration, mixing, and mastering.
 
@@ -433,7 +433,7 @@ Required capabilities:
 
 ### Accessibility-Specific Production Tools
 
-Accessible Media Editor should exceed conventional editors through:
+Accessible Production Studio should exceed conventional editors through:
 
 - A dedicated Audio Description role or track.
 - Narration recording.
@@ -676,7 +676,7 @@ Media Editor, Presentation, and AudioStudio Pro must expose one project state th
 
 ### Reuse Across Media Editor and Presentation
 
-AudioStudio Pro work must remain part of Accessible Media Editor rather than becoming an isolated audio application.
+AudioStudio Pro work must remain part of Accessible Production Studio rather than becoming an isolated audio application.
 
 - Send a complete mix, selected range, stem, track, or processed voice recording to Media Editor.
 - Add the result beneath or in place of video while preserving exact synchronization.
@@ -705,7 +705,7 @@ The AudioStudio Pro interface should follow the same principles as Media Editor:
 
 ## Reference Feature Sets
 
-This roadmap was informed by the official documentation for Adobe Premiere, Apple Final Cut Pro, Avid Media Composer, and Blackmagic Design DaVinci Resolve. Those products establish the professional feature categories, but their visual interaction models are not the Accessible Media Editor interface specification.
+This roadmap was informed by the official documentation for Adobe Premiere, Apple Final Cut Pro, Avid Media Composer, and Blackmagic Design DaVinci Resolve. Those products establish the professional feature categories, but their visual interaction models are not the Accessible Production Studio interface specification.
 
 - Adobe Premiere Help: https://helpx.adobe.com/premiere/desktop.html
 - Apple Final Cut Pro User Guide: https://support.apple.com/guide/final-cut-pro/welcome/mac

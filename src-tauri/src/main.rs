@@ -214,13 +214,13 @@ fn export_audio_files_to_folder(window: tauri::WebviewWindow, items: Vec<AudioFo
 
 #[tauri::command]
 fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjectResult>, String> {
-    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Open Project - Select an AMEPROJECT file, not a media file").add_filter("Accessible Media Editor project", &["ameproject"]);
+    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Open Project - Select an AMEPROJECT file, not a media file").add_filter("Accessible Production Studio project", &["ameproject"]);
     if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.pick_file() else { return Ok(None); };
     if path.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("ameproject")) != Some(true) {
-        return Err("That is not an Accessible Media Editor project. Use Ctrl+O to open video, audio, or images.".into());
+        return Err("That is not an Accessible Production Studio project. Use Ctrl+O to open video, audio, or images.".into());
     }
-    let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Media Editor project. Use Ctrl+O to open media.".to_string())?;
+    let content = fs::read_to_string(&path).map_err(|_| "The project could not be read as an Accessible Production Studio project. Use Ctrl+O to open media.".to_string())?;
     Ok(Some(OpenProjectResult { path: path.to_string_lossy().into_owned(), content }))
 }
 
@@ -228,7 +228,7 @@ fn open_project_dialog(window: tauri::WebviewWindow) -> Result<Option<OpenProjec
 fn open_project_path(path: String) -> Result<OpenProjectResult, String> {
     let path = PathBuf::from(path);
     if path.extension().and_then(|value| value.to_str()).map(|value| value.eq_ignore_ascii_case("ameproject")) != Some(true) {
-        return Err("That is not an Accessible Media Editor project.".into());
+        return Err("That is not an Accessible Production Studio project.".into());
     }
     let content = fs::read_to_string(&path).map_err(|error| format!("The project could not be read: {}", error))?;
     Ok(OpenProjectResult { path: path.to_string_lossy().into_owned(), content })
@@ -236,7 +236,7 @@ fn open_project_path(path: String) -> Result<OpenProjectResult, String> {
 
 #[tauri::command]
 fn save_project_dialog(window: tauri::WebviewWindow, suggested_name: String, content: String) -> Result<Option<String>, String> {
-    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Accessible Media Editor Project").set_file_name(&suggested_name).add_filter("Accessible Media Editor project", &["ameproject"]);
+    let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Accessible Production Studio Project").set_file_name(&suggested_name).add_filter("Accessible Production Studio project", &["ameproject"]);
     if let Some(folder) = app_folder("Projects") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.save_file() else { return Ok(None); };
     fs::write(&path, content).map_err(|error| error.to_string())?;
@@ -318,7 +318,7 @@ async fn export_edited_media(app: tauri::AppHandle, window: tauri::WebviewWindow
     let mut dialog = rfd::FileDialog::new().set_parent(&window).set_title("Save Edited Media").set_file_name(&suggested_name).add_filter("Edited media", &[extension]);
     if let Some(folder) = app_folder("Exports") { dialog = dialog.set_directory(folder); }
     let Some(path) = dialog.save_file() else { return Ok(None); };
-    let file_stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("AccessibleMediaEditorExport");
+    let file_stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("AccessibleProductionStudioExport");
     let temporary_path = path.with_file_name(format!("{}.ame-exporting.{}", file_stem, extension));
     let _ = fs::remove_file(&temporary_path);
     window.emit("production-render-progress", format!("Export destination selected. Converting complete production to {}. Please wait for Export Complete before using the file.", extension.to_ascii_uppercase())).map_err(|error| error.to_string())?;
@@ -700,12 +700,12 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .separator().item(&item(app,"Open Media List","focusProjectItems")?).item(&item(app,"Playhead","focusPlayhead")?).build()?;
     let help = SubmenuBuilder::new(app, "Help")
         .item(&item(app,"Testing Guide","showTestingGuide")?).item(&item(app,"Instructions and Keyboard Shortcuts F1","showShortcuts")?).item(&item(app,"Toggle Sound Cues","toggleSoundCues")?)
-        .item(&item(app,"About Accessible Media Editor","showAbout")?).build()?;
+        .item(&item(app,"About Accessible Production Studio","showAbout")?).build()?;
     MenuBuilder::new(app).items(&[&file,&edit,&insert,&project,&playback,&navigate,&help]).build()
 }
 
 fn main() {
-    write_startup_log("Build 0.12.6 executable started.");
+    write_startup_log("Build 0.12.7 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -732,5 +732,5 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![save_audio_recording,save_title_slide_image,log_frontend_startup,frontend_ready,pick_media_files,pick_audio_folder_files,export_audio_files_to_folder,open_project_dialog,open_project_path,save_project_dialog,read_recovery_session,write_recovery_session,read_media_library,write_media_library,write_project,export_edited_media,open_projects_folder,open_exports_folder,reveal_exported_file,set_window_title,normalize_media,analyze_silence,render_working_edit,render_production])
         .run(tauri::generate_context!())
-        .expect("error while running Accessible Media Editor");
+        .expect("error while running Accessible Production Studio");
 }

@@ -6,7 +6,9 @@ JAWS regression check: with Virtual Cursor off, press Ctrl+Tab repeatedly, then 
 
 Build 0.10.21: Save bracketed video selections as reusable source clips. Saving moves the playhead to the selection end, clears brackets, and retains focus in the editing context. The presentation dialog supports different saved clips for each gap between images, with continuous music and ducking.
 
-# Accessible Media Editor
+# Accessible Production Studio
+
+Build 0.12.7 introduces the Accessible Production Studio product name. The GitHub repository and local development folder use the shorter ProductionStudio name. The internal application identifier, AMEPROJECT format marker, and existing Accessible Media Editor data folders remain unchanged so saved projects, sessions, recordings, exports, and shared-library data continue to be available after upgrading.
 
 Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.
 
@@ -66,7 +68,7 @@ Build 0.10.18 begins Quick Slideshow authoring.
 - Images are scaled to fit a 1280 by 720 production frame without stretching, with black padding when needed.
 - Still images render in sequence items and video-only replacement ranges during export.
 
-Accessible Media Editor is a screen-reader-first Windows application for direct media editing, nondestructive composition, and optional professional audio work.
+Accessible Production Studio is a screen-reader-first Windows application for video editing, presentation authoring, audio production, and nondestructive multimedia composition.
 
 The governing product plan, locked interaction rules, professional feature inventory, phased implementation order, and acceptance requirements are in [AccessibleMediaEditorDevelopmentRoadmap.md](AccessibleMediaEditorDevelopmentRoadmap.md).
 

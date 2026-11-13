@@ -187,7 +187,7 @@ let activeSectionIndex=0;
 let undoStack=[];
 let redoStack=[];
 let soundCues=localStorage.getItem("ame-sound-cues")==="on";
-let lastNativeTitle="Accessible Media Editor";
+let lastNativeTitle="Accessible Production Studio";
 const PROGRAM_ID="primary-production";
 let mediaClipboard=null;
 let presentationClipboard=[];
@@ -662,13 +662,13 @@ function render({focus=false}={}){
   el["activate-source-button"].disabled=!source;el["make-source-primary-button"].disabled=!source||!project.items.length;el["insert-source-button"].disabled=!source||!selected||!source.duration;el["append-source-button"].disabled=!source||!source.duration;el["remove-source-button"].disabled=!source;
   el["activate-image-button"].disabled=!imageSource;el["place-image-button"].disabled=!imageSource;el["move-image-earlier-button"].disabled=!imageSource||imageSources.indexOf(imageSource)===0;el["move-image-later-button"].disabled=!imageSource||imageSources.indexOf(imageSource)===imageSources.length-1;el["remove-image-button"].disabled=!imageSource;
   renderEditors();
-  const primary=project.items.find(item=>item.role==="primary")||project.items[0];const workingName=project.path?project.name:primary?(primary.name||primary.label):"Accessible Media Editor";
+  const primary=project.items.find(item=>item.role==="primary")||project.items[0];const workingName=project.path?project.name:primary?(primary.name||primary.label):"Accessible Production Studio";
   el["project-heading"].textContent=displayName({name:workingName});
   el["project-summary"].textContent=primary?`${project.items.length} primary sequence ${project.items.length===1?"item":"items"}. ${mediaSources.length} source video or audio ${mediaSources.length===1?"item":"items"}. ${imageSources.length} project ${imageSources.length===1?"image":"images"}. ${project.path?(project.dirty?"Project has unsaved changes.":"Project saved."):"No project required."}`:imageSources.length?`No Primary Production. ${imageSources.length} project ${imageSources.length===1?"image":"images"} available in the Project Image Library.`:"No media open. Press Ctrl+O to begin.";
   const replacementCount=(project.trackReplacements||[]).length;
   el["output-summary"].textContent=primary?`Primary Production duration ${readableTime(duration(project))}. ${replacementCount} track ${replacementCount===1?"replacement":"replacements"}. Source media is excluded until inserted or used as a replacement.`:"Open media to begin editing. Project creation is optional.";
   el["export-button"].disabled=!primary;
-  const title=`${project.dirty?"* ":""}${workingName}${workingName==="Accessible Media Editor"?"":" - Accessible Media Editor"}`;document.title=title;
+  const title=`${project.dirty?"* ":""}${workingName}${workingName==="Accessible Production Studio"?"":" - Accessible Production Studio"}`;document.title=title;
   if(invoke&&title!==lastNativeTitle){lastNativeTitle=title;invoke("set_window_title",{title}).catch(()=>{});}
   if(activeWorkspace==="presentation")renderPresentation();
   collectLibraryItems();
@@ -1022,7 +1022,7 @@ async function importMedia(){
     if(projectPaths.length){
       if(paths.length!==1)return announce("A project file cannot be opened together with media. Open the AMEPROJECT separately with Ctrl+Shift+O.",true);
       if(project.dirty&&!window.confirm("Discard unsaved changes and open the selected project?"))return;
-      updateStatus("Opening Accessible Media Editor project...");
+      updateStatus("Opening Accessible Production Studio project...");
       const result=await invoke("open_project_path",{path:projectPaths[0]});applyOpenedProject(result);announce(`${project.name} opened as an editable project.`);return;
     }
     announce("Preparing selected media. Please wait.");let next=project,primaryAdded=false,sourceCount=0,imageCount=0,importedCount=0;const skipped=[];
@@ -1390,7 +1390,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Media Editor Build 0.12.6 Development Testing Build. Copyright 2026 Open Door Design. Quiet playback position updates, direct playback-speed shortcuts, and clearer automatic library saving are included.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.7 Development Testing Build. Copyright 2026 Open Door Design. This build introduces the new product name while preserving existing projects, libraries, sessions, and application data.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

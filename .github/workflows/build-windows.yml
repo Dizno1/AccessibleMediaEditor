@@ -32,7 +32,7 @@ jobs:
             Authorization = "Bearer $env:GITHUB_TOKEN"
             Accept = "application/vnd.github+json"
             "X-GitHub-Api-Version" = "2022-11-28"
-            "User-Agent" = "AccessibleMediaEditor-Build"
+            "User-Agent" = "AccessibleProductionStudio-Build"
           }
           $release = Invoke-RestMethod -Uri "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest" -Headers $headers
           # The upstream release uses changing build identifiers in archive names.
@@ -73,14 +73,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Accessible Media Editor ${{ github.ref_name }}"
+          releaseName: "Accessible Production Studio ${{ github.ref_name }}"
           releaseBody: "Screen-reader-first Windows multimedia authoring from Open Door Design."
           releaseDraft: true
           prerelease: true
       - name: Upload Windows installers
         uses: actions/upload-artifact@v4
         with:
-          name: AccessibleMediaEditorWindowsInstallers
+          name: AccessibleProductionStudioWindowsInstallers
           path: |
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe

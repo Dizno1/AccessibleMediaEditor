@@ -1,4 +1,4 @@
-# Accessible Media Editor
+# Accessible Production Studio
 
 ## Product Definition and Initial Requirements
 
@@ -6,17 +6,17 @@ Version 0.1 - September 7, 2026
 
 ## Implementation status
 
-Accessible Media Editor build 0.10.0 establishes a unified Primary Production player, user-controlled Primary reassignment, stabilized pause-to-bracket positions, complete selection audition, seek-aware audible and quiet scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, automatic working-media normalization, immediate nondestructive playback, and FFmpeg rendering and format-selectable export. Ctrl+V now replaces the selected A, V, or B track without changing production duration. Ctrl+Shift+V separately inserts media and increases production duration. Saved projects preserve exact track replacement ranges.
+The application, formerly named Accessible Media Editor, established a unified Primary Production player in build 0.10.0. It includes user-controlled Primary reassignment, stabilized pause-to-bracket positions, complete selection audition, seek-aware audible and quiet scrubbing, dedicated filename-titled and nondestructively editable Source Video and Source Audio editors, shared orientation-based bracket selection for Copy and Delete, completed-operation bracket cleanup, concise editing announcements, working Ctrl+Z and Ctrl+Y shortcuts, one-step restoration after Source removal, automatic working-media normalization, immediate nondestructive playback, and FFmpeg rendering and format-selectable export. Ctrl+V replaces the selected A, V, or B track without changing production duration. Ctrl+Shift+V separately inserts media and increases production duration. Saved projects preserve exact track replacement ranges.
 
 ## Product purpose
 
-Accessible Media Editor is a screen-reader-first multimedia editor and authoring studio from Open Door Design. It enables a user to arrange video, screen recordings, still images, narration, other audio, and text into a complete production and export the result as a new MP4.
+Accessible Production Studio is a screen-reader-first video, presentation, and audio production application from Open Door Design. It enables a user to arrange video, screen recordings, still images, narration, other audio, and text into a complete production and export the result as a new MP4.
 
 The application is intended for accessibility demonstrations, training modules, presentations, family-memory projects, and other productions that combine several kinds of media.
 
 ## Product boundary
 
-AccessibleScreenCapture Pro and Accessible Media Editor are related applications with distinct central jobs.
+AccessibleScreenCapture Pro and Accessible Production Studio are related applications with distinct central jobs.
 
 AccessibleScreenCapture Pro:
 
@@ -24,9 +24,9 @@ AccessibleScreenCapture Pro:
 - Reviews the captured recording.
 - Provides straightforward, non-destructive edits such as trimming.
 - Saves the edited recording.
-- Can send a completed recording to Accessible Media Editor.
+- Can send a completed recording to Accessible Production Studio.
 
-Accessible Media Editor:
+Accessible Production Studio:
 
 - Combines multiple media items into one production.
 - Arranges items into a sequence.
@@ -36,11 +36,11 @@ Accessible Media Editor:
 - Adds transitions between items.
 - Exports the complete composition as a new MP4.
 
-Simple trimming belongs in AccessibleScreenCapture Pro. Full composition belongs in Accessible Media Editor.
+Simple trimming belongs in AccessibleScreenCapture Pro. Full composition belongs in Accessible Production Studio.
 
 ## Connection between the applications
 
-AccessibleScreenCapture Pro should eventually include a "Send to Accessible Media Editor" action. Activating it should open or create a Media Editor project and add the completed recording as a project item. The editor can then add other recordings, screenshots, images, narration, audio, text, and transitions.
+AccessibleScreenCapture Pro should eventually include a "Send to Accessible Production Studio" action. Activating it should open or create a Production Studio project and add the completed recording as a project item. The studio can then add other recordings, screenshots, images, narration, audio, text, and transitions.
 
 The handoff must not require the user to locate and import the recording again.
 
@@ -84,7 +84,7 @@ The editor must support this complete workflow:
 6. Continue with another screenshot, image, or video.
 7. Export the entire sequence as one MP4.
 
-This is a defining real-user scenario for Accessible Media Editor and should become an acceptance test.
+This is a defining real-user scenario for Accessible Production Studio and should become an acceptance test.
 
 ## Required media types
 

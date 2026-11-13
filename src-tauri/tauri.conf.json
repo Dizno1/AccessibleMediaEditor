@@ -1,13 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Accessible Media Editor",
-    "version": "0.12.6",
+  "productName": "Accessible Production Studio",
+    "version": "0.12.7",
   "identifier": "org.opendoordesign.accessiblemediaeditor",
   "build": { "frontendDist": "../dist", "devUrl": null, "beforeDevCommand": "node scripts/prepare-dist.js", "beforeBuildCommand": "node scripts/prepare-dist.js" },
   "app": {
     "windows": [{
       "label": "main",
-      "title": "Accessible Media Editor",
+      "title": "Accessible Production Studio",
       "width": 1100,
       "height": 760,
       "minWidth": 720,
@@ -26,8 +26,8 @@
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
     "publisher": "Open Door Design",
     "copyright": "2026 Open Door Design",
-    "shortDescription": "Screen-reader-first multimedia editing and authoring.",
-    "longDescription": "Accessible Media Editor arranges video, images, narration, audio, text, and transitions through keyboard-first and screen-reader-first workflows.",
+    "shortDescription": "Screen-reader-first video, presentation, and audio production.",
+    "longDescription": "Accessible Production Studio creates and edits video, presentations, narration, audiobooks, other audio, images, text, and transitions through keyboard-first and screen-reader-first workflows.",
     "externalBin": ["binaries/ffmpeg"],
     "windows": { "wix": { "language": "en-US" }, "nsis": { "installMode": "currentUser", "languages": ["English"], "displayLanguageSelector": false } }
   }

@@ -107,10 +107,10 @@ test("audiobook folders and multiple chapters are managed from Shared Audio Libr
   assert.match(rust,/fn export_audio_files_to_folder/);
 });
 
-test("all visible and native build identification is 0.12.6",()=>{
-  assert.match(html,/Build 0\.12\.6 Development Testing Build/);
-  assert.match(app,/Accessible Media Editor Build 0\.12\.6/);
-  assert.match(rust,/Build 0\.12\.6 executable started/);
+test("all visible and native build identification is 0.12.7",()=>{
+  assert.match(html,/Build 0\.12\.7 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.7/);
+  assert.match(rust,/Build 0\.12\.7 executable started/);
 });
 
 test("playback position is quiet while playing and speed has direct shortcuts",()=>{
