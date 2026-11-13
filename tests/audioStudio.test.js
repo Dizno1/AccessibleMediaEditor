@@ -107,10 +107,38 @@ test("audiobook folders and multiple chapters are managed from Shared Audio Libr
   assert.match(rust,/fn export_audio_files_to_folder/);
 });
 
-test("all visible and native build identification is 0.12.7",()=>{
-  assert.match(html,/Build 0\.12\.7 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.7/);
-  assert.match(rust,/Build 0\.12\.7 executable started/);
+test("all visible and native build identification is 0.12.8",()=>{
+  assert.match(html,/Build 0\.12\.8 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.8/);
+  assert.match(rust,/Build 0\.12\.8 executable started/);
+});
+
+test("AudioStudio presents opening before the library and selected-item actions after it",()=>{
+  const open=html.indexOf('id="audio-open-files"'),list=html.indexOf('id="audio-library-items"'),actions=html.indexOf('id="audio-preview-source"');
+  assert.ok(open<list&&list<actions);
+  assert.match(html,/Open Audiobook or Audio Folder \(Ctrl\+Shift\+O\)/);
+  assert.match(shortcuts,/openCurrentWorkspace.*ctrl:true,key:"o"/s);
+  assert.match(shortcuts,/openWorkspaceCollection.*ctrl:true,shift:true,key:"o"/s);
+  assert.match(app,/openWorkspaceCollection:.*activeWorkspace==="audio".*openFolder\(\).*openProject\(\)/s);
+  assert.doesNotMatch(shortcuts,/openAudioFolder/);
+});
+
+test("Shared Audio Library reports individual and aggregate selection changes",()=>{
+  assert.match(html,/id="audio-library-selection-status"/);
+  assert.match(studio,/selected\. \$\{count\} audio/);
+  assert.match(studio,/unselected\. \$\{count/);
+  assert.match(studio,/All \$\{selectionSnapshot\.size\} audio files selected/);
+  assert.match(studio,/event\.key==="Delete"/);
+  assert.match(studio,/event\.key==="Enter"/);
+});
+
+test("audiobook imports recover from direct metadata failure and retain exact failure reports",()=>{
+  assert.match(app,/could not be measured directly\. Preparing a compatible working copy/);
+  assert.match(app,/failed\.push\(\{path,name,reason/);
+  assert.match(app,/retryAudioStudioFiles/);
+  assert.match(html,/Review Last Import Results/);
+  assert.match(html,/Retry Failed Chapters/);
+  assert.match(studio,/failure\.name.*failure\.reason/s);
 });
 
 test("playback position is quiet while playing and speed has direct shortcuts",()=>{

@@ -1,0 +1,37 @@
+Accessible Production Studio
+Build 0.12.8 Development Testing Build
+Open Door Design
+
+Primary testing goals
+
+1. Open Audio Files and Open Audiobook or Audio Folder now appear before the Shared Audio Library.
+
+2. Ctrl+O opens files for the active workspace. In AudioStudio Pro, it opens audio files.
+
+3. Ctrl+Shift+O opens the larger structured item for the active workspace. In Presentation or Media Editor, it opens an AMEPROJECT. In AudioStudio Pro, it opens an audiobook or audio folder.
+
+5. In Shared Audio Library, Ctrl+Space and Shift+Arrow should announce the affected filename, selected or unselected state, and total number selected.
+
+6. Ctrl+A in Shared Audio Library should announce that every audio file is selected.
+
+7. Enter on a library item opens it in Audio Editor. P starts or stops its preview. Delete removes selected library entries after confirmation without deleting original files.
+
+8. When a chapter cannot be measured directly, the application should announce that it is preparing a compatible working copy and retry the chapter automatically.
+
+9. After an audio import, Review Last Import Results should identify whether the import is complete. Any failed chapter must be listed by filename with its reason.
+
+10. Retry Failed Chapters should retry only the files that failed during the last import.
+
+Data protection
+
+Original audio and audiobook chapter files are never changed or deleted by import recovery. Compatible working copies belong to the application. Removing an entry from Shared Audio Library does not delete the original file.
+
+Verification completed
+
+All 116 automated JavaScript tests passed.
+
+The production frontend was prepared successfully.
+
+JavaScript syntax verification passed for the main application and AudioStudio Pro modules.
+
+Rust and Tauri compilation must be verified by the Windows GitHub Actions build.

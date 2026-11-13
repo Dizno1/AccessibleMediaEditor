@@ -140,36 +140,46 @@ function audioCanOpenDirectly(path){
   return ["mp3","m4a","aac","wav","ogg","opus","webm"].includes(extension);
 }
 async function importAudioPaths(paths,origin){
-  if(!paths.length)return announce("Open Audio canceled. No files selected.");
-  let imported=0;const skipped=[];
+  if(!paths.length){announce("Open Audio canceled. No files selected.");return{total:0,imported:0,recovered:0,failed:[]};}
+  let imported=0,recovered=0;const failed=[];
   for(const [index,path]of paths.entries()){
     const name=baseName(path);
-    if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){skipped.push(name);continue;}
+    if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){failed.push({path,name,reason:"Unsupported audio file type."});continue;}
     try{
       const itemNumber=index+1,started=Date.now(),progress=(stage)=>announce(`${stage} chapter ${itemNumber} of ${paths.length}. ${name}.`);
-      const itemId=id();let source;
-      if(audioCanOpenDirectly(path)){source=path;progress("Opening directly from its folder");}
-      else{
+      const itemId=id();let source,length,usedRecovery=false;
+      if(audioCanOpenDirectly(path)){
+        source=path;progress("Opening directly from its folder");
+        try{
+          progress("Measuring duration for");
+          const directReminder=setInterval(()=>announce(`Still measuring duration for chapter ${itemNumber} of ${paths.length}. ${name}.`),30000);
+          try{length=await probeAudioDuration(source);}finally{clearInterval(directReminder);}
+        }catch(error){usedRecovery=true;source=null;announce(`${name} could not be measured directly. Preparing a compatible working copy.`);}
+      }
+      if(!source){
         progress("Preparing");
         let elapsedIntervals=0;const reminder=setInterval(()=>{elapsedIntervals++;announce(`Still preparing chapter ${itemNumber} of ${paths.length}. ${name}. ${elapsedIntervals*30} seconds elapsed.`);},30000);
         try{source=await invoke("normalize_media",{source:path,mediaKind:"Audio",itemId});}finally{clearInterval(reminder);}
+        progress("Measuring duration for");
+        const measureReminder=setInterval(()=>announce(`Still measuring duration for chapter ${itemNumber} of ${paths.length}. ${name}.`),30000);
+        try{length=await probeAudioDuration(source);}finally{clearInterval(measureReminder);}
       }
-      progress("Measuring duration for");
-      const measureReminder=setInterval(()=>announce(`Still measuring duration for chapter ${itemNumber} of ${paths.length}. ${name}.`),30000);
-      let length;try{length=await probeAudioDuration(source);}finally{clearInterval(measureReminder);}
       const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder";
       addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
-      imported++;announce(`Completed chapter ${itemNumber} of ${paths.length}. ${name}. Duration ${readableTime(length)}. Import time ${readableTime((Date.now()-started)/1000)}.`);
-    }catch(error){console.error(`Audio import failed for ${name}`,error);skipped.push(name);}
+      imported++;if(usedRecovery)recovered++;announce(`Completed chapter ${itemNumber} of ${paths.length}. ${name}. Duration ${readableTime(length)}.${usedRecovery?" A compatible working copy was created.":""} Import time ${readableTime((Date.now()-started)/1000)}.`);
+    }catch(error){console.error(`Audio import failed for ${name}`,error);failed.push({path,name,reason:String(error?.message||error||"The audio file could not be decoded.")});announce(`${name} could not be imported. The remaining chapters will continue.`,true);}
   }
   if(imported){renderLibrary();saveLibrary();}
-  const skippedText=skipped.length?` ${skipped.length} ${skipped.length===1?"file was":"files were"} skipped without canceling the import.`:"";
-  announce(imported?`${imported} audio ${imported===1?"file":"files"} added to the Shared Audio Library in filename order.${skippedText}`:`No audio was imported.${skippedText}`,!imported);
+  const recoveryText=recovered?` ${recovered} ${recovered===1?"chapter required":"chapters required"} a compatible working copy.`:"";
+  const failureText=failed.length?` Import incomplete. ${failed.length} ${failed.length===1?"chapter failed":"chapters failed"}. Review Import Results for filenames and reasons.`:"";
+  announce(imported?`${imported} of ${paths.length} audio ${paths.length===1?"file":"files"} added to the Shared Audio Library in filename order.${recoveryText}${failureText}`:`No audio was imported.${failureText}`,Boolean(failed.length));
+  return{total:paths.length,imported,recovered,failed};
 }
 async function importAudioStudioFiles(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
   return importAudioPaths(await invoke("pick_media_files"),"selected audio");
 }
+async function retryAudioStudioFiles(paths){return importAudioPaths(paths,"retry");}
 async function importAudioStudioFolder(){
   if(!invoke)return announce("The Windows folder picker is available in the installed application.",true);
   const paths=await invoke("pick_audio_folder_files");if(!paths.length)return announce("Open Audio Folder canceled or the folder contained no supported audio files.");
@@ -1375,6 +1385,8 @@ function cancel(){const state=activeState();if(el["presentation-item-properties-
 
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
+  openCurrentWorkspace:()=>activeWorkspace==="audio"?audioStudio?.openAudio():importMedia(),
+  openWorkspaceCollection:()=>activeWorkspace==="audio"?audioStudio?.openFolder():openProject(),
   previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showPresentationWorkspace:()=>switchWorkspace(1,"presentation"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition:()=>activeWorkspace==="presentation"?addPresentationCrossfade():addTransition(),moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationItemProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
@@ -1390,7 +1402,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.7 Development Testing Build. Copyright 2026 Open Door Design. This build introduces the new product name while preserving existing projects, libraries, sessions, and application data.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.8 Development Testing Build. Copyright 2026 Open Door Design. This build improves AudioStudio Pro workflow order, selection feedback, audiobook import recovery, and import reporting.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1482,7 +1494,7 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
-audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,exportAudioFiles:exportAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder});
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,exportAudioFiles:exportAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder,retryAudioFiles:retryAudioStudioFiles});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){

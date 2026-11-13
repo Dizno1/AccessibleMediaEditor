@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Production Studio</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.7 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.8 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -274,17 +274,21 @@
       <section class="editor-section audio-studio" id="audio-library-section" aria-labelledby="audio-library-heading" tabindex="-1">
         <h2 id="audio-library-heading">Audio Source Library</h2>
         <p id="audio-library-summary">No saved audio sources.</p>
+        <div class="button-row" aria-label="Open audio">
+          <button type="button" id="audio-open-files">Open Audio Files (Ctrl+O)</button>
+          <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder (Ctrl+Shift+O)</button>
+          <button type="button" id="audio-review-import" hidden>Review Last Import Results</button>
+        </div>
         <label for="audio-library-items">Shared Audio Library</label>
         <p>Select one chapter, or use Ctrl+Space and Shift+Arrow to select multiple chapters.</p>
         <select id="audio-library-items" size="8" multiple></select>
+        <p id="audio-library-selection-status">No audio files selected.</p>
         <audio id="audio-library-preview" controls preload="metadata" hidden></audio>
-        <div class="button-row">
-          <button type="button" id="audio-open-files">Open Audio Files</button>
-          <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder</button>
-          <button type="button" id="audio-preview-source">Preview Selected Audio</button>
+        <div class="button-row" aria-label="Selected audio actions">
+          <button type="button" id="audio-preview-source">Play or Stop Selected Audio Preview</button>
           <button type="button" id="audio-edit-source">Open Selected Audio in Audio Editor</button>
-          <button type="button" id="audio-add-to-project">Add Selected Audio to Media Editor Sources</button>
-          <button type="button" id="audio-export-sources">Export Selected Audio Copies to Folder</button>
+          <button type="button" id="audio-add-to-project">Send Selected Audio to Media Editor</button>
+          <button type="button" id="audio-export-sources">Export Selected Audio Files</button>
           <button type="button" id="audio-remove-sources">Remove Selected Audio from Shared Library</button>
         </div>
         <fieldset id="audio-silence-controls"><legend>Shorten long pauses in selected chapters</legend>
@@ -303,6 +307,18 @@
           <p id="audio-silence-status">Select one or more chapters to analyze. Original sources will remain unchanged.</p>
         </fieldset>
       </section>
+
+      <dialog id="audio-import-results-dialog" aria-labelledby="audio-import-results-heading">
+        <form method="dialog">
+          <h2 id="audio-import-results-heading" tabindex="-1">Audiobook Import Results</h2>
+          <p id="audio-import-results-summary"></p>
+          <ul id="audio-import-results-list"></ul>
+          <div class="button-row">
+            <button type="button" id="audio-import-retry" hidden>Retry Failed Chapters</button>
+            <button type="submit" id="audio-import-results-close">Close Import Results</button>
+          </div>
+        </form>
+      </dialog>
 
       <section class="editor-section audio-studio" id="audio-editor-section" aria-labelledby="audio-editor-heading" tabindex="-1">
         <h2 id="audio-editor-heading">Audio Editor</h2>
@@ -541,7 +557,8 @@
       <p>Use the application interaction mode while working in Media Editor, Presentation, AudioStudio Pro, media lists, and production sequences. These instructions are available from every workspace with F1.</p>
       <h3>App-wide commands</h3>
       <ul>
-        <li>Ctrl+O: Open one or more media files.</li><li>Ctrl+Shift+O: Open Project.</li>
+        <li>Ctrl+O: Open ordinary files for the active workspace. In AudioStudio Pro, this opens one or more audio files.</li>
+        <li>Ctrl+Shift+O: Open the larger structured item for the active workspace. In Presentation or Media Editor, this opens an AMEPROJECT. In AudioStudio Pro, this opens an audiobook or audio folder.</li>
         <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
         <li>Ctrl+E: Render and export the complete Primary Production.</li>
         <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
@@ -596,7 +613,7 @@
         <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
         <li>Kept recordings enter the Shared Audio Library and can be deliberately added to Media Editor or Presentation.</li>
         <li>Open Audio Files imports selected files. Open Audiobook or Audio Folder imports every supported audio file from one folder in filename order.</li>
-        <li>Use Ctrl+Space or Shift+Arrow in Shared Audio Library to select multiple chapters, then add or remove them together.</li>
+        <li>Use Ctrl+Space or Shift+Arrow in Shared Audio Library to select multiple chapters. Each change announces the filename, selected or unselected state, and total selected. Ctrl+A selects every audio file.</li>
         <li>Remove Selected Audio from Shared Library removes library entries without deleting original chapter files.</li>
         <li>Alt+S moves directly to Shared Audio Library while AudioStudio Pro is active. In Media Editor, Alt+S moves to Shared Media Library when the current project has no sources.</li>
         <li>Preview Selected Audio is a toggle. Activate it again, or press X, to stop the library preview.</li>

@@ -8,7 +8,8 @@ test("Open Media uses restored native 0.10.21 picker",()=>{
  assert.match(section,/native_media_picker::pick_media_files\(&app\)/);
  assert.doesNotMatch(section,/rfd::FileDialog/);
 });
-test("Open Media button and Ctrl+O invoke same import function",()=>{
+test("Open Media button and contextual Ctrl+O retain the native picker",()=>{
  assert.match(app,/el\["import-media-button"\]\.addEventListener\("click",importMedia\)/);
  assert.match(app,/const paths=await invoke\("pick_media_files"\)/);
+ assert.match(app,/openCurrentWorkspace:.*activeWorkspace==="audio".*openAudio\(\).*importMedia\(\)/);
 });

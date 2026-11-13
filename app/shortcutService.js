@@ -1,8 +1,8 @@
 const handlers = new Map();
 export const shortcuts = [
   ["showShortcuts", {key:"f1"}],
-  ["newProject", {ctrl:true,key:"n"}], ["openProject", {ctrl:true,shift:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
-  ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["importMedia", {ctrl:true,key:"o"}],
+  ["newProject", {ctrl:true,key:"n"}], ["openWorkspaceCollection", {ctrl:true,shift:true,key:"o"}], ["saveProject", {ctrl:true,key:"s"}],
+  ["saveProjectAs", {ctrl:true,shift:true,key:"s"}], ["openCurrentWorkspace", {ctrl:true,key:"o"}],
   ["exportMedia", {ctrl:true,key:"e"}],
   ["moveEarlier", {ctrl:true,key:"arrowup"}], ["moveLater", {ctrl:true,key:"arrowdown"}],
   ["properties", {alt:true,key:"enter"}], ["trimPrimary", {ctrl:true,key:"delete"}], ["removeItem", {key:"delete"}], ["preview", {ctrl:true,key:"p"}], ["cancel", {key:"escape"}],

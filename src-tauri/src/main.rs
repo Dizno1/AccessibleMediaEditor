@@ -664,9 +664,9 @@ fn accelerated_item(app: &tauri::AppHandle, label: &str, id: &str, accelerator: 
 
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
-        .item(&item(app,"Open Media... Ctrl+O","importMedia")?)
+        .item(&item(app,"Open Files for Current Workspace... Ctrl+O","openCurrentWorkspace")?)
         .item(&item(app,"Export Complete Production... Ctrl+E","exportMedia")?)
-        .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project... Ctrl+Shift+O","openProject")?)
+        .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project or Audio Folder... Ctrl+Shift+O","openWorkspaceCollection")?)
         .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).item(&item(app,"Open Exports Folder","openExportsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
@@ -675,7 +675,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Paste Insert Explicitly Ctrl+Shift+V","pasteInsert")?)
         .separator().item(&item(app,"Apply Bracketed Edit Ctrl+Delete","trimPrimary")?).item(&item(app,"Split at Playhead Ctrl+K","split")?).item(&item(app,"Remove Selected Item Delete","removeItem")?).build()?;
     let insert = SubmenuBuilder::new(app, "Insert")
-        .item(&item(app,"Media... Ctrl+O","importMedia")?).item(&item(app,"Text...","addText")?)
+        .item(&item(app,"Files for Current Workspace... Ctrl+O","openCurrentWorkspace")?).item(&item(app,"Text...","addText")?)
         .item(&item(app,"Crossfade Transition","addTransition")?).build()?;
     let project = SubmenuBuilder::new(app, "Project")
         .item(&item(app,"Item Properties Alt+Enter","properties")?).item(&item(app,"Make Selected Source Primary","makeSourcePrimary")?).separator()
@@ -705,7 +705,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.7 executable started.");
+    write_startup_log("Build 0.12.8 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
