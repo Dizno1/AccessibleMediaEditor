@@ -36,8 +36,8 @@ test("opening and closing effects incorporate boundary item durations",()=>{
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.12\.10 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.10 Development Testing Build/);
+  assert.match(html,/Build 0\.12\.11 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.11 Development Testing Build/);
 });
 test("the product rename preserves existing projects and application data",()=>{
   assert.match(tauri,/"productName": "Accessible Production Studio"/);

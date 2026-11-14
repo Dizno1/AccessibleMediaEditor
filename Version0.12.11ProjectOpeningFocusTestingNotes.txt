@@ -1,0 +1,15 @@
+Accessible Production Studio
+Build 0.12.11 Development Testing Build
+Open Door Design
+
+Press Ctrl+Shift+O while AudioStudio Pro is active.
+
+The Open Project or Audiobook dialog should open with focus on Open Accessible Production Studio Project. Pressing Enter immediately should open the AMEPROJECT file picker, not the audiobook folder picker.
+
+Select a presentation AMEPROJECT. The project should open in Presentation and focus should move to the Presentation Timeline.
+
+Repeat Ctrl+Shift+O from Media Editor and Presentation. Open Project should remain the first focused choice.
+
+To open an audiobook, press Ctrl+Shift+O, Tab once to Open Audiobook or Audio Folder, and activate it. AudioStudio Pro should become active before the Windows folder picker opens.
+
+The dedicated Open Audiobook or Audio Folder button in AudioStudio Pro should continue to open the folder picker directly.

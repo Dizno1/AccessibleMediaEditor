@@ -1390,7 +1390,7 @@ function splitSelected(){const location=activeLocation(),state=activeState();if(
 function cancel(){const state=activeState();if(el["structured-open-dialog"].open)el["structured-open-dialog"].close();else if(el["shortcuts-dialog"].open)el["shortcuts-dialog"].close();else if(el["presentation-item-properties-dialog"].open)closePresentationItemProperties();else if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
 function showStructuredOpen(){
   el["structured-open-dialog"].showModal();
-  (activeWorkspace==="audio"?el["structured-open-audiobook"]:el["structured-open-project"]).focus();
+  el["structured-open-project"].focus();
 }
 function openStructuredProject(){el["structured-open-dialog"].close();void openProject();}
 function openStructuredAudiobook(){el["structured-open-dialog"].close();switchWorkspace(1,"audio");void audioStudio?.openFolder();}
@@ -1418,7 +1418,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcut-key-list-toggle"].focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.10 Development Testing Build. Copyright 2026 Open Door Design. This build adds intelligent project and audiobook opening plus complete expandable F1 instructions.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.11 Development Testing Build. Copyright 2026 Open Door Design. This build makes Open Project the predictable first choice from every workspace.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

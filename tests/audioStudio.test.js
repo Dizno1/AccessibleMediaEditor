@@ -120,10 +120,10 @@ test("audiobooks use separate collections and natural chapter order",()=>{
   assert.match(app,/!derived&&!entry\.silenceShortened/);
 });
 
-test("all visible and native build identification is 0.12.10",()=>{
-  assert.match(html,/Build 0\.12\.10 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.10/);
-  assert.match(rust,/Build 0\.12\.10 executable started/);
+test("all visible and native build identification is 0.12.11",()=>{
+  assert.match(html,/Build 0\.12\.11 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.11/);
+  assert.match(rust,/Build 0\.12\.11 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{
@@ -141,6 +141,8 @@ test("structured opening works from every workspace and routes to the correct ed
   assert.match(html,/id="structured-open-project"/);
   assert.match(html,/id="structured-open-audiobook"/);
   assert.match(app,/function showStructuredOpen\(\)/);
+  assert.match(app,/showStructuredOpen\(\).*structured-open-project.*focus\(\)/s);
+  assert.doesNotMatch(app,/activeWorkspace==="audio"\?el\["structured-open-audiobook"\]/);
   assert.match(app,/function openStructuredProject\(\).*openProject\(\)/s);
   assert.match(app,/function openStructuredAudiobook\(\).*switchWorkspace\(1,"audio"\).*openFolder\(\)/s);
   assert.match(app,/async function importAudioStudioFiles\(\).*projectPaths.*open_project_path.*applyOpenedProject/s);

@@ -1,6 +1,6 @@
 {
   "name": "accessible-production-studio",
-  "version": "0.12.10",
+  "version": "0.12.11",
   "type": "module",
   "private": true,
   "description": "A screen-reader-first Windows video, presentation, and audio production application from Open Door Design.",
