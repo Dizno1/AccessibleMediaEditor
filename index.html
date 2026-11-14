@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Production Studio</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.8 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.9 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -279,6 +279,10 @@
           <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder (Ctrl+Shift+O)</button>
           <button type="button" id="audio-review-import" hidden>Review Last Import Results</button>
         </div>
+        <label for="audio-library-collection">Audio collection</label>
+        <select id="audio-library-collection">
+          <option value="all">All Audio</option>
+        </select>
         <label for="audio-library-items">Shared Audio Library</label>
         <p>Select one chapter, or use Ctrl+Space and Shift+Arrow to select multiple chapters.</p>
         <select id="audio-library-items" size="8" multiple></select>
@@ -294,9 +298,11 @@
         <fieldset id="audio-silence-controls"><legend>Shorten long pauses in selected chapters</legend>
           <p>Select one or more chapters. New shortened copies will be created in the Shared Audio Library. Original files will remain unchanged.</p>
           <label for="audio-silence-minimum">Find pauses lasting at least this many seconds</label>
-          <input type="number" id="audio-silence-minimum" min="0.5" max="30" step="0.1" value="1.5">
+          <input type="text" inputmode="decimal" id="audio-silence-minimum" value="1.5" aria-describedby="audio-silence-minimum-help">
+          <span id="audio-silence-minimum-help">Enter 0.5 through 30 seconds.</span>
           <label for="audio-silence-retain">Retain this many seconds from each detected pause</label>
-          <input type="number" id="audio-silence-retain" min="0.1" max="10" step="0.1" value="0.5">
+          <input type="text" inputmode="decimal" id="audio-silence-retain" value="0.5" aria-describedby="audio-silence-retain-help">
+          <span id="audio-silence-retain-help">Enter 0.1 through 10 seconds. This must be shorter than the minimum detected pause.</span>
           <label for="audio-silence-threshold">Silence detection sensitivity</label>
           <select id="audio-silence-threshold">
             <option value="-45">Conservative, very quiet audio only</option>
@@ -607,13 +613,14 @@
         <li>Enable Microphone Access makes Windows request microphone permission and lists the available microphones.</li>
         <li>Ctrl+Alt+R starts or stops recording while AudioStudio Pro is active.</li>
         <li>Playback speed changes listening speed without changing the saved source duration or pitch. Press Comma to decrease speed or Period to increase speed in Media Editor or Audio Editor.</li>
-        <li>Analyze and Create Shortened Copies processes one or more selected chapters, reports the proposed reduction, asks for confirmation, and saves new sources automatically to the Shared Audio Library. The originals are never changed.</li>
+        <li>Analyze and Create Shortened Copies processes one or more selected chapters, reports the proposed reduction, asks for confirmation, and saves the results in a separate Shortened Pauses collection for that book. The originals are never changed.</li>
         <li>Export Selected Audio Copies to Folder creates ordinary audio files outside the app.</li>
         <li>Ctrl+Alt+Space pauses or resumes an active recording.</li>
         <li>After stopping, review the recording before keeping it, recording again, or discarding it.</li>
         <li>Kept recordings enter the Shared Audio Library and can be deliberately added to Media Editor or Presentation.</li>
-        <li>Open Audio Files imports selected files. Open Audiobook or Audio Folder imports every supported audio file from one folder in filename order.</li>
-        <li>Use Ctrl+Space or Shift+Arrow in Shared Audio Library to select multiple chapters. Each change announces the filename, selected or unselected state, and total selected. Ctrl+A selects every audio file.</li>
+        <li>Open Audio Files imports selected files. Open Audiobook or Audio Folder creates or updates a collection named from the chosen folder and opens that collection in natural chapter-number order.</li>
+        <li>The Audio collection selector separates All Audio, Other Audio, Recordings, each imported book, and each book's Shortened Pauses copies.</li>
+        <li>Use Ctrl+Space or Shift+Arrow in Shared Audio Library to select multiple chapters. Each change announces the filename, selected or unselected state, and total selected. Ctrl+A selects every audio file in the current collection.</li>
         <li>Remove Selected Audio from Shared Library removes library entries without deleting original chapter files.</li>
         <li>Alt+S moves directly to Shared Audio Library while AudioStudio Pro is active. In Media Editor, Alt+S moves to Shared Media Library when the current project has no sources.</li>
         <li>Preview Selected Audio is a toggle. Activate it again, or press X, to stop the library preview.</li>

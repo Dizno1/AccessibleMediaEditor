@@ -8,7 +8,7 @@ Build 0.10.21: Save bracketed video selections as reusable source clips. Saving 
 
 # Accessible Production Studio
 
-Build 0.12.8 improves AudioStudio Pro workflow order, multi-selection feedback, audiobook import recovery, and exact import reporting. The GitHub repository and local development folder use the shorter ProductionStudio name. The internal application identifier, AMEPROJECT format marker, and existing Accessible Media Editor data folders remain unchanged so saved projects, sessions, recordings, exports, and shared-library data continue to be available after upgrading.
+Build 0.12.9 separates audiobooks, recordings, and other audio into accessible collections. Each imported book is named from its folder and its chapters use natural numeric filename order, including after reimport. Shortened chapters receive their own book collection without replacing the originals. Batch pause shortening and folder export follow the visible collection order. The pause-duration fields now expose clean, human-readable decimal limits instead of floating-point spin-box values. The internal application identifier, AMEPROJECT format marker, and existing Accessible Media Editor data folders remain unchanged so saved projects, sessions, recordings, exports, and shared-library data continue to be available after upgrading.
 
 Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.
 

@@ -103,7 +103,7 @@ async function loadLibrary(){
 
 function audioLibraryItems(){return libraryItems.filter(item=>item.kind==="Audio"&&item.source);}
 function addAudioLibraryItem(item,deferUpdate=false){
-  const index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source||entry.originalSource&&entry.originalSource===item.originalSource);
+  const derived=Boolean(item.silenceShortened||item.sourceItemId),index=libraryItems.findIndex(entry=>entry.id===item.id||entry.source===item.source||!derived&&!entry.silenceShortened&&entry.originalSource&&entry.originalSource===item.originalSource);
   if(index<0)libraryItems.push(structuredClone({...item,role:"source"}));
   else libraryItems[index]=structuredClone({...libraryItems[index],...item,role:"source"});
   if(!deferUpdate){renderLibrary();saveLibrary();}
@@ -141,7 +141,7 @@ function audioCanOpenDirectly(path){
 }
 async function importAudioPaths(paths,origin){
   if(!paths.length){announce("Open Audio canceled. No files selected.");return{total:0,imported:0,recovered:0,failed:[]};}
-  let imported=0,recovered=0;const failed=[];
+  let imported=0,recovered=0;const failed=[],firstFolder=paths[0].replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder",isAudiobookImport=origin==="folder"||origin==="folder-retry";
   for(const [index,path]of paths.entries()){
     const name=baseName(path);
     if(!supportedMediaPath(path)||kindFromPath(path)!=="Audio"){failed.push({path,name,reason:"Unsupported audio file type."});continue;}
@@ -164,8 +164,8 @@ async function importAudioPaths(paths,origin){
         const measureReminder=setInterval(()=>announce(`Still measuring duration for chapter ${itemNumber} of ${paths.length}. ${name}.`),30000);
         try{length=await probeAudioDuration(source);}finally{clearInterval(measureReminder);}
       }
-      const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder";
-      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
+      const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder",isAudiobook=origin==="folder"||origin==="folder-retry";
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,...(isAudiobook?{collectionType:"audiobook",audiobookCollection:folder}:{}),duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
       imported++;if(usedRecovery)recovered++;announce(`Completed chapter ${itemNumber} of ${paths.length}. ${name}. Duration ${readableTime(length)}.${usedRecovery?" A compatible working copy was created.":""} Import time ${readableTime((Date.now()-started)/1000)}.`);
     }catch(error){console.error(`Audio import failed for ${name}`,error);failed.push({path,name,reason:String(error?.message||error||"The audio file could not be decoded.")});announce(`${name} could not be imported. The remaining chapters will continue.`,true);}
   }
@@ -173,13 +173,13 @@ async function importAudioPaths(paths,origin){
   const recoveryText=recovered?` ${recovered} ${recovered===1?"chapter required":"chapters required"} a compatible working copy.`:"";
   const failureText=failed.length?` Import incomplete. ${failed.length} ${failed.length===1?"chapter failed":"chapters failed"}. Review Import Results for filenames and reasons.`:"";
   announce(imported?`${imported} of ${paths.length} audio ${paths.length===1?"file":"files"} added to the Shared Audio Library in filename order.${recoveryText}${failureText}`:`No audio was imported.${failureText}`,Boolean(failed.length));
-  return{total:paths.length,imported,recovered,failed};
+  return{total:paths.length,imported,recovered,failed,origin,collection:isAudiobookImport?firstFolder:null};
 }
 async function importAudioStudioFiles(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
   return importAudioPaths(await invoke("pick_media_files"),"selected audio");
 }
-async function retryAudioStudioFiles(paths){return importAudioPaths(paths,"retry");}
+async function retryAudioStudioFiles(paths,origin){return importAudioPaths(paths,origin==="folder"?"folder-retry":"retry");}
 async function importAudioStudioFolder(){
   if(!invoke)return announce("The Windows folder picker is available in the installed application.",true);
   const paths=await invoke("pick_audio_folder_files");if(!paths.length)return announce("Open Audio Folder canceled or the folder contained no supported audio files.");
@@ -1402,7 +1402,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.8 Development Testing Build. Copyright 2026 Open Door Design. This build improves AudioStudio Pro workflow order, selection feedback, audiobook import recovery, and import reporting.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.9 Development Testing Build. Copyright 2026 Open Door Design. This build improves AudioStudio Pro workflow order, selection feedback, audiobook import recovery, and import reporting.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 

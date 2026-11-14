@@ -1,0 +1,32 @@
+Accessible Production Studio
+Build 0.12.9 Development Testing Build
+
+Primary test
+
+Open AudioStudio Pro and activate Open Audiobook or Audio Folder.
+
+Choose a folder containing one audiobook.
+
+After import, the Audio collection selector should contain a collection named from that folder. The app should open that collection automatically.
+
+The Shared Audio Library should contain only that book's chapters and should arrange Chapter 1, Chapter 2, and Chapter 10 in natural numeric order.
+
+Reimport the same folder after adding previously missing chapters. Existing entries should update, the newly recovered chapters should appear in their correct numeric positions, and duplicate chapters should not be created.
+
+Select multiple chapters and activate Analyze and Create Shortened Copies. The selected chapters must be processed in the order shown in the current book collection.
+
+When processing finishes, focus should return to the Shared Audio Library in a separate collection named Book Name - Shortened Pauses. The original book collection must remain unchanged.
+
+Select chapters and export them. The exported copies should follow the order shown in the collection.
+
+Additional checks
+
+Other Audio should contain ordinary imported audio that is not part of an audiobook folder.
+
+Recordings should contain recordings kept from AudioStudio Pro.
+
+All Audio should continue to provide access to every saved audio source.
+
+The pause settings should announce clean text ranges such as 0.5 through 30 seconds and 0.1 through 10 seconds. They must not announce long floating-point minimum values.
+
+Use Virtual PC Cursor off in JAWS or Focus Mode in NVDA for direct list selection and keyboard shortcuts.

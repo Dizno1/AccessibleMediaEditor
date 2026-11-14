@@ -16,6 +16,16 @@ function naturalTime(seconds){
 function recordingExtension(type){if(type.includes("ogg"))return"ogg";if(type.includes("mp4"))return"m4a";return"webm";}
 function supportedType(){return typeof MediaRecorder==="undefined"?"":(["audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus","audio/mp4"].find(type=>MediaRecorder.isTypeSupported(type))||"");}
 function blobDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error||new Error("The recording could not be read."));reader.readAsDataURL(blob);});}
+const audioNaturalCollator=new Intl.Collator(undefined,{numeric:true,sensitivity:"base"});
+function baseBookName(item){return String(item.audiobookCollection||item.collection||"Audiobook").replace(/ - Shortened Pauses$/i,"");}
+function looksLikeBookChapter(item){return /(?:chapter\s*0*\d+|(?:^|[_ -])0*\d+(?:[_ .-]|$)|intro|outro)/i.test(String(item.label||item.name||""));}
+export function audioCollectionInfo(item){
+  if(item.collectionType==="recording")return{key:"recordings",label:"Recordings",rank:1};
+  const book=item.collectionType?.startsWith("audiobook")||item.audiobookCollection||(item.collection&&looksLikeBookChapter(item));
+  if(book){const name=baseBookName(item),shortened=item.collectionType==="audiobook-shortened"||item.silenceShortened;return{key:"book:"+(shortened?"shortened:":"original:")+name,label:name+(shortened?" - Shortened Pauses":""),rank:shortened?3:2};}
+  return{key:"other",label:"Other Audio",rank:0};
+}
+export function sortAudioItems(items){return [...items].sort((left,right)=>audioNaturalCollator.compare(String(left.label||left.name||""),String(right.label||right.name||"")));}
 
 export function createAudioStudio(options){
   const {elements,invoke,convertFileSrc,announce,getAudioItems,addLibraryAudio,addAudioToProject,removeLibraryAudio,exportAudioFiles,importAudioFiles,importAudioFolder,retryAudioFiles}=options;
@@ -25,12 +35,13 @@ export function createAudioStudio(options){
   let playbackSpeed=Number(localStorage.getItem("ame-playback-speed"))||1;
 
   function setStatus(text){e("audio-studio-status").textContent=text;}
+  function visibleItems(){const value=e("audio-library-collection").value,items=getAudioItems();return sortAudioItems(value==="all"?items:items.filter(item=>audioCollectionInfo(item).key===value));}
   function selectedItem(){return getAudioItems().find(value=>value.id===e("audio-library-items").value);}
-  function selectedItems(){const ids=new Set([...e("audio-library-items").selectedOptions].map(option=>option.value));return getAudioItems().filter(item=>ids.has(item.id));}
+  function selectedItems(){const ids=new Set([...e("audio-library-items").selectedOptions].map(option=>option.value));return visibleItems().filter(item=>ids.has(item.id));}
   function selectedIds(){return new Set([...e("audio-library-items").selectedOptions].map(option=>option.value));}
   function optionName(option){return String(option?.textContent||option?.text||"Audio file").replace(/\. \d+(?: minute| hour| second| millisecond)s?.*$/i,"");}
   function updateSelectionStatus(){
-    const count=selectedItems().length,total=getAudioItems().length;
+    const count=selectedItems().length,total=visibleItems().length;
     e("audio-library-selection-status").textContent=count?`${count} of ${total} audio ${total===1?"file":"files"} selected.`:"No audio files selected.";
     e("audio-editor-shorten-silence").disabled=!count;
   }
@@ -59,11 +70,16 @@ export function createAudioStudio(options){
     e("audio-editor-clear-marks").disabled=!marks.length;e("audio-editor-save-range").disabled=!(markIn!=null&&markOut!=null&&markOut>markIn);
   }
   function renderLibrary(){
-    const items=getAudioItems(),list=e("audio-library-items"),previous=new Set([...list.selectedOptions].map(option=>option.value));list.replaceChildren();
+    const allItems=getAudioItems(),collection=e("audio-library-collection"),previousCollection=collection.value||"all",collections=new Map();
+    for(const item of allItems){const info=audioCollectionInfo(item);collections.set(info.key,info);}
+    const collectionOptions=[new Option("All Audio, "+allItems.length+" files","all"),...([...collections.values()].sort((left,right)=>left.rank-right.rank||audioNaturalCollator.compare(left.label,right.label)).map(info=>new Option(info.label+", "+allItems.filter(item=>audioCollectionInfo(item).key===info.key).length+" files",info.key)))];
+    collection.replaceChildren(...collectionOptions);collection.value=[...collection.options].some(option=>option.value===previousCollection)?previousCollection:"all";
+    const items=visibleItems(),list=e("audio-library-items"),previous=new Set([...list.selectedOptions].map(option=>option.value));list.replaceChildren();
     for(const item of items)list.add(new Option(`${item.label||item.name}. ${naturalTime(item.duration||0)}.`,item.id));
     if(!items.length){const option=new Option("No saved audio sources","");option.disabled=true;list.add(option);}
     for(const option of list.options)option.selected=previous.has(option.value);
-    e("audio-library-summary").textContent=`${items.length} saved audio ${items.length===1?"source":"sources"}. These sources are shared with Media Editor and Presentation.`;
+    const selectedCollection=collection.options[collection.selectedIndex]?.textContent?.replace(/, \d+ files$/,"")||"All Audio";
+    e("audio-library-summary").textContent=selectedCollection+". "+items.length+" saved audio "+(items.length===1?"source":"sources")+". These sources are shared with Media Editor and Presentation.";
     const available=items.length>0;for(const id of ["audio-preview-source","audio-edit-source","audio-add-to-project","audio-export-sources","audio-remove-sources"])e(id).disabled=!available;
     selectionSnapshot=selectedIds();updateSelectionStatus();
   }
@@ -120,7 +136,7 @@ export function createAudioStudio(options){
     try{
       e("audio-keep-recording").disabled=true;setStatus("Saving recording to the shared library. Please wait.");
       const dataUrl=await blobDataUrl(pending.blob),original=await invoke("save_audio_recording",{dataUrl,suggestedName:name,extension}),itemId=`audio-${Date.now()}`,source=await invoke("normalize_media",{source:original,mediaKind:"Audio",itemId});
-      addLibraryAudio({id:itemId,name:`${name}.m4a`,label:name,kind:"Audio",source,workingSource:source,originalSource:original,duration:pending.duration,inPoint:0,outPoint:pending.duration,editSegments:[{start:0,end:pending.duration}],trackTarget:"audio",role:"source"});
+      addLibraryAudio({id:itemId,name:`${name}.m4a`,label:name,kind:"Audio",source,workingSource:source,originalSource:original,collection:"Recordings",collectionType:"recording",duration:pending.duration,inPoint:0,outPoint:pending.duration,editSegments:[{start:0,end:pending.duration}],trackTarget:"audio",role:"source"});
       clearPending();renderLibrary();setStatus(`${name} saved to the shared Source Media Library.`);announce("Recording saved to the shared Source Media Library.");e("audio-library-items").value=itemId;e("audio-library-items").focus();
     }catch(error){setStatus("Recording was not saved.");announce(`Recording could not be saved. ${error}`,true);}finally{e("audio-keep-recording").disabled=false;}
   }
@@ -147,11 +163,11 @@ export function createAudioStudio(options){
   async function retryFailedImports(){
     const paths=lastImportReport?.failed?.map(item=>item.path).filter(Boolean)||[];if(!paths.length)return announce("There are no failed chapters to retry.");
     e("audio-import-retry").disabled=true;announce(`Retrying ${paths.length} failed ${paths.length===1?"chapter":"chapters"}.`);
-    try{const report=await retryAudioFiles(paths);setImportReport(report);renderLibrary();if(!report.failed.length){e("audio-import-results-dialog").close();e("audio-library-items").focus();}}
+    try{const report=await retryAudioFiles(paths,lastImportReport?.origin);setImportReport(report);renderLibrary();if(!report.failed.length){e("audio-import-results-dialog").close();e("audio-library-items").focus();}}
     catch(error){announce(`Failed chapters could not be retried. ${error}`,true);}finally{e("audio-import-retry").disabled=false;}
   }
   async function openAudio(){try{const report=await importAudioFiles();setImportReport(report);renderLibrary();}catch(error){announce(`Audio import failed. ${error}`,true);}}
-  async function openFolder(){try{const report=await importAudioFolder();setImportReport(report);renderLibrary();}catch(error){announce(`Audio folder import failed. ${error}`,true);}}
+  async function openFolder(){try{const report=await importAudioFolder();setImportReport(report);renderLibrary();if(report?.collection){e("audio-library-collection").value="book:original:"+report.collection;renderLibrary();announce(`${report.collection} opened. ${visibleItems().length} chapters in filename order.`);e("audio-library-items").focus();}}catch(error){announce(`Audio folder import failed. ${error}`,true);}}
   function addSelected(){const items=selectedItems();if(!items.length)return announce("Select one or more entries in the Shared Audio Library first.",true);addAudioToProject(items);e("audio-library-items").focus();}
   async function exportSelected(){const items=selectedItems();if(!items.length)return announce("Select one or more entries in the Shared Audio Library first.",true);await exportAudioFiles(items);e("audio-library-items").focus();}
   function removeSelected(){const items=selectedItems();if(!items.length)return announce("Select one or more entries in the Shared Audio Library first.",true);removeLibraryAudio(items);e("audio-library-items").focus();}
@@ -226,16 +242,16 @@ export function createAudioStudio(options){
       if(!plans.length){status.textContent=`No pauses of at least ${naturalTime(minimum)} were detected in the selected chapters.`;announce(status.textContent);return;}
       const totalRemoved=plans.reduce((total,plan)=>total+plan.removed,0),message=`${plans.length} of ${items.length} selected ${items.length===1?"chapter has":"chapters have"} long pauses. Creating shortened copies will remove ${naturalTime(totalRemoved)} in total. Original sources will remain unchanged. Continue?`;
       status.textContent=message;if(!window.confirm(message)){announce("Silence shortening canceled. Original sources were not changed.");return;}
-      const created=[];
+      const created=[],shortenedBook=items.length?baseBookName(items[0]):"Audiobook";
       for(const [index,plan] of plans.entries()){
         const label=plan.item.label||plan.item.name;status.textContent=`Creating shortened chapter ${index+1} of ${plans.length}. ${label}.`;announce(status.textContent);
         const reminder=setTimeout(()=>announce(`Still creating shortened chapter ${index+1} of ${plans.length}. ${label}.`),30000),itemId=`audio-silence-${Date.now()}-${index}`;
         let path;try{path=await invoke("render_working_edit",{source:plan.item.source,segments:plan.retained,mediaKind:"Audio",itemId});}finally{clearTimeout(reminder);}
         const name=`${label.replace(/\.[^.]+$/,'')} - Shortened Pauses`;
-        addLibraryAudio({...plan.item,id:itemId,name,label:name,source:path,workingSource:path,originalSource:plan.item.originalSource||plan.item.source,duration:plan.newDuration,inPoint:0,outPoint:plan.newDuration,editSegments:[{start:0,end:plan.newDuration}],silenceShortened:true,sourceItemId:plan.item.id,role:"source"});created.push(itemId);
+        addLibraryAudio({...plan.item,id:itemId,name,label:name,source:path,workingSource:path,originalSource:plan.item.originalSource||plan.item.source,collection:`${baseBookName(plan.item)} - Shortened Pauses`,collectionType:"audiobook-shortened",audiobookCollection:baseBookName(plan.item),duration:plan.newDuration,inPoint:0,outPoint:plan.newDuration,editSegments:[{start:0,end:plan.newDuration}],silenceShortened:true,sourceItemId:plan.item.id,role:"source"});created.push(itemId);
         announce(`Shortened chapter ${index+1} of ${plans.length} created. ${label}.`);
       }
-      renderLibrary();for(const option of e("audio-library-items").options)option.selected=created.includes(option.value);status.textContent=`${created.length} shortened ${created.length===1?"chapter":"chapters"} created and saved automatically to the Shared Audio Library. ${naturalTime(totalRemoved)} removed in total. Original sources unchanged.`;announce(status.textContent);e("audio-library-items").focus();
+      renderLibrary();e("audio-library-collection").value=`book:shortened:${shortenedBook}`;renderLibrary();for(const option of e("audio-library-items").options)option.selected=created.includes(option.value);selectionSnapshot=selectedIds();updateSelectionStatus();status.textContent=`${created.length} shortened ${created.length===1?"chapter":"chapters"} created in ${shortenedBook} - Shortened Pauses. ${naturalTime(totalRemoved)} removed in total. Original sources unchanged.`;announce(status.textContent);e("audio-library-items").focus();
     }catch(error){status.textContent="The shortened copies could not all be created.";announce(`Silence analysis or rendering failed. ${error}`,true);}finally{button.disabled=!selectedItems().length;}
   }
   function focusSection(offset){
@@ -249,6 +265,7 @@ export function createAudioStudio(options){
   e("audio-library-preview").addEventListener("timeupdate",()=>{const preview=e("audio-library-preview");if(libraryPreviewEnd!=null&&preview.currentTime>=libraryPreviewEnd){preview.pause();libraryPreviewEnd=null;e("audio-preview-source").textContent="Play or Stop Selected Audio Preview";}});
   e("audio-library-preview").addEventListener("ended",()=>{e("audio-preview-source").textContent="Play or Stop Selected Audio Preview";});
   e("audio-library-items").addEventListener("change",reportSelectionChange);
+  e("audio-library-collection").addEventListener("change",()=>{renderLibrary();announce(e("audio-library-summary").textContent);e("audio-library-items").focus();});
   e("audio-library-items").addEventListener("keydown",event=>{
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="a"){
       event.preventDefault();for(const option of e("audio-library-items").options)if(!option.disabled)option.selected=true;selectionSnapshot=selectedIds();updateSelectionStatus();announce(`All ${selectionSnapshot.size} audio files selected.`);

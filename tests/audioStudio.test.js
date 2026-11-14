@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { audioCollectionInfo, sortAudioItems } from "../app/audioStudio.js";
 
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
 const studio=readFileSync(new URL("../app/audioStudio.js",import.meta.url),"utf8");
@@ -10,7 +11,7 @@ const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf
 const prepare=readFileSync(new URL("../scripts/prepare-dist.js",import.meta.url),"utf8");
 
 test("AudioStudio Pro exposes keyboard-operable recording, review, and shared-library controls",()=>{
-  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-export-sources","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
+  for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-collection","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-export-sources","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
     assert.match(html,new RegExp(`id=["']${id}["']`));
   }
   assert.match(html,/shared Source Media Library/i);
@@ -107,10 +108,22 @@ test("audiobook folders and multiple chapters are managed from Shared Audio Libr
   assert.match(rust,/fn export_audio_files_to_folder/);
 });
 
-test("all visible and native build identification is 0.12.8",()=>{
-  assert.match(html,/Build 0\.12\.8 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.8/);
-  assert.match(rust,/Build 0\.12\.8 executable started/);
+test("audiobooks use separate collections and natural chapter order",()=>{
+  const book={collection:"My Book",collectionType:"audiobook"};
+  assert.deepEqual(sortAudioItems([{...book,label:"Chapter 10"},{...book,label:"Chapter 2"},{...book,label:"Chapter 1"}]).map(item=>item.label),["Chapter 1","Chapter 2","Chapter 10"]);
+  assert.equal(audioCollectionInfo({...book,label:"Chapter 1"}).label,"My Book");
+  assert.equal(audioCollectionInfo({...book,label:"Chapter 1",silenceShortened:true}).label,"My Book - Shortened Pauses");
+  assert.equal(audioCollectionInfo({label:"Music.mp3",collection:"Music"}).label,"Other Audio");
+  assert.equal(audioCollectionInfo({label:"Voice note",collectionType:"recording"}).label,"Recordings");
+  assert.match(studio,/visibleItems\(\)\.filter|visibleItems\(\)/);
+  assert.match(app,/collectionType:"audiobook"/);
+  assert.match(app,/!derived&&!entry\.silenceShortened/);
+});
+
+test("all visible and native build identification is 0.12.9",()=>{
+  assert.match(html,/Build 0\.12\.9 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.9/);
+  assert.match(rust,/Build 0\.12\.9 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{
