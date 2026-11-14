@@ -1,6 +1,6 @@
 Version 0.11.1 navigation stabilization
 
-Workspace switching: Ctrl+Tab and Ctrl+Shift+Tab move among Media Editor, Presentation, and AudioStudio Pro. Focus lands on the selected tab and the screen reader should announce it once. Arrow keys also navigate when focus is on the tab list. Ctrl+Page Up and Ctrl+Page Down continue navigating sections within the selected workspace.
+Workspace switching: Ctrl+Tab and Ctrl+Shift+Tab move among Media Editor, Presentation, and Audio Editor. Focus lands on the selected tab and the screen reader should announce it once. Arrow keys also navigate when focus is on the tab list. Ctrl+Page Up and Ctrl+Page Down continue navigating sections within the selected workspace.
 
 JAWS regression check: with Virtual Cursor off, press Ctrl+Tab repeatedly, then Ctrl+Shift+Tab. Expect one tab announcement per keypress, without repeated document/window titles. Repeat with Virtual Cursor on and NVDA Focus Mode. This Windows runtime check has not been performed by the automated tests.
 
@@ -8,7 +8,7 @@ Build 0.10.21: Save bracketed video selections as reusable source clips. Saving 
 
 # Accessible Production Studio
 
-Build 0.12.11 adds a consistent way to open editable projects and audiobooks from every workspace. Ctrl+Shift+O presents a short choice between an AMEPROJECT and an audiobook folder, then moves to the correct workspace. Open Project is always the initial focused choice, including when the command is used from AudioStudio Pro. Ctrl+O continues to open ordinary files and recognizes an AMEPROJECT selected from AudioStudio Pro. F1 begins with screen-reader setup, workspace purpose, opening workflow, and saving guidance. A single expandable button reveals the complete keyboard shortcut reference without adding a long list to the initial reading order. The internal application identifier, AMEPROJECT format marker, and existing Accessible Media Editor data folders remain unchanged so saved projects, sessions, recordings, exports, and shared-library data continue to be available after upgrading.
+Build 0.12.12 renames the third workspace Audio Editor and organizes its shared sources into Audiobooks, Music, Recordings, Other Audio, and All Audio. These areas filter and classify shared-library metadata without moving, duplicating, or modifying original files. Audiobooks retain separate book collections and natural chapter order. Existing recordings remain under Recordings, and ordinary audio can be classified as Music or Other Audio. The F1 instructions explain the new organization and preserve the distinction between this workspace and the planned standalone AccessibleAudioStudioPro application. Internal identifiers and existing data folders remain unchanged so an upgrade continues to find saved projects, sessions, recordings, exports, and library data.
 
 Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.
 
@@ -286,7 +286,7 @@ Build 0.7.0 replaces the disconnected inserted-item editors with a ScreenCapture
 - End followed by Ctrl+V appends the selection without a separate Append command.
 - Every Source editor includes Remove Source from Project. The original file and already pasted production material remain unchanged.
 - Inserted items no longer create focus jumps into additional editing regions.
-- Source audio uses the same ordinary Media Editor workflow and does not require AudioStudio Pro.
+- Source audio uses the same ordinary Media Editor workflow and does not require Audio Editor.
 
 Build 0.7.0 provides immediate continuous playback of a multi-item production. FFmpeg rendering of that multi-item production is intentionally not presented as complete yet; format-selectable export remains available for a normalized or edited single-media production.
 
@@ -347,7 +347,7 @@ All operations are nondestructive. Source files are not modified.
 
 ## Current limits
 
-Build 0.9.0 adds FFmpeg rendering and format-selectable export for the complete video and audio Primary Production. Text, still-image, transition, caption, and AudioStudio Pro rendering are not implemented yet.
+Build 0.9.0 adds FFmpeg rendering and format-selectable export for the complete video and audio Primary Production. Text, still-image, transition, caption, and Audio Editor rendering are not implemented yet.
 
 ## Developer commands
 

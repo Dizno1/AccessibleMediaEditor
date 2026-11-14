@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { audioCollectionInfo, sortAudioItems } from "../app/audioStudio.js";
+import { audioCollectionInfo, itemMatchesAudioArea, sortAudioItems } from "../app/audioStudio.js";
 
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
 const studio=readFileSync(new URL("../app/audioStudio.js",import.meta.url),"utf8");
@@ -10,7 +10,7 @@ const shortcuts=readFileSync(new URL("../app/shortcutService.js",import.meta.url
 const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const prepare=readFileSync(new URL("../scripts/prepare-dist.js",import.meta.url),"utf8");
 
-test("AudioStudio Pro exposes keyboard-operable recording, review, and shared-library controls",()=>{
+test("Audio Editor exposes keyboard-operable recording, review, and shared-library controls",()=>{
   for(const id of ["audio-enable-microphone","audio-microphone-select","audio-recording-profile","audio-record-toggle","audio-record-pause","audio-recording-preview","audio-keep-recording","audio-record-again","audio-discard-recording","audio-library-collection","audio-library-items","audio-open-files","audio-open-folder","audio-edit-source","audio-add-to-project","audio-export-sources","audio-remove-sources","audio-editor-playhead","audio-editor-speed","audio-editor-play","audio-editor-mark-in","audio-editor-mark-out","audio-editor-goto","audio-editor-save-range","audio-silence-minimum","audio-silence-retain","audio-silence-threshold","audio-editor-shorten-silence"]){
     assert.match(html,new RegExp(`id=["']${id}["']`));
   }
@@ -25,7 +25,7 @@ test("every AudioStudio element reference exists and an empty preview is not exp
   assert.match(studio,/libraryPreviewEnd/);
 });
 
-test("AudioStudio Pro records with MediaRecorder and handles missing microphone support",()=>{
+test("Audio Editor records with MediaRecorder and handles missing microphone support",()=>{
   assert.match(studio,/new MediaRecorder/);
   assert.match(studio,/navigator\.mediaDevices\?\.getUserMedia/);
   assert.match(studio,/Microphone recording is not available/);
@@ -44,7 +44,7 @@ test("the production frontend package includes the AudioStudio module",()=>{
   assert.match(prepare,/"audioStudio\.js"/);
 });
 
-test("recording shortcuts are app-wide but handlers act only in AudioStudio Pro",()=>{
+test("recording shortcuts are app-wide but handlers act only in Audio Editor",()=>{
   assert.match(shortcuts,/toggleAudioRecording.*ctrl:true,alt:true,key:"r"/s);
   assert.match(shortcuts,/pauseAudioRecording.*ctrl:true,alt:true,key:" "/s);
   assert.match(app,/activeWorkspace==="audio".*toggleRecording/s);
@@ -120,10 +120,22 @@ test("audiobooks use separate collections and natural chapter order",()=>{
   assert.match(app,/!derived&&!entry\.silenceShortened/);
 });
 
-test("all visible and native build identification is 0.12.11",()=>{
-  assert.match(html,/Build 0\.12\.11 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.11/);
-  assert.match(rust,/Build 0\.12\.11 executable started/);
+test("Audio Editor separates audio into accessible areas without moving source files",()=>{
+  for(const area of ["audiobooks","music","recordings","other","all"])assert.match(html,new RegExp(`data-audio-area=["']${area}["']`));
+  assert.equal(itemMatchesAudioArea({collectionType:"audiobook",label:"Chapter 1"},"audiobooks"),true);
+  assert.equal(itemMatchesAudioArea({audioCategory:"music",label:"Song"},"music"),true);
+  assert.equal(itemMatchesAudioArea({collectionType:"recording",label:"Voice note"},"recordings"),true);
+  assert.equal(itemMatchesAudioArea({audioCategory:"other",label:"Sound effect"},"other"),true);
+  assert.equal(itemMatchesAudioArea({label:"Legacy audio"},"all"),true);
+  assert.match(studio,/No file was moved, duplicated, or edited/);
+  assert.match(app,/function classifyAudioLibraryItems/);
+  assert.match(html,/AccessibleAudioStudioPro is planned as a separate audio-focused application/);
+});
+
+test("all visible and native build identification is 0.12.12",()=>{
+  assert.match(html,/Build 0\.12\.12 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.12/);
+  assert.match(rust,/Build 0\.12\.12 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{
@@ -145,7 +157,7 @@ test("structured opening works from every workspace and routes to the correct ed
   assert.doesNotMatch(app,/activeWorkspace==="audio"\?el\["structured-open-audiobook"\]/);
   assert.match(app,/function openStructuredProject\(\).*openProject\(\)/s);
   assert.match(app,/function openStructuredAudiobook\(\).*switchWorkspace\(1,"audio"\).*openFolder\(\)/s);
-  assert.match(app,/async function importAudioStudioFiles\(\).*projectPaths.*open_project_path.*applyOpenedProject/s);
+  assert.match(app,/async function importAudioStudioFiles\([^)]*\).*projectPaths.*open_project_path.*applyOpenedProject/s);
   assert.match(rust,/"Open Project\.\.\.","openProject"/);
   assert.match(rust,/"Open Audiobook or Audio Folder\.\.\.","openAudioFolder"/);
 });

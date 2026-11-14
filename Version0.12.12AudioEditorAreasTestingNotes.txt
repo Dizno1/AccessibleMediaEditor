@@ -1,0 +1,36 @@
+Accessible Production Studio
+Build 0.12.12 Audio Editor Areas Testing Notes
+
+This build renames the AudioStudio Pro workspace to Audio Editor. It does not rename or replace the planned standalone AccessibleAudioStudioPro application.
+
+What to test
+
+Open Audio Editor and confirm that the workspace name is announced as Audio Editor.
+
+Move through the five area buttons: Audiobooks, Music, Recordings, Other Audio, and All Audio. Each is an ordinary keyboard-operable button that announces whether it is pressed. Activating one filters the Shared Audio Library and moves focus into that list.
+
+Confirm that Audiobooks contains imported book collections in natural chapter order. Original and shortened chapter collections should remain separate.
+
+Confirm that Recordings contains microphone recordings created in the application.
+
+In All Audio or Other Audio, select one or more non-audiobook sources and activate Classify Selected as Music. Confirm that the selected sources appear in Music. Then test Classify Selected as Other Audio.
+
+Classification changes library metadata only. It must not move, duplicate, rename, edit, or delete the original audio file.
+
+Audiobook chapters cannot be reclassified as Music or Other Audio. They remain associated with their book.
+
+While Music is active, use Ctrl+O to import ordinary audio and confirm it appears under Music. In other areas, Ctrl+O imports ordinary audio under Other Audio. Opening an audiobook folder switches to Audiobooks.
+
+Press F1 from each workspace and confirm that the instructions call the third workspace Audio Editor, explain all five areas, and identify AccessibleAudioStudioPro as a planned separate audio-focused application.
+
+Regression checks
+
+Confirm that Alt+S still reaches Shared Audio Library from Audio Editor.
+
+Confirm that Ctrl+Tab and Ctrl+Shift+Tab still switch among Media Editor, Presentation, and Audio Editor.
+
+Confirm that Ctrl+Shift+O still offers Open Project first and Open Audiobook or Audio Folder second from every workspace.
+
+Confirm that saved projects, imported books, recordings, and existing shared-library sources remain available after upgrading.
+
+Confirm that Virtual PC Cursor off or NVDA Focus Mode operation remains predictable throughout the five audio areas.

@@ -695,7 +695,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .item(&item(app,"Jump to Beginning Home","jumpBeginning")?).item(&item(app,"Jump to End End","jumpEnd")?).separator()
         .item(&item(app,"Primary Replacement Target Both Audio and Video B","targetBoth")?).item(&item(app,"Primary Replacement Target Video Only V","targetVideo")?).item(&item(app,"Primary Replacement Target Audio Only A","targetAudio")?).build()?;
     let navigate = SubmenuBuilder::new(app, "Navigate")
-        .item(&item(app,"Media Editor Workspace","showMediaWorkspace")?).item(&item(app,"Presentation Workspace","showPresentationWorkspace")?).item(&item(app,"AudioStudio Pro Workspace","showAudioWorkspace")?)
+        .item(&item(app,"Media Editor Workspace","showMediaWorkspace")?).item(&item(app,"Presentation Workspace","showPresentationWorkspace")?).item(&item(app,"Audio Editor Workspace","showAudioWorkspace")?)
         .item(&item(app,"Next Workspace Ctrl+Tab","nextWorkspace")?).item(&item(app,"Previous Workspace Ctrl+Shift+Tab","previousWorkspace")?).separator()
         .item(&accelerated_item(app,"Presentation Timeline Alt+P","focusPresentationTimeline","Alt+P")?).item(&accelerated_item(app,"Source Media Library Alt+S","focusPresentationSources","Alt+S")?).separator()
         .item(&item(app,"Previous Section Ctrl+Page Up","previousSection")?).item(&item(app,"Next Section Ctrl+Page Down","nextSection")?)
@@ -707,7 +707,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.11 executable started.");
+    write_startup_log("Build 0.12.12 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

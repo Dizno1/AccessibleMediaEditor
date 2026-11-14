@@ -117,6 +117,11 @@ function removeAudioLibraryItems(items){
   if(!window.confirm(`Remove ${count} selected audio ${count===1?"source":"sources"} from the Shared Audio Library? Original chapter files and media already used in projects will not be deleted.`))return;
   libraryItems=libraryItems.filter(item=>!ids.has(item.id));renderLibrary();saveLibrary();announce(`${count} audio ${count===1?"source":"sources"} removed from the Shared Audio Library. Original files were not deleted.`);
 }
+function classifyAudioLibraryItems(items,category){
+  const ids=new Set(items.map(item=>item.id));
+  libraryItems=libraryItems.map(item=>ids.has(item.id)?{...item,audioCategory:category}:item);
+  renderLibrary();saveLibrary();
+}
 async function exportAudioLibraryItems(items){
   if(!invoke)return announce("Audio folder export is available in the installed application.",true);
   try{
@@ -139,7 +144,7 @@ function audioCanOpenDirectly(path){
   const extension=path.includes(".")?path.split(".").pop().toLowerCase():"";
   return ["mp3","m4a","aac","wav","ogg","opus","webm"].includes(extension);
 }
-async function importAudioPaths(paths,origin){
+async function importAudioPaths(paths,origin,category="other"){
   if(!paths.length){announce("Open Audio canceled. No files selected.");return{total:0,imported:0,recovered:0,failed:[]};}
   let imported=0,recovered=0;const failed=[],firstFolder=paths[0].replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder",isAudiobookImport=origin==="folder"||origin==="folder-retry";
   for(const [index,path]of paths.entries()){
@@ -165,7 +170,7 @@ async function importAudioPaths(paths,origin){
         try{length=await probeAudioDuration(source);}finally{clearInterval(measureReminder);}
       }
       const folder=path.replace(/[\\/][^\\/]+$/,"").split(/[\\/]/).pop()||"Audio Folder",isAudiobook=origin==="folder"||origin==="folder-retry";
-      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,...(isAudiobook?{collectionType:"audiobook",audiobookCollection:folder}:{}),duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
+      addAudioLibraryItem({id:itemId,name,label:name,kind:"Audio",source,workingSource:source,originalSource:path,collection:folder,audioCategory:isAudiobook?"audiobook":category,...(isAudiobook?{collectionType:"audiobook",audiobookCollection:folder}:{}),duration:length,inPoint:0,outPoint:length,editSegments:[{start:0,end:length}],trackTarget:"audio",role:"source"},true);
       imported++;if(usedRecovery)recovered++;announce(`Completed chapter ${itemNumber} of ${paths.length}. ${name}. Duration ${readableTime(length)}.${usedRecovery?" A compatible working copy was created.":""} Import time ${readableTime((Date.now()-started)/1000)}.`);
     }catch(error){console.error(`Audio import failed for ${name}`,error);failed.push({path,name,reason:String(error?.message||error||"The audio file could not be decoded.")});announce(`${name} could not be imported. The remaining chapters will continue.`,true);}
   }
@@ -173,9 +178,9 @@ async function importAudioPaths(paths,origin){
   const recoveryText=recovered?` ${recovered} ${recovered===1?"chapter required":"chapters required"} a compatible working copy.`:"";
   const failureText=failed.length?` Import incomplete. ${failed.length} ${failed.length===1?"chapter failed":"chapters failed"}. Review Import Results for filenames and reasons.`:"";
   announce(imported?`${imported} of ${paths.length} audio ${paths.length===1?"file":"files"} added to the Shared Audio Library in filename order.${recoveryText}${failureText}`:`No audio was imported.${failureText}`,Boolean(failed.length));
-  return{total:paths.length,imported,recovered,failed,origin,collection:isAudiobookImport?firstFolder:null};
+  return{total:paths.length,imported,recovered,failed,origin,category,collection:isAudiobookImport?firstFolder:null};
 }
-async function importAudioStudioFiles(){
+async function importAudioStudioFiles(category="other"){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
   const paths=await invoke("pick_media_files"),projectPaths=paths.filter(path=>/\.ameproject$/i.test(path));
   if(projectPaths.length){
@@ -183,9 +188,9 @@ async function importAudioStudioFiles(){
     if(project.dirty&&!window.confirm("Discard unsaved changes and open the selected project?"))return{total:0,imported:0,recovered:0,failed:[],routed:true};
     const result=await invoke("open_project_path",{path:projectPaths[0]});applyOpenedProject(result);announce(`${project.name} opened as an editable project in the correct workspace.`);return{total:0,imported:0,recovered:0,failed:[],routed:true};
   }
-  return importAudioPaths(paths,"selected audio");
+  return importAudioPaths(paths,"selected audio",category);
 }
-async function retryAudioStudioFiles(paths,origin){return importAudioPaths(paths,origin==="folder"?"folder-retry":"retry");}
+async function retryAudioStudioFiles(paths,origin,category="other"){return importAudioPaths(paths,origin==="folder"?"folder-retry":"retry",category);}
 async function importAudioStudioFolder(){
   if(!invoke)return announce("The Windows folder picker is available in the installed application.",true);
   const paths=await invoke("pick_audio_folder_files");if(!paths.length)return announce("Open Audio Folder canceled or the folder contained no supported audio files.");
@@ -1418,7 +1423,7 @@ const actions={
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
   showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcut-key-list-toggle"].focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.11 Development Testing Build. Copyright 2026 Open Door Design. This build makes Open Project the predictable first choice from every workspace.")
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.12 Development Testing Build. Copyright 2026 Open Door Design. This build makes Open Project the predictable first choice from every workspace.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1513,7 +1518,7 @@ if(listen){listen("menu-action",event=>triggerAction(event.payload));listen("pro
 el["persistent-library-add"].addEventListener("click",addLibrarySelection);
 el["persistent-library-remove"].addEventListener("click",removeLibrarySelection);
 el["persistent-library-items"].addEventListener("change",renderLibrary);
-audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,exportAudioFiles:exportAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder,retryAudioFiles:retryAudioStudioFiles});
+audioStudio=createAudioStudio({elements:el,invoke,convertFileSrc,announce,getAudioItems:audioLibraryItems,addLibraryAudio:addAudioLibraryItem,addAudioToProject:addAudioLibraryItemsToProject,removeLibraryAudio:removeAudioLibraryItems,classifyLibraryAudio:classifyAudioLibraryItems,exportAudioFiles:exportAudioLibraryItems,importAudioFiles:importAudioStudioFiles,importAudioFolder:importAudioStudioFolder,retryAudioFiles:retryAudioStudioFiles});
 // Native window visibility is independent of frontend startup and library I/O.
 render();
 if(invoke){
