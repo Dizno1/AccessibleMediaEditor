@@ -5,6 +5,7 @@ const app=readFileSync(new URL("../app/app.js",import.meta.url),"utf8");
 const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
 const rust=readFileSync(new URL("../src-tauri/src/main.rs",import.meta.url),"utf8");
 const tauri=readFileSync(new URL("../src-tauri/tauri.conf.json",import.meta.url),"utf8");
+const workflow=readFileSync(new URL("../.github/workflows/build-windows.yml",import.meta.url),"utf8");
 const projectModel=readFileSync(new URL("../app/projectModel.js",import.meta.url),"utf8");
 const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
 test("visual condensation preserves Virtual PC Cursor off keyboard targets",()=>{
@@ -36,14 +37,21 @@ test("opening and closing effects incorporate boundary item durations",()=>{
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.12\.13 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.13 Development Testing Build/);
+  assert.match(html,/Build 0\.12\.14 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.14 Development Testing Build/);
 });
 test("the product rename preserves existing projects and application data",()=>{
   assert.match(tauri,/"productName": "Accessible Production Studio"/);
   assert.match(tauri,/"identifier": "org\.opendoordesign\.accessiblemediaeditor"/);
   assert.match(projectModel,/Open Door Design Accessible Media Editor Project/);
   assert.match(rust,/join\("Accessible Media Editor"\)/);
+});
+test("the Windows MSI replaces the old Accessible Media Editor installation",()=>{
+  assert.match(tauri,/"targets": \["msi"\]/);
+  assert.match(tauri,/"upgradeCode": "344ea42c-3ec4-5751-b132-35a5319deca4"/);
+  assert.doesNotMatch(tauri,/"nsis"/);
+  assert.match(workflow,/AccessibleProductionStudioWindowsMSI/);
+  assert.doesNotMatch(workflow,/bundle\/nsis/);
 });
 test("all statically referenced UI element IDs exist",()=>{
   const referenced=[...app.matchAll(/\bel\["([^"]+)"\]/g)].map(m=>m[1]);

@@ -140,10 +140,10 @@ test("Audio Editor workspace sections have unique descriptive accessible names",
   assert.match(html,/Ctrl\+Page Up or Ctrl\+Page Down moves among Recording Studio, Review Recording when available, Shared Audio Library, and Audio Clip Editor/);
 });
 
-test("all visible and native build identification is 0.12.13",()=>{
-  assert.match(html,/Build 0\.12\.13 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.13/);
-  assert.match(rust,/Build 0\.12\.13 executable started/);
+test("all visible and native build identification is 0.12.14",()=>{
+  assert.match(html,/Build 0\.12\.14 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.14/);
+  assert.match(rust,/Build 0\.12\.14 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{

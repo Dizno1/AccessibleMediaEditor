@@ -1,0 +1,48 @@
+Accessible Production Studio
+Build 0.12.14 Windows Upgrade Migration Testing Notes
+
+Purpose
+
+This build corrects the duplicate installation created when Accessible Media Editor was renamed Accessible Production Studio.
+
+Do not uninstall Accessible Media Editor before performing this test. Leaving it installed is necessary to verify the upgrade.
+
+Before installation
+
+Confirm that Accessible Media Editor still appears in the Start menu, on the desktop, or under Windows Installed Apps.
+
+Open Accessible Media Editor once and confirm that existing projects or shared-library media are still available. Then close the application.
+
+Install the Accessible Production Studio 0.12.14 MSI.
+
+Expected installation result
+
+Windows Installer should recognize Accessible Production Studio as an upgrade of Accessible Media Editor.
+
+Accessible Production Studio should be the installed application after setup completes.
+
+The older Accessible Media Editor program entry and shortcut should be removed by the upgrade. Do not manually delete either shortcut before checking this behavior.
+
+Only one current application should appear under Windows Installed Apps.
+
+Data preservation checks
+
+Open Accessible Production Studio.
+
+Confirm that existing AMEPROJECT files can still be opened.
+
+Confirm that the Shared Media Library and Shared Audio Library still contain the expected entries.
+
+Confirm that imported audiobooks, shortened chapters, recordings, presentation projects, and saved clips remain available.
+
+Confirm that previously exported ordinary media files remain in their original folders.
+
+Confirm that the application reports Build 0.12.14 in About or the build information.
+
+Failure reporting
+
+Report whether Accessible Media Editor remained in Installed Apps or retained a working shortcut after installation.
+
+Report whether Windows displayed a repair, downgrade, already installed, or incompatible version message.
+
+Do not uninstall either application if user data appears missing. Record the exact spoken message and stop testing so the existing data locations can be examined without risk.
