@@ -1,0 +1,30 @@
+Accessible Production Studio
+Build 0.12.13 Audio Editor Section Names Testing Notes
+
+This build corrects repeated and ambiguous Audio Editor headings and region names.
+
+The workspace tab remains Audio Editor.
+
+The first section is Recording Studio. It contains microphone selection, recording profiles, and recording controls.
+
+The second persistent section is Shared Audio Library. It contains Audiobooks, Music, Recordings, Other Audio, All Audio, import controls, sources, classification, exporting, removal, and pause shortening.
+
+The final section is Audio Clip Editor. It contains playback, speed, playhead, brackets, exact time entry, and saving a bracketed range.
+
+Review Recording appears between Recording Studio and Shared Audio Library only when a new recording is waiting for review.
+
+Testing
+
+Switch to Audio Editor and confirm that the tab is announced as Audio Editor and focus enters Recording Studio.
+
+Use Ctrl+Page Down repeatedly. Confirm that the application announces Recording Studio, Review Recording when present, Shared Audio Library, and Audio Clip Editor instead of repeatedly saying Audio Editor section.
+
+Use Ctrl+Page Up to move through the same sections in reverse order.
+
+Navigate by headings and regions with the Virtual PC Cursor on. Confirm that each section has a unique name and that there are no duplicate Audio Editor section headings.
+
+Turn the Virtual PC Cursor off or use NVDA Focus Mode. Confirm that normal controls, lists, transport shortcuts, and editing commands continue to work.
+
+Press F1 and confirm that the Audio Editor instructions use the same three section names.
+
+Confirm that existing recordings, audiobooks, shared audio, projects, and editing behavior are unchanged.

@@ -8,6 +8,8 @@ Build 0.10.21: Save bracketed video selections as reusable source clips. Saving 
 
 # Accessible Production Studio
 
+Build 0.12.13 gives every section inside Audio Editor a unique, descriptive name. The recording section is Recording Studio, the reusable source section is Shared Audio Library, and the detailed playhead and bracket editing section is Audio Clip Editor. Region labels, Ctrl+Page navigation announcements, F1 instructions, preview messages, and build information use the same terminology. Audio Editor remains the workspace and tab name. This naming-only correction does not change media, projects, internal identifiers, or editing behavior.
+
 Build 0.12.12 renames the third workspace Audio Editor and organizes its shared sources into Audiobooks, Music, Recordings, Other Audio, and All Audio. These areas filter and classify shared-library metadata without moving, duplicating, or modifying original files. Audiobooks retain separate book collections and natural chapter order. Existing recordings remain under Recordings, and ordinary audio can be classified as Music or Other Audio. The F1 instructions explain the new organization and preserve the distinction between this workspace and the planned standalone AccessibleAudioStudioPro application. Internal identifiers and existing data folders remain unchanged so an upgrade continues to find saved projects, sessions, recordings, exports, and library data.
 
 Build 0.10.20 adds accessible presentation creation: images can be interleaved with one selected video clip, continuous music can play underneath, and music can duck automatically while video audio plays. The presentation replaces Primary Production while preserving former Primary media as reusable Source Media.

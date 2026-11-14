@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Production Studio</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.12 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.13 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -234,10 +234,8 @@
 
     <div id="audio-studio-workspace" class="audio-studio-grid" role="tabpanel" aria-labelledby="audio-studio-tab" hidden tabindex="-1">
       <section class="editor-section audio-studio" id="audio-recording-section" aria-labelledby="audio-studio-heading" tabindex="-1">
-        <h2 id="audio-studio-heading" tabindex="-1">Audio Editor</h2>
+        <h2 id="audio-studio-heading" tabindex="-1">Recording Studio</h2>
         <p id="audio-studio-status">Ready. Enable microphone access to record, or open existing audio.</p>
-
-        <h3>Record Audio</h3>
         <p id="audio-microphone-status">Microphone access has not been enabled.</p>
         <button type="button" id="audio-enable-microphone">Enable Microphone Access</button>
         <div id="audio-recording-setup" hidden>
@@ -272,7 +270,7 @@
       </section>
 
       <section class="editor-section audio-studio" id="audio-library-section" aria-labelledby="audio-library-heading" tabindex="-1">
-        <h2 id="audio-library-heading">Audio Source Library</h2>
+        <h2 id="audio-library-heading">Shared Audio Library</h2>
         <div class="audio-area-navigation" role="group" aria-label="Audio Editor areas">
           <button type="button" id="audio-area-audiobooks" data-audio-area="audiobooks" aria-pressed="false">Audiobooks</button>
           <button type="button" id="audio-area-music" data-audio-area="music" aria-pressed="false">Music</button>
@@ -339,8 +337,8 @@
       </dialog>
 
       <section class="editor-section audio-studio" id="audio-editor-section" aria-labelledby="audio-editor-heading" tabindex="-1">
-        <h2 id="audio-editor-heading">Audio Editor</h2>
-        <p id="audio-editor-summary">Choose an audio source and activate Open Selected Audio in Audio Editor.</p>
+        <h2 id="audio-editor-heading">Audio Clip Editor</h2>
+        <p id="audio-editor-summary">Choose an audio source and activate Open Selected Audio in Audio Clip Editor.</p>
         <audio id="audio-editor-media" preload="metadata"></audio>
         <label for="audio-editor-playhead">Audio playhead</label>
         <input id="audio-editor-playhead" type="range" min="0" max="0" step="0.001" value="0" disabled>
@@ -646,9 +644,9 @@
         <li>Remove Selected Audio from Shared Library removes library entries without deleting original chapter files.</li>
         <li>Alt+S moves directly to Shared Audio Library while Audio Editor is active. In Media Editor, Alt+S moves to Shared Media Library when the current project has no sources.</li>
         <li>Preview Selected Audio is a toggle. Activate it again, or press X, to stop the library preview.</li>
-        <li>Ctrl+Page Up or Ctrl+Page Down moves among Recording, Recording Review when available, Audio Source Library, and Audio Editor.</li>
-        <li>Open Selected Audio in Audio Editor activates the selected source without changing the original file.</li>
-        <li>In Audio Editor, X plays or pauses. Arrow keys, U and I, Home and End, Alt+Arrow, and Ctrl+G use the same timing model as Media Editor.</li>
+        <li>Ctrl+Page Up or Ctrl+Page Down moves among Recording Studio, Review Recording when available, Shared Audio Library, and Audio Clip Editor.</li>
+        <li>Open Selected Audio in Audio Clip Editor activates the selected source without changing the original file.</li>
+        <li>In Audio Clip Editor, X plays or pauses. Arrow keys, U and I, Home and End, Alt+Arrow, and Ctrl+G use the same timing model as Media Editor.</li>
         <li>Left and Right Brackets select a range. Ctrl+Delete or Keep Bracketed Range as New Audio Source saves that range as a new nondestructive source.</li>
       </ul>
       </div>

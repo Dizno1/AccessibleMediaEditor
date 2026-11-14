@@ -73,7 +73,7 @@ test("Alt S is contextual and the active workspace survives refresh",()=>{
 
 test("audio preview toggles and retained microphone permission is reused",()=>{
   assert.match(studio,/Stop Selected Audio Preview/);
-  assert.match(studio,/Audio Source Library preview stopped/);
+  assert.match(studio,/Shared Audio Library preview stopped/);
   assert.match(studio,/navigator\.permissions\.query\(\{name:"microphone"\}\)/);
   assert.match(studio,/permission\.state==="granted"/);
 });
@@ -132,10 +132,18 @@ test("Audio Editor separates audio into accessible areas without moving source f
   assert.match(html,/AccessibleAudioStudioPro is planned as a separate audio-focused application/);
 });
 
-test("all visible and native build identification is 0.12.12",()=>{
-  assert.match(html,/Build 0\.12\.12 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.12/);
-  assert.match(rust,/Build 0\.12\.12 executable started/);
+test("Audio Editor workspace sections have unique descriptive accessible names",()=>{
+  assert.match(html,/id="audio-studio-heading"[^>]*>Recording Studio</);
+  assert.match(html,/id="audio-library-heading"[^>]*>Shared Audio Library</);
+  assert.match(html,/id="audio-editor-heading"[^>]*>Audio Clip Editor</);
+  assert.equal((html.match(/<h2 id="audio-editor-heading">Audio Editor<\/h2>/g)||[]).length,0);
+  assert.match(html,/Ctrl\+Page Up or Ctrl\+Page Down moves among Recording Studio, Review Recording when available, Shared Audio Library, and Audio Clip Editor/);
+});
+
+test("all visible and native build identification is 0.12.13",()=>{
+  assert.match(html,/Build 0\.12\.13 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.13/);
+  assert.match(rust,/Build 0\.12\.13 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{

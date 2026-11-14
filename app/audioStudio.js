@@ -220,7 +220,7 @@ export function createAudioStudio(options){
     e("audio-editor-speed").value=String(rates[next]);setPlaybackSpeed();
   }
   function togglePlayback(){
-    const libraryPreview=e("audio-library-preview");if(!libraryPreview.paused){libraryPreview.pause();e("audio-preview-source").textContent="Play or Stop Selected Audio Preview";announce("Audio Source Library preview stopped.");return;}
+    const libraryPreview=e("audio-library-preview");if(!libraryPreview.paused){libraryPreview.pause();e("audio-preview-source").textContent="Play or Stop Selected Audio Preview";announce("Shared Audio Library preview stopped.");return;}
     if(!editingItem)return announce("Open an audio source in Audio Editor first.",true);
     if(!editor.paused){pauseEditor();updateEditor(true);announce(`Paused at ${naturalTime(cursor)}.`);return;}
     if(cursor>=editorDuration())cursor=0;editor.currentTime=sourceTime(cursor);editor.play().then(()=>{e("audio-editor-play").textContent="Pause (X)";}).catch(error=>announce(`Audio could not be played. ${error}`,true));
