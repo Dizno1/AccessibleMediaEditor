@@ -25,7 +25,7 @@
   <header class="app-header">
     <h1 id="project-heading" tabindex="-1">Accessible Production Studio</h1>
     <p id="project-summary">No media open.</p>
-    <p class="build-information">Build 0.12.9 Development Testing Build. Copyright 2026 Open Door Design.</p>
+    <p class="build-information">Build 0.12.10 Development Testing Build. Copyright 2026 Open Door Design.</p>
     <button type="button" id="instructions-shortcuts-button">Instructions and Keyboard Shortcuts (F1)</button>
   </header>
 
@@ -133,7 +133,7 @@
       <section class="editor-section presentation-builder" id="presentation-builder-section" tabindex="-1" aria-labelledby="presentation-builder-heading">
         <h2 id="presentation-builder-heading">Presentation Builder</h2>
         <button type="button" id="presentation-new">Start New Presentation Sequence</button>
-        <button type="button" id="presentation-open">Open Presentation Project (Ctrl+Shift+O)</button>
+        <button type="button" id="presentation-open">Open Presentation Project</button>
         <button type="button" id="presentation-save">Save Presentation Project (Ctrl+S)</button>
         <button type="button" id="presentation-save-as">Save Presentation Project As (Ctrl+Shift+S)</button>
         <p id="presentation-project-status">Presentation project has not been saved.</p>
@@ -276,7 +276,7 @@
         <p id="audio-library-summary">No saved audio sources.</p>
         <div class="button-row" aria-label="Open audio">
           <button type="button" id="audio-open-files">Open Audio Files (Ctrl+O)</button>
-          <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder (Ctrl+Shift+O)</button>
+          <button type="button" id="audio-open-folder">Open Audiobook or Audio Folder</button>
           <button type="button" id="audio-review-import" hidden>Review Last Import Results</button>
         </div>
         <label for="audio-library-collection">Audio collection</label>
@@ -561,10 +561,18 @@
       <p><strong>JAWS:</strong> Press Insert+Z to turn the Virtual PC Cursor off. Press Insert+Z again when you want to turn it back on.</p>
       <p><strong>Narrator:</strong> Press Narrator+Space to turn Scan Mode off. Press Narrator+Space again when you want to turn it back on.</p>
       <p>Use the application interaction mode while working in Media Editor, Presentation, AudioStudio Pro, media lists, and production sequences. These instructions are available from every workspace with F1.</p>
+      <h3>Choose a workspace</h3>
+      <p>Media Editor assembles and edits video, audio, images, and text in Primary Production. Presentation builds an independent ordered presentation with title slides, transitions, narration, background music, ducking, preview, project saving, and MP4 export. AudioStudio Pro records audio, organizes ordinary audio and audiobooks, edits selected sources, changes playback speed, shortens long pauses nondestructively, and exports audio copies.</p>
+      <p>Press Ctrl+Tab or Ctrl+Shift+Tab to move among the three workspaces. Press Ctrl+Page Up or Ctrl+Page Down to move among sections inside the active workspace.</p>
+      <h3>Opening work</h3>
+      <p>Ctrl+O opens ordinary files and recognizes an AMEPROJECT automatically. Ctrl+Shift+O opens a choice between an Accessible Production Studio project and an audiobook folder. Either structured item can be opened from any workspace, and the application moves to the correct workspace.</p>
+      <p>Opening, editing, shortening pauses, and arranging presentation items are nondestructive. Original files are not deliberately changed or deleted. Save an AMEPROJECT when you need to reopen an editable production or presentation. Export creates a finished media file.</p>
+      <button type="button" id="shortcut-key-list-toggle" aria-expanded="false" aria-controls="shortcut-key-list">Show Complete Keyboard Shortcuts</button>
+      <div id="shortcut-key-list" hidden>
       <h3>App-wide commands</h3>
       <ul>
         <li>Ctrl+O: Open ordinary files for the active workspace. In AudioStudio Pro, this opens one or more audio files.</li>
-        <li>Ctrl+Shift+O: Open the larger structured item for the active workspace. In Presentation or Media Editor, this opens an AMEPROJECT. In AudioStudio Pro, this opens an audiobook or audio folder.</li>
+        <li>Ctrl+Shift+O: Open a choice between an editable AMEPROJECT and an audiobook or audio folder. Either choice works from every workspace and moves to the correct workspace.</li>
         <li>Ctrl+S: Save Project.</li><li>Ctrl+Shift+S: Save Project As.</li>
         <li>Ctrl+E: Render and export the complete Primary Production.</li>
         <li>Ctrl+Page Up or Ctrl+Page Down: Move to the previous or next editor section.</li>
@@ -595,7 +603,7 @@
       <h3>Presentation commands</h3>
       <ul>
         <li>Start New Presentation Sequence clears only the presentation sequence. It does not save a file.</li>
-        <li>Open Presentation Project or Ctrl+Shift+O opens an existing AMEPROJECT file.</li>
+        <li>Open Presentation Project opens an existing AMEPROJECT file directly. Ctrl+Shift+O opens the project-or-audiobook choice from any workspace.</li>
         <li>Save Presentation Project or Ctrl+S saves an AMEPROJECT containing the sequence, source references, durations, descriptions, and music settings.</li>
         <li>Save Presentation Project As or Ctrl+Shift+S chooses a new AMEPROJECT filename and location.</li>
         <li>Export creates the finished MP4. The MP4 can be edited as one video, but its separate presentation components cannot be recovered from the export.</li>
@@ -629,7 +637,18 @@
         <li>In Audio Editor, X plays or pauses. Arrow keys, U and I, Home and End, Alt+Arrow, and Ctrl+G use the same timing model as Media Editor.</li>
         <li>Left and Right Brackets select a range. Ctrl+Delete or Keep Bracketed Range as New Audio Source saves that range as a new nondestructive source.</li>
       </ul>
+      </div>
       <button type="submit">Close Instructions and Keyboard Shortcuts</button>
+    </form>
+  </dialog>
+
+  <dialog id="structured-open-dialog" aria-labelledby="structured-open-heading">
+    <form method="dialog">
+      <h2 id="structured-open-heading" tabindex="-1">Open Project or Audiobook</h2>
+      <p>Choose what you want to open. The application will move to the correct workspace.</p>
+      <button type="button" id="structured-open-project">Open Accessible Production Studio Project</button>
+      <button type="button" id="structured-open-audiobook">Open Audiobook or Audio Folder</button>
+      <button type="submit" id="structured-open-cancel">Cancel</button>
     </form>
   </dialog>
 

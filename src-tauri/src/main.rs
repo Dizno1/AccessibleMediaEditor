@@ -664,9 +664,11 @@ fn accelerated_item(app: &tauri::AppHandle, label: &str, id: &str, accelerator: 
 
 fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let file = SubmenuBuilder::new(app, "File")
-        .item(&item(app,"Open Files for Current Workspace... Ctrl+O","openCurrentWorkspace")?)
+        .item(&item(app,"Open Files... Ctrl+O","openCurrentWorkspace")?)
+        .item(&item(app,"Open Project...","openProject")?)
+        .item(&item(app,"Open Audiobook or Audio Folder...","openAudioFolder")?)
         .item(&item(app,"Export Complete Production... Ctrl+E","exportMedia")?)
-        .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project or Audio Folder... Ctrl+Shift+O","openWorkspaceCollection")?)
+        .separator().item(&item(app,"New Project Ctrl+N","newProject")?).item(&item(app,"Open Project or Audiobook... Ctrl+Shift+O","openWorkspaceCollection")?)
         .item(&item(app,"Save Project Ctrl+S","saveProject")?).item(&item(app,"Save Project As... Ctrl+Shift+S","saveProjectAs")?)
         .item(&item(app,"Open Projects Folder","openProjectsFolder")?).item(&item(app,"Open Exports Folder","openExportsFolder")?).separator().item(&item(app,"Exit","exitApp")?).build()?;
     let edit = SubmenuBuilder::new(app, "Edit")
@@ -705,7 +707,7 @@ fn build_menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 }
 
 fn main() {
-    write_startup_log("Build 0.12.9 executable started.");
+    write_startup_log("Build 0.12.10 executable started.");
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {

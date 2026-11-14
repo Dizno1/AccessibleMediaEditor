@@ -120,20 +120,40 @@ test("audiobooks use separate collections and natural chapter order",()=>{
   assert.match(app,/!derived&&!entry\.silenceShortened/);
 });
 
-test("all visible and native build identification is 0.12.9",()=>{
-  assert.match(html,/Build 0\.12\.9 Development Testing Build/);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.9/);
-  assert.match(rust,/Build 0\.12\.9 executable started/);
+test("all visible and native build identification is 0.12.10",()=>{
+  assert.match(html,/Build 0\.12\.10 Development Testing Build/);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.10/);
+  assert.match(rust,/Build 0\.12\.10 executable started/);
 });
 
 test("AudioStudio presents opening before the library and selected-item actions after it",()=>{
   const open=html.indexOf('id="audio-open-files"'),list=html.indexOf('id="audio-library-items"'),actions=html.indexOf('id="audio-preview-source"');
   assert.ok(open<list&&list<actions);
-  assert.match(html,/Open Audiobook or Audio Folder \(Ctrl\+Shift\+O\)/);
+  assert.match(html,/id="audio-open-folder">Open Audiobook or Audio Folder</);
   assert.match(shortcuts,/openCurrentWorkspace.*ctrl:true,key:"o"/s);
   assert.match(shortcuts,/openWorkspaceCollection.*ctrl:true,shift:true,key:"o"/s);
-  assert.match(app,/openWorkspaceCollection:.*activeWorkspace==="audio".*openFolder\(\).*openProject\(\)/s);
+  assert.match(app,/openWorkspaceCollection:showStructuredOpen/);
   assert.doesNotMatch(shortcuts,/openAudioFolder/);
+});
+
+test("structured opening works from every workspace and routes to the correct editor",()=>{
+  assert.match(html,/id="structured-open-dialog"/);
+  assert.match(html,/id="structured-open-project"/);
+  assert.match(html,/id="structured-open-audiobook"/);
+  assert.match(app,/function showStructuredOpen\(\)/);
+  assert.match(app,/function openStructuredProject\(\).*openProject\(\)/s);
+  assert.match(app,/function openStructuredAudiobook\(\).*switchWorkspace\(1,"audio"\).*openFolder\(\)/s);
+  assert.match(app,/async function importAudioStudioFiles\(\).*projectPaths.*open_project_path.*applyOpenedProject/s);
+  assert.match(rust,/"Open Project\.\.\.","openProject"/);
+  assert.match(rust,/"Open Audiobook or Audio Folder\.\.\.","openAudioFolder"/);
+});
+
+test("F1 provides concise instructions and an expandable complete shortcut reference",()=>{
+  assert.match(html,/id="shortcut-key-list-toggle" aria-expanded="false" aria-controls="shortcut-key-list"/);
+  assert.match(html,/id="shortcut-key-list" hidden/);
+  assert.match(html,/Ctrl\+Shift\+O: Open a choice between an editable AMEPROJECT and an audiobook or audio folder/);
+  assert.match(app,/function toggleShortcutKeyList\(\)/);
+  assert.match(app,/showShortcuts:.*shortcut-key-list-toggle.*focus\(\)/s);
 });
 
 test("Shared Audio Library reports individual and aggregate selection changes",()=>{

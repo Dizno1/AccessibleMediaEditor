@@ -177,7 +177,13 @@ async function importAudioPaths(paths,origin){
 }
 async function importAudioStudioFiles(){
   if(!invoke)return announce("The Windows file picker is available in the installed application.",true);
-  return importAudioPaths(await invoke("pick_media_files"),"selected audio");
+  const paths=await invoke("pick_media_files"),projectPaths=paths.filter(path=>/\.ameproject$/i.test(path));
+  if(projectPaths.length){
+    if(paths.length!==1){announce("An AMEPROJECT cannot be opened together with audio files. Select the project by itself.",true);return{total:0,imported:0,recovered:0,failed:[],routed:true};}
+    if(project.dirty&&!window.confirm("Discard unsaved changes and open the selected project?"))return{total:0,imported:0,recovered:0,failed:[],routed:true};
+    const result=await invoke("open_project_path",{path:projectPaths[0]});applyOpenedProject(result);announce(`${project.name} opened as an editable project in the correct workspace.`);return{total:0,imported:0,recovered:0,failed:[],routed:true};
+  }
+  return importAudioPaths(paths,"selected audio");
 }
 async function retryAudioStudioFiles(paths,origin){return importAudioPaths(paths,origin==="folder"?"folder-retry":"retry");}
 async function importAudioStudioFolder(){
@@ -1030,7 +1036,7 @@ async function importMedia(){
     if(!paths.length){updateStatus("Open Media canceled. No files selected.");return;}
     const projectPaths=paths.filter(path=>/\.ameproject$/i.test(path));
     if(projectPaths.length){
-      if(paths.length!==1)return announce("A project file cannot be opened together with media. Open the AMEPROJECT separately with Ctrl+Shift+O.",true);
+      if(paths.length!==1)return announce("A project file cannot be opened together with media. Press Ctrl+Shift+O and choose Open Project, or select the AMEPROJECT by itself.",true);
       if(project.dirty&&!window.confirm("Discard unsaved changes and open the selected project?"))return;
       updateStatus("Opening Accessible Production Studio project...");
       const result=await invoke("open_project_path",{path:projectPaths[0]});applyOpenedProject(result);announce(`${project.name} opened as an editable project.`);return;
@@ -1381,12 +1387,22 @@ function setTrackTarget(target){
 function showGoToTime(){const state=activeState();if(!state)return announce("Activate a media editor first.",true);if(state.imageOnly)return announce("Source Images do not have a playhead. Set the placement time in Primary Production.");writeTime("goto",state.cursor);el["go-to-time-dialog"].showModal();el["goto-hours"].focus();}
 function confirmGoToTime(){const state=activeState(),location=activeLocation(),point=readTime("goto"),bounds=location?editorBounds(location.item,location.type):null;if(!state||!location||!Number.isFinite(point)||point>bounds.end)return announce("Enter a valid time.",true);el["go-to-time-dialog"].close();setEditorPosition(state,point,true);state.slider.focus();announce(`Playhead moved to ${readableTime(point)}.`);}
 function splitSelected(){const location=activeLocation(),state=activeState();if(!location||location.type!=="sequence")return announce("Activate a Primary Sequence editor before splitting.",true);const newId=id(),next=splitItem(project,location.item.id,state.cursor,newId);if(next===project)return announce("Move the playhead inside the media before splitting.",true);clearProgramMarks();selectedId=newId;activeMediaId=newId;rememberChange(next,`Split at ${readableTime(state.cursor)}. Part 2 active.`,true);}
-function cancel(){const state=activeState();if(el["presentation-item-properties-dialog"].open)closePresentationItemProperties();else if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
+function cancel(){const state=activeState();if(el["structured-open-dialog"].open)el["structured-open-dialog"].close();else if(el["shortcuts-dialog"].open)el["shortcuts-dialog"].close();else if(el["presentation-item-properties-dialog"].open)closePresentationItemProperties();else if(el["properties-dialog"].open)el["properties-dialog"].close();else if(el["text-dialog"].open)el["text-dialog"].close();else if(el["go-to-time-dialog"].open)el["go-to-time-dialog"].close();else if(el["export-dialog"].open){el["export-dialog"].close();exportPhase="idle";clearAnnouncements();}else if(el["export-success-dialog"].open)el["export-success-dialog"].close();else if(state?.audition){cancelAudition(state,true);announce("Audition canceled.");}else if(state&&(state.markIn!=null||state.markOut!=null)){state.markIn=state.markOut=null;state.markHistory=[];const location=activeLocation();if(location)updateEditorLabels(state,location.item,location.type);announce("Uncommitted marks canceled.");}else announce("No temporary operation to cancel.");}
+function showStructuredOpen(){
+  el["structured-open-dialog"].showModal();
+  (activeWorkspace==="audio"?el["structured-open-audiobook"]:el["structured-open-project"]).focus();
+}
+function openStructuredProject(){el["structured-open-dialog"].close();void openProject();}
+function openStructuredAudiobook(){el["structured-open-dialog"].close();switchWorkspace(1,"audio");void audioStudio?.openFolder();}
+function toggleShortcutKeyList(){
+  const button=el["shortcut-key-list-toggle"],content=el["shortcut-key-list"],expanded=button.getAttribute("aria-expanded")==="true";
+  button.setAttribute("aria-expanded",String(!expanded));content.hidden=expanded;button.textContent=expanded?"Show Complete Keyboard Shortcuts":"Hide Complete Keyboard Shortcuts";announce(`Complete keyboard shortcuts ${expanded?"collapsed":"expanded"}.`);
+}
 
 const actions={
   newProject,openProject,saveProject:()=>saveProject(false),saveProjectAs:()=>saveProject(true),importMedia,exportMedia,
   openCurrentWorkspace:()=>activeWorkspace==="audio"?audioStudio?.openAudio():importMedia(),
-  openWorkspaceCollection:()=>activeWorkspace==="audio"?audioStudio?.openFolder():openProject(),
+  openWorkspaceCollection:showStructuredOpen,openAudioFolder:()=>{switchWorkspace(1,"audio");audioStudio?.openFolder();},
   previousWorkspace:()=>switchWorkspace(-1),nextWorkspace:()=>switchWorkspace(1),showMediaWorkspace:()=>switchWorkspace(1,"media"),showPresentationWorkspace:()=>switchWorkspace(1,"presentation"),showAudioWorkspace:()=>switchWorkspace(1,"audio"),
   previousSection:()=>focusSection(-1),nextSection:()=>focusSection(1),openProjectsFolder:async()=>{try{await invoke("open_projects_folder");announce("Projects folder opened.");}catch(error){announce(String(error),true);}},openExportsFolder:async()=>{try{await invoke("open_exports_folder");announce("Exports folder opened.");}catch(error){announce(String(error),true);}},
   addText:showTextDialog,addTransition:()=>activeWorkspace==="presentation"?addPresentationCrossfade():addTransition(),moveEarlier:()=>activeWorkspace==="presentation"?movePresentation(-1):move(-1),moveLater:()=>activeWorkspace==="presentation"?movePresentation(1):move(1),properties:()=>activeWorkspace==="presentation"?showPresentationItemProperties():showProperties(),makeSourcePrimary:promoteSelectedSource,removeItem:()=>activeWorkspace==="presentation"?removePresentation():removeActive(),split:splitSelected,undo,redo,
@@ -1401,8 +1417,8 @@ const actions={
   jumpBeginning:()=>activeWorkspace==="audio"?audioStudio?.jump(false):jumpPlayhead(false),jumpEnd:()=>activeWorkspace==="audio"?audioStudio?.jump(true):jumpPlayhead(true),targetBoth:()=>setTrackTarget("both"),targetVideo:()=>setTrackTarget("video"),targetAudio:()=>setTrackTarget("audio"),cancel,stop:cancel,
   focusProjectItems:()=>{el["project-items"].focus();announce("Primary Sequence. Press Enter to open the selected media editor.");},
   focusPlayhead:()=>{const state=activeState();if(!state)return announce("No media editor active.");state.slider.focus();updateStatus(`Playhead ${readableTime(state.cursor)}.`);},
-  showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcuts-dialog"].querySelector("button").focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
-  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.9 Development Testing Build. Copyright 2026 Open Door Design. This build improves AudioStudio Pro workflow order, selection feedback, audiobook import recovery, and import reporting.")
+  showShortcuts:()=>{el["shortcuts-dialog"].showModal();el["shortcut-key-list-toggle"].focus();},showTestingGuide:()=>{el["testing-guide-dialog"].showModal();el["testing-guide-dialog"].querySelector("button").focus();},
+  toggleSoundCues:()=>{soundCues=!soundCues;localStorage.setItem("ame-sound-cues",soundCues?"on":"off");announce(`Sound cues ${soundCues?"on":"off"}.`);},showAbout:()=>announce("Accessible Production Studio Build 0.12.10 Development Testing Build. Copyright 2026 Open Door Design. This build adds intelligent project and audiobook opening plus complete expandable F1 instructions.")
 };
 Object.entries(actions).forEach(([name,handler])=>registerAction(name,handler));initShortcuts();
 
@@ -1425,6 +1441,9 @@ el["remove-image-button"].addEventListener("click",removeSelectedImage);
 
 el["remove-replacement-button"].addEventListener("click",removeSelectedReplacement);
 el["instructions-shortcuts-button"].addEventListener("click",actions.showShortcuts);
+el["shortcut-key-list-toggle"].addEventListener("click",toggleShortcutKeyList);
+el["structured-open-project"].addEventListener("click",openStructuredProject);
+el["structured-open-audiobook"].addEventListener("click",openStructuredAudiobook);
 el["save-project-button"].addEventListener("click",()=>saveProject(false));el["save-project-as-button"].addEventListener("click",()=>saveProject(true));el["media-editor-tab"].addEventListener("click",()=>switchWorkspace(1,"media"));el["audio-studio-tab"].addEventListener("click",()=>switchWorkspace(1,"audio"));el["presentation-tab"].addEventListener("click",()=>switchWorkspace(1,"presentation"));
 el["export-button"].addEventListener("click",exportMedia);
 el["export-confirm"].addEventListener("click",confirmExport);el["export-cancel"].addEventListener("click",()=>{el["export-dialog"].close();exportPhase="idle";clearAnnouncements();});

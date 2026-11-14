@@ -36,8 +36,8 @@ test("opening and closing effects incorporate boundary item durations",()=>{
   assert.match(rust,/afade=t=out:st=/);
 });
 test("the current build and copyright are available inside the interface",()=>{
-  assert.match(html,/Build 0\.12\.9 Development Testing Build\. Copyright 2026 Open Door Design\./);
-  assert.match(app,/Accessible Production Studio Build 0\.12\.9 Development Testing Build/);
+  assert.match(html,/Build 0\.12\.10 Development Testing Build\. Copyright 2026 Open Door Design\./);
+  assert.match(app,/Accessible Production Studio Build 0\.12\.10 Development Testing Build/);
 });
 test("the product rename preserves existing projects and application data",()=>{
   assert.match(tauri,/"productName": "Accessible Production Studio"/);
@@ -54,7 +54,7 @@ test("new presentation command exists and is wired",()=>{
   assert.match(app,/el\["presentation-new"\]\.addEventListener\("click",newPresentation\)/);
 });
 test("presentation workspace exposes project save and save as controls",()=>{
-  assert.match(html,/id="presentation-open"[^>]*>Open Presentation Project \(Ctrl\+Shift\+O\)/);
+  assert.match(html,/id="presentation-open"[^>]*>Open Presentation Project</);
   assert.match(html,/id="presentation-save"[^>]*>Save Presentation Project \(Ctrl\+S\)/);
   assert.match(html,/id="presentation-save-as"[^>]*>Save Presentation Project As \(Ctrl\+Shift\+S\)/);
   assert.match(app,/el\["presentation-save"\]\.addEventListener\("click",\(\)=>saveProject\(false\)\)/);

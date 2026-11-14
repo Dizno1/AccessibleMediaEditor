@@ -1,0 +1,27 @@
+Accessible Production Studio
+Build 0.12.10 Development Testing Build
+Open Door Design
+
+Primary test areas
+
+Press F1 from each workspace. Focus should move to Show Complete Keyboard Shortcuts. The initial instructions should explain screen-reader interaction mode, the purpose of all three workspaces, how to open work, and the difference between saving a project and exporting finished media.
+
+Activate Show Complete Keyboard Shortcuts. The full app-wide, Presentation, and AudioStudio Pro command reference should become available. The button should announce expanded. Activate it again to collapse the reference.
+
+Press Ctrl+Shift+O from Media Editor, Presentation, and AudioStudio Pro. A choice should offer Open Accessible Production Studio Project and Open Audiobook or Audio Folder. The default button should be Open Audiobook or Audio Folder in AudioStudio Pro and Open Accessible Production Studio Project in the other workspaces.
+
+Open an AMEPROJECT from any workspace. The project should open in its correct workspace. A presentation project should move focus to the Presentation Timeline.
+
+Choose Open Audiobook or Audio Folder from any workspace. AudioStudio Pro should become active and the Windows folder picker should open.
+
+In AudioStudio Pro, press Ctrl+O and select one AMEPROJECT instead of audio. It should open as an editable project rather than being rejected as audio.
+
+Use the File menu to verify that Open Files, Open Project, Open Audiobook or Audio Folder, and Open Project or Audiobook are separately available and clearly named.
+
+Confirm that Escape closes the project-or-audiobook choice and the F1 instructions.
+
+Regression checks
+
+Confirm that audiobook collections, natural chapter order, shortened-pause collections, batch pause shortening, and folder export continue to work.
+
+Confirm that existing projects, saved library items, recordings, and exports remain available after installation.
